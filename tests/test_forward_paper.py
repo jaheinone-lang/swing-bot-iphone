@@ -60,6 +60,28 @@ class PaperLedgerTests(unittest.TestCase):
                               as_of=bars[62].day + timedelta(days=1))
         self.assertEqual(again, state2)
 
+    def test_existing_position_gap_stop_sells_without_crash(self):
+        bars = prices(64)
+        data0, markets = one_feed(bars[:61])
+        state = advance_paper(data0, markets,
+                              as_of=bars[60].day + timedelta(days=1))
+        for n in (62, 63):
+            data, _ = one_feed(bars[:n])
+            state = advance_paper(data, markets, state,
+                                  as_of=bars[n-1].day + timedelta(days=1))
+        self.assertIn("FAKE", state["positions"])
+        d = bars[63].day
+        gap = Bar(d, 45, 47, 43, 45)
+        data, _ = one_feed(bars[:63] + [gap])
+        sold = advance_paper(data, markets, state,
+                             as_of=d + timedelta(days=1))
+        self.assertNotIn("FAKE", sold["positions"])
+        self.assertTrue(any(
+            event["side"] == "SELL" and event["reason"] == "STOP"
+            for event in sold["events"]
+        ))
+        self.assertLess(sold["cash_eur"], 5000)
+
     def test_corrupt_or_mismatched_state_cannot_be_reset(self):
         bars = prices(62)
         data, markets = one_feed(bars)
