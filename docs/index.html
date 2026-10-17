@@ -44,6 +44,9 @@
     .amount{font-size:14px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
     .section-sub{font-size:14px;margin:18px 0 10px}
     .warn{background:#44311f;border:1px solid #8a6236;padding:11px;border-radius:11px;color:#ffe1a9;font-size:12px;line-height:1.6}
+    .compare-head{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:right;font-size:12px;color:#cce0ff;padding:12px 0;border-bottom:1px solid #324358}
+    .compare-row{display:grid;grid-template-columns:1fr 2fr;gap:8px;align-items:center;padding:11px 0;border-bottom:1px solid #26374b;font-size:13px}
+    .compare-values{display:grid;grid-template-columns:1fr 1fr;text-align:right;font-variant-numeric:tabular-nums;gap:8px}
     .good{color:#a8edcf}
     .bad{color:#ffb2a8}
     svg#equitychart{width:100%;height:145px;background:#0b1726;border-radius:12px;margin-top:14px;display:block}
@@ -87,6 +90,14 @@
       EUR-päiväkynttilöitä, joiden aikarajat voivat erota. Osakkeiden osingot/yhtiötapahtumat,
       vero- ja markkinavaikutukset voivat vääristää tulosta.</p>
   </section>
+  <section class="card">
+    <h2>Strategian vertailu osta ja pidä -sijoittamiseen</h2>
+    <p class="note">Historiallinen tutkimus, ei oikea salkku eikä tulevan tuoton ennuste.
+       Osta ja pidä jakaa saman 5 000 €:n lähtöpääoman instrumenteille tasan lämmittelyjakson jälkeen,
+       eikä sijoituksia tasapainoteta uudelleen.</p>
+    <div id="benchmark" aria-live="polite"><p class="muted">Ladataan vertailua…</p></div>
+  </section>
+
   <section class="card">
     <h2>Jatka kehitystä</h2>
     <p class="muted">Paperisalkku tallennetaan GitHubiin, mutta välittäjätileihin ei olla yhteydessä.
@@ -191,6 +202,50 @@ function renderPaper(report) {
   wrap.append(node("p","note","Kulut yhteensä: "+euro(a.fees_eur)+" (oletus). Paperitila ei vastaa todellista toimeksiannon toteutusta. Tila tallennetaan julkiseen GitHubiin."));
 }
 
+function comparisonRow(label, a, b, pct=true) {
+  const row=node("div","compare-row");
+  row.append(node("div","muted",label));
+  const cells=node("div","compare-values");
+  cells.append(node("span","",a===null||a===undefined?"—":(pct?percent(a):String(a))),
+               node("span","",b===null||b===undefined?"—":(pct?percent(b):String(b))));
+  row.append(cells);return row;
+}
+function renderBenchmark(report) {
+  const wrap=$("benchmark");
+  wrap.replaceChildren();
+  const result=report.research_comparison;
+  if(!result || !result.swing || !result.buy_hold) {
+    wrap.append(node("p","warn","Vertailu ei ole saatavilla. Vaaditaan kaikki EUR-hintasyötteet ja riittävä yhteinen historia."));
+    return;
+  }
+  const head=node("div","compare-head");
+  head.append(node("div","",""),node("strong","","Swing Bot"),node("strong","","Osta & pidä"));
+  wrap.append(head);
+  const rows=[
+    ["Kokonaistuotto", "total_return_pct", true],
+    ["Vuosituotto (CAGR)", "cagr_pct", true],
+    ["Suurin arvonlasku", "max_drawdown_pct", true],
+    ["Vuosivolatiliteetti", "annualized_volatility_pct", true],
+    ["Sharpe (0 % korko)", "sharpe_zero_cash_rate", false],
+  ];
+  for(const [label,key,pct] of rows)
+    wrap.append(comparisonRow(label,result.swing[key],result.buy_hold[key],pct));
+  const summary=node("p","note","Ajanjakso: "+result.comparison_window.start+" – "+
+    result.comparison_window.end+" · Tuottoero: "+percent(result.excess_return_percentage_points)+
+    " %-yksikköä. Erot eivät ole samantasoisella riskillä saavutettuja.");
+  wrap.append(summary);
+  const recent=result.last_180_days;
+  if(recent) {
+    wrap.append(node("h3","section-sub","Viimeiset 180 päivää (sama kehitysaineisto)"));
+    wrap.append(comparisonRow("Jakson tuotto",recent.swing.total_return_pct,
+                              recent.buy_hold.total_return_pct,true));
+    wrap.append(comparisonRow("Suurin lasku",recent.swing.max_drawdown_pct,
+                              recent.buy_hold.max_drawdown_pct,true));
+  }
+  wrap.append(node("p","warn","Vertailu ei ole riippumaton testi. Osta ja pidä on 100 % sijoitettuna mahdollisuuksien mukaan, kun Swing Bot voi pitää käteistä. "+
+    "Osinkoja, osakesplittejä, veroja ja todellista likviditeettiä ei ole varmennettu. Maker/taker- ja liukuma-arviot ovat oletuksia."));
+}
+
 async function load() {
   let report;
   try {
@@ -241,6 +296,7 @@ async function load() {
     $("assets").append(card);
   }
   renderPaper(report);
+  renderBenchmark(report);
   const perf=$("performance");
   perf.replaceChildren();
   const p=report.portfolio_backtest;
