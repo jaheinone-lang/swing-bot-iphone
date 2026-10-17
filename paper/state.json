@@ -29,5 +29,7 @@
     }
   ],
   "fees_eur": 0.0,
-  "halted_new_entries": false
+  "halted_new_entries": false,
+  "tax_reserved_eur": 0.0,
+  "disposals": []
 }
