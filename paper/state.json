@@ -31,5 +31,7 @@
   "fees_eur": 0.0,
   "halted_new_entries": false,
   "tax_reserved_eur": 0.0,
-  "disposals": []
+  "disposals": [],
+  "tax_profile": "PERSONAL_FINLAND_ESTIMATE",
+  "holding_transfer_mode": "NO_AUTO_HOLDING_TRANSFER"
 }
