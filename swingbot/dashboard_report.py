@@ -12,6 +12,7 @@ from pathlib import Path
 
 from .bitvavo_data import bitvavo_eur_daily
 from .market_data import MarketDataError, stooq_eur_daily
+from .yahoo_data import yahoo_eur_daily
 from .portfolio import backtest
 from .strategy import evaluate_signal
 
@@ -20,7 +21,7 @@ INSTRUMENTS = {
     "BTC-EUR": ("crypto", bitvavo_eur_daily, "Bitvavo public OHLC"),
     "ETH-EUR": ("crypto", bitvavo_eur_daily, "Bitvavo public OHLC"),
     "SOL-EUR": ("crypto", bitvavo_eur_daily, "Bitvavo public OHLC"),
-    "SAP.DE": ("stock", stooq_eur_daily, "Stooq historical OHLC"),
+    "SAP.DE": ("stock", yahoo_eur_daily, "Yahoo Finance unofficial historical OHLC"),
 }
 PAPER_CAPITAL_EUR = 5000.0
 
