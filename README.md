@@ -72,9 +72,9 @@ Viralliset docs: https://docs.trading212.com/api ja https://docs.bitvavo.com/doc
 ## iPhone-verkkonäkymä (paperisalkku)
 
 Lähdetiedostot: [docs/index.html](docs/index.html), julkinen [docs/data.json](docs/data.json).
-Raporttiajastin on tällä hetkellä **manuaalinen**. Avaa
+Raportti päivittyy automaattisesti päivittäin noin klo 04.17 UTC (GitHub Actionsin aikataulu voi viivästyä). Tarvittaessa voit myös käynnistää
 [Update iPhone paper dashboard](https://github.com/jaheinone-lang/swing-bot-iphone/actions/workflows/dashboard.yml)
-→ **Run workflow** → **Run workflow**, jolloin luetaan julkiset kurssit ja päivitetään JSON-tiedosto.
+→ **Run workflow** → **Run workflow**, jolloin haetaan julkiset kurssit ja päivitetään JSON-tiedosto.
 
 Jotta saat verkkosivun Safariin:
 
@@ -85,6 +85,6 @@ Jotta saat verkkosivun Safariin:
    `https://jaheinone-lang.github.io/swing-bot-iphone/` – linkki ei ole toimiva ennen kuin Pages-julkaisu on valmistunut.
 5. Lisää toimiva sivu iPhonen Safari-valikosta kohtaan **Lisää Koti-valikkoon**.
 
-Huomautus: GitHub Actionsin `GITHUB_TOKEN`-commitit eivät välttämättä käynnistä Pagesin branch-julkaisua uudelleen. Siksi staattinen sivu hakee ensisijaisesti uusimman julkisen JSON-raportin suoraan GitHubin raw-tiedostosta ja käyttää Pagesin kopiota vain varavaihtoehtona. Raportti ei päivity itsestään ilman GitHub Actions -ajoa, ja GitHubin välimuistit voivat aiheuttaa viivettä. Sivun päiväys ja vanhentumismerkintä kertovat, milloin data on päivitetty.
+Huomautus: GitHub Actionsin `GITHUB_TOKEN`-commitit eivät välttämättä käynnistä Pagesin branch-julkaisua uudelleen. Siksi staattinen sivu hakee ensisijaisesti uusimman julkisen JSON-raportin suoraan GitHubin raw-tiedostosta ja käyttää Pagesin kopiota vain varavaihtoehtona. Raportin ajastettu GitHub Actions -ajo voi joskus viivästyä tai epäonnistua, ja GitHubin välimuistit voivat aiheuttaa viivettä. Sivun päiväys ja vanhentumismerkintä kertovat, milloin data on päivitetty.
 
-Osakepuolen Stooq-lähde vaatii mahdollisesti oman API-avaimen. Kun se ei toimi, **osakekurssi ja yhdistetty tuottosimulaatio näytetään puuttuvana**. Kryptojen Bitvavo-data toimii ilman tiliä. Tämä on aikaisemman datan tutkintanäkymä, ei käyttäjän oikea salkku.
+iPhone-näkymä käyttää SAP.DE-osakkeelle **epävirallista Yahoo Finance -historiadataa**, jonka EUR-valuutta, päivämäärät ja ajantasaisuus tarkistetaan ennen näyttämistä. Erillinen CLI käyttää edelleen Stooqia, joka saattaa vaatia API-avaimen. Jos osake- tai kryptosyöte ei vastaa, **osakekurssi tai yhdistetty tuottosimulaatio näytetään puuttuvana**. Bitvavon kryptodata toimii ilman tiliä. Historiallinen tuottosimulaatio perustuu useisiin oletuksiin eikä ole validoitu sijoitusstrategia. Tämä on tutkimusnäkymä, ei käyttäjän oikea salkku.
