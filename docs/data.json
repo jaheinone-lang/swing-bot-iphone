@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-10-17T16:17:12+00:00",
+  "generated_at_utc": "2026-10-17T16:32:16+00:00",
   "mode": "READ_ONLY_RESEARCH",
   "initial_eur": 5000.0,
   "max_new_entry_drawdown_pct": 25,
@@ -45,17 +45,29 @@
       "symbol": "SAP.DE",
       "market": "stock",
       "currency": "EUR",
-      "source": "Stooq historical OHLC",
-      "status": "unavailable",
-      "signal": "NO_DATA",
-      "reason": "Stooq did not return daily CSV; an API key may be required"
+      "source": "Yahoo Finance unofficial historical OHLC",
+      "status": "ok",
+      "day": "2026-10-16",
+      "last_completed_close_eur": 199.22000122070312,
+      "signal": "HOLD",
+      "reason": "no_breakout_or_trend",
+      "bars": 507
     }
   ],
-  "portfolio_backtest": null,
+  "portfolio_backtest": {
+    "start": "2024-10-28",
+    "end": "2026-10-16",
+    "starting_eur": 5000.0,
+    "final_equity_eur": 5330.51,
+    "return_pct": 6.61,
+    "max_drawdown_pct": 14.29,
+    "estimated_fees_eur": 245.53,
+    "halted_new_entries": false,
+    "trade_count": 101
+  },
   "messages": [
     "Oikeaa rahaa ei käytetä. Ei välittäjätiliyhteyttä eikä toimeksiantoja.",
     "Päiväkynttilät ovat valmistuneita historiallisen datan havaintoja; signaalit eivät ole intraday-hälytyksiä.",
-    "Pörssikulut, verot, toimeksiannon toteutuvuus ja mallin tuottavuus vaativat erillisen vahvistuksen.",
-    "Yhdistettyä tuottoa ei lasketa ennen kuin KAIKKIEN markkinoiden EUR-hintadata toimii."
+    "Pörssikulut, verot, toimeksiannon toteutuvuus ja mallin tuottavuus vaativat erillisen vahvistuksen."
   ]
 }
