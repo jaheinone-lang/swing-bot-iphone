@@ -122,8 +122,8 @@ def advance_paper(
         # Existing stops; overnight gaps fill at worse next OPEN (plus slippage).
         for symbol, bar in sorted(active.items()):
             p = state["positions"].get(symbol)
-            if p is not None and bar.low <= p["stop"]:
-                raw = min(bar.open, p["stop"])
+            if p is not None and bar.low <= p["stop_eur"]:
+                raw = min(bar.open, p["stop_eur"])
                 _sell(state, symbol, raw, markets[symbol], day, "STOP")
                 stopped_today.add(symbol)
 
