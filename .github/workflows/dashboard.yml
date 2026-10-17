@@ -32,6 +32,15 @@ jobs:
           python-version: '3.12'
       - name: Verify offline paper safety tests before publishing
         run: python -m unittest discover -s tests -v
+      - name: Verify iPhone dashboard JavaScript syntax
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          html = Path("docs/index.html").read_text(encoding="utf-8")
+          script = html.split("<script>", 1)[1].split("</script>", 1)[0]
+          Path("/tmp/swing-dashboard.js").write_text(script, encoding="utf-8")
+          PY
+          node --check /tmp/swing-dashboard.js
       - name: Produce read-only EUR market snapshot (no broker credentials)
         run: python -m swingbot.dashboard_report
       - name: Commit snapshot and paper state atomically to git
