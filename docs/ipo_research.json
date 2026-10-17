@@ -1,0 +1,57 @@
+{
+  "as_of": "2026-10-17",
+  "status": "RESEARCH_ONLY_NO_EXECUTION",
+  "provider_coverage": "PUBLIC_PREVIEW_ONLY; individual account entitlements not verified",
+  "source_note": "Issuer news/SEC and selected publicly surfaced Trading 212 instrument pages; not complete IPO calendar",
+  "ipo_examples": [
+    {
+      "ticker": "CTY",
+      "name": "City Therapeutics",
+      "currency": "USD",
+      "exchange": "NASDAQ",
+      "planned_first_trade": "2026-10-16",
+      "offering_price_usd": 18,
+      "first_close_usd": 22.4,
+      "first_day_vs_offering_pct": 24.44,
+      "verified_exchange_debut_source": "https://investors.citytx.com/news-releases/news-release-details/city-therapeutics-announces-pricing-upsized-initial-public",
+      "public_trading212_page": "https://www.trading212.com/de/trading-instruments/invest/CTY.US",
+      "trading212_account_verified": false,
+      "watch_state": "WAIT_5_COMPLETED_SESSIONS",
+      "risk": "Clinical-stage biotech; short price history; volume/spread and full prospectus required"
+    },
+    {
+      "ticker": "IAM",
+      "name": "Iambic Therapeutics",
+      "currency": "USD",
+      "exchange": "NASDAQ",
+      "planned_first_trade": "2026-10-15",
+      "offering_price_usd": 16,
+      "first_close_usd": null,
+      "first_day_vs_offering_pct": 13,
+      "first_day_return_approximate": true,
+      "verified_exchange_debut_source": "https://ir.iambic.ai/news-releases/news-release-details/iambic-announces-pricing-initial-public-offering",
+      "public_trading212_page": null,
+      "trading212_account_verified": false,
+      "watch_state": "WAIT_5_COMPLETED_SESSIONS",
+      "risk": "Unprofitable clinical-stage biotech; independent price/volume data required; funding/dilution and trials risk"
+    },
+    {
+      "ticker": "ACCV",
+      "name": "Accelevation Holdings",
+      "currency": "USD",
+      "exchange": "NASDAQ",
+      "planned_first_trade": "2026-09-30",
+      "offering_price_usd": 18,
+      "first_close_usd": null,
+      "verified_exchange_debut_source": "https://investors.accelevation.com/news-releases/news-release-details/accelevation-launches-roadshow-proposed-initial-public-offering",
+      "public_trading212_page": "https://www.trading212.com/sv/trading-instruments/invest/ACCV.US",
+      "trading212_account_verified": false,
+      "watch_state": "DO_NOT_CHASE_UNVERIFIED",
+      "risk": "Offering repriced below initial $20-24 range; much of offering secondary; historical quote and liquidity need direct verification"
+    }
+  ],
+  "account_scan_status": "NOT_CONNECTED",
+  "price_data_status": "IPO_OHLCV_SPREAD_NOT_CONFIGURED",
+  "auto_trade_authorized": false,
+  "caveat": "A public Trading 212 instrument page is not proof a security is enabled on the user's account. Offering price is not a retail execution price. Do not equate broker addedOn with exchange debut."
+}
