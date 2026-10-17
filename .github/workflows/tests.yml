@@ -2,6 +2,7 @@ name: Python safety tests
 on:
   push:
   pull_request:
+  workflow_dispatch:
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
@@ -12,3 +13,5 @@ jobs:
           python-version: '3.12'
       - name: Test prototype strategy
         run: python -m unittest discover -s tests -v
+      - name: Example signal (SIMULATION ONLY)
+        run: python -m swingbot.cli data/demo_prices.csv --equity 5000 --peak-equity 5000
