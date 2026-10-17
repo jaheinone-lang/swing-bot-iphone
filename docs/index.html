@@ -284,7 +284,9 @@ function renderStrategyLab(report) {
     };
     display("Kehitysjakson tuotto",v.development?percent(v.development.total_return_pct):"—");
     display("Myöhemmän jakson tuotto",v.holdout?percent(v.holdout.total_return_pct):"—");
-    display("Koko historian verojen jälkeinen tuotto",
+    display("Koko historian tuotto ennen verovarausta",
+      percent(v.gross_return_pct));
+    display("Koko historian tuotto verovarauksen jälkeen",
       percent(v.full_period_after_tax.total_return_pct));
     display("Suurin historiallinen lasku",
       "−"+percent(v.full_period_after_tax.max_drawdown_pct));
