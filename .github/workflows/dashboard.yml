@@ -10,6 +10,8 @@ on:
       - '.github/workflows/dashboard.yml'
       - 'swingbot/dashboard_report.py'
       - 'swingbot/forward_paper.py'
+      - 'swingbot/portfolio.py'
+      - 'swingbot/research_metrics.py'
       - 'swingbot/market_data.py'
       - 'swingbot/bitvavo_data.py'
       - 'swingbot/yahoo_data.py'
