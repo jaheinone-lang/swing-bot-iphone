@@ -106,5 +106,29 @@ class SecIpoTests(unittest.TestCase):
                 fetch_submissions(12345)
 
 
+from swingbot.sec_identity import exact_cik_match, SecIdentityError
+
+
+class SecIdentityTests(unittest.TestCase):
+    def test_exact_exchange_and_symbol_required(self):
+        records={"fields":["cik","name","ticker","exchange"],
+                 "data":[[320193,"Apple Inc","AAPL","Nasdaq"],
+                         [123456,"Example Ltd","AAPL","NYSE"]]}
+        a=exact_cik_match(records,issuer_ticker="AAPL",exchange="Nasdaq")
+        self.assertEqual(a["cik"],320193)
+        self.assertFalse(a["identity_verified_by_isin"])
+        self.assertIsNone(exact_cik_match(records,
+                            issuer_ticker="AAPL_US_EQ",exchange="Nasdaq"))
+        self.assertIsNone(exact_cik_match(records,
+                            issuer_ticker="AAPL",exchange="XETRA"))
+
+    def test_duplicate_exact_identity_is_ambiguous(self):
+        records={"fields":["cik","name","ticker","exchange"],
+                 "data":[[1,"A","X","Nasdaq"],[2,"B","X","Nasdaq"]]}
+        self.assertIsNone(exact_cik_match(records,issuer_ticker="X",
+                                          exchange="Nasdaq"))
+
+
+
 if __name__=="__main__":
     unittest.main()
