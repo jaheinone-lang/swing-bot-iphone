@@ -44,6 +44,12 @@
     .amount{font-size:14px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
     .section-sub{font-size:14px;margin:18px 0 10px}
     .warn{background:#44311f;border:1px solid #8a6236;padding:11px;border-radius:11px;color:#ffe1a9;font-size:12px;line-height:1.6}
+    .lab-item{border:1px solid #304358;background:#0b1726;border-radius:14px;padding:14px;margin-top:12px}
+    .lab-item h3{font-size:15px;margin:0 0 5px}
+    .lab-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:12px}
+    .lab-grid div{font-size:12px;color:#a7b6ca}
+    .lab-grid strong{display:block;font-size:18px;color:#ecf3ff;margin-top:4px;font-variant-numeric:tabular-nums}
+    .lab-highlight{display:inline-block;font-size:11px;border:1px solid #536a90;color:#cde3ff;border-radius:9px;padding:4px 8px}
     .compare-head{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:right;font-size:12px;color:#cce0ff;padding:12px 0;border-bottom:1px solid #324358}
     .compare-row{display:grid;grid-template-columns:1fr 2fr;gap:8px;align-items:center;padding:11px 0;border-bottom:1px solid #26374b;font-size:13px}
     .compare-values{display:grid;grid-template-columns:1fr 1fr;text-align:right;font-variant-numeric:tabular-nums;gap:8px}
@@ -96,6 +102,12 @@
        Osta ja pidä jakaa saman 5 000 €:n lähtöpääoman instrumenteille tasan lämmittelyjakson jälkeen,
        eikä sijoituksia tasapainoteta uudelleen.</p>
     <div id="benchmark" aria-live="polite"><p class="muted">Ladataan vertailua…</p></div>
+  </section>
+
+  <section class="card">
+    <h2>Kolme strategiaa · verojen jälkeinen vertailu</h2>
+    <p class="note">Säännöt ovat ennalta valittuja testivaihtoehtoja. Pääoma aloittaa 5 000 eurosta, ja tulos lasketaan laskennallisen verovarauksen sekä kulujen jälkeen. Jatkuva paperisalkku ei muutu tämän testin perusteella.</p>
+    <div id="strategylab" aria-live="polite"><p class="muted">Ladataan historiallisen vertailun tuloksia…</p></div>
   </section>
 
   <section class="card">
@@ -246,6 +258,51 @@ function renderBenchmark(report) {
     "Osinkoja, osakesplittejä, veroja ja todellista likviditeettiä ei ole varmennettu. Maker/taker- ja liukuma-arviot ovat oletuksia."));
 }
 
+function renderStrategyLab(report) {
+  const wrap=$("strategylab");
+  wrap.replaceChildren();
+  const lab=report.strategy_lab;
+  if(!lab || !Array.isArray(lab.variants)) {
+    wrap.append(node("p","warn","Ei riittävästi varmennettua historiadataa strategioiden vertailuun. Raporttia ei täytetä arvatuilla tuloksilla."));
+    return;
+  }
+  wrap.append(node("p","muted","Kehitysjakso "+lab.development_start+" – "+lab.split_date+
+    " · Myöhempi testijakso "+lab.split_date+" – "+lab.validation_end));
+  for(const v of lab.variants) {
+    const card=node("div","lab-item");
+    card.append(node("h3","",v.name));
+    const p=v.parameters;
+    card.append(node("p","note","Ostoläpimurto "+p.breakout+" pv · stop "+p.stop_atr+
+      " ATR · enintään "+p.max_position_pct+" % / positio · 200 pv trendisuodatin "+
+      (p.sma200_filter?"käytössä":"ei käytössä")+
+      (p.time_exit_bars?" · aikapoistuminen "+p.time_exit_bars+" kynttilää":"")));
+    const grid=node("div","lab-grid");
+    const display=(label,value)=>{
+      const cell=node("div","");
+      cell.append(node("span","",label),node("strong","",value));
+      grid.append(cell);
+    };
+    display("Kehitysjakson tuotto",v.development?percent(v.development.total_return_pct):"—");
+    display("Myöhemmän jakson tuotto",v.holdout?percent(v.holdout.total_return_pct):"—");
+    display("Koko historian verojen jälkeinen tuotto",
+      percent(v.full_period_after_tax.total_return_pct));
+    display("Suurin historiallinen lasku",
+      "−"+percent(v.full_period_after_tax.max_drawdown_pct));
+    display("Loppupääoma verovarauksen jälkeen",euro(v.after_tax_equity_eur));
+    display("Laskennallinen verovaraus",euro(v.estimated_tax_reserve_eur));
+    display("Arvioidut kulut",euro(v.estimated_fees_eur));
+    display("Kauppatapahtumia",String(v.trade_count));
+    card.append(grid);
+    if(v.name===lab.training_selected_variant) {
+      card.append(node("p","lab-highlight","Kehitysjaksolla valittu (ei live-käyttöön)"));
+    }
+    wrap.append(card);
+  }
+  wrap.append(node("p","warn","Veromalli on arvio yksityishenkilön Suomen pääomatuloverosta: 30 % / 34 %, viiden vuoden tappiosiirto. "+
+    "Muu pääomatulo, osingot, osakesäästötili, yhteisöverotus, hankintameno-olettama ja vähäiset luovutukset eivät ole mukana. "+
+    "Verovaraus ei ole verottajan lasku. Voitot voivat palautua markkinoille, mutta varattu vero ei."));
+  wrap.append(node("p","note",lab.caveat));
+}
 async function load() {
   let report;
   try {
@@ -297,6 +354,7 @@ async function load() {
   }
   renderPaper(report);
   renderBenchmark(report);
+  renderStrategyLab(report);
   const perf=$("performance");
   perf.replaceChildren();
   const p=report.portfolio_backtest;
