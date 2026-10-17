@@ -67,3 +67,24 @@ Avaa `Run workflow` → `Run workflow`. Testi hakee tuoreet **valmiit** EUR-päi
 **Älä koskaan lähetä kaupankäyntitilisi salasanoja, API-avaimia tai salaisuuksia ChatGPT-viestinä tai vie niitä julkiseen GitHub-koodiin.** Kun demoavain on ajankohtainen, sen voi lisätä yksityisen kehitysympäristön salaisuushallintaan. Myös automaattisten toimeksiantojen toteutus tarvitsee erillisen lupapäätöksen, käyttöoikeusrajaukset ja testatun täsmäytyksen, jotta uudelleenyritys ei tee tuplaostoa.
 
 Viralliset docs: https://docs.trading212.com/api ja https://docs.bitvavo.com/docs/rest-api/get-candlestick-data/
+
+
+## iPhone-verkkonäkymä (paperisalkku)
+
+Lähdetiedostot: [docs/index.html](docs/index.html), julkinen [docs/data.json](docs/data.json).
+Raporttiajastin on tällä hetkellä **manuaalinen**. Avaa
+[Update iPhone paper dashboard](https://github.com/jaheinone-lang/swing-bot-iphone/actions/workflows/dashboard.yml)
+→ **Run workflow** → **Run workflow**, jolloin luetaan julkiset kurssit ja päivitetään JSON-tiedosto.
+
+Jotta saat verkkosivun Safariin:
+
+1. Avaa [Repository Settings → Pages](https://github.com/jaheinone-lang/swing-bot-iphone/settings/pages).
+2. Valitse **Build and deployment → Source: Deploy from a branch**.
+3. Valitse **Branch: main**, kansio **/docs**, ja **Save**.
+4. Odota GitHubin ilmoittamaa julkaisuosoitetta. Oletusosoite on
+   `https://jaheinone-lang.github.io/swing-bot-iphone/` – linkki ei ole toimiva ennen kuin Pages-julkaisu on valmistunut.
+5. Lisää toimiva sivu iPhonen Safari-valikosta kohtaan **Lisää Koti-valikkoon**.
+
+Huomautus: GitHub Actionsin automaattisesti tekemät `GITHUB_TOKEN`-commitit eivät välttämättä käynnistä Pagesin branch-julkaisua uudelleen. Tämän vuoksi verkkosivu voi näyttää vanhaa raporttia, vaikka `docs/data.json` olisi tuore. Seuraavassa versiossa siirrymme tarvittaessa GitHub Actions -pohjaiseen Pages-julkaisuun. Sivun päiväys ja vanhentumismerkintä kertovat, milloin data on päivitetty.
+
+Osakepuolen Stooq-lähde vaatii mahdollisesti oman API-avaimen. Kun se ei toimi, **osakekurssi ja yhdistetty tuottosimulaatio näytetään puuttuvana**. Kryptojen Bitvavo-data toimii ilman tiliä. Tämä on aikaisemman datan tutkintanäkymä, ei käyttäjän oikea salkku.
