@@ -111,6 +111,13 @@
   </section>
 
   <section class="card">
+    <h2>Osakeseulonta ja uudet pörssilistautumiset</h2>
+    <p class="note">Kaikkien Trading 212:n osakkeiden ja ETF:ien tilikohtainen skannaus vaatii erillisen rajatun API-yhteyden sekä markkinadatan käyttöoikeudet. Vielä EI käytössä. Alla on tutkimusesimerkkejä vahvistetuista listautumisista, ei ostosignaaleja.</p>
+    <div id="ipo-research"><p class="muted">Ladataan IPO-tutkimuksen esimerkit…</p></div>
+    <p class="note">IPOn ensimmäisen päivän nousu listautumishinnasta ei ole sama kuin tavallisen sijoittajan saavutettava tuotto. Botin sääntö vaatii vähintään viisi valmistunutta kaupankäyntipäivää, aidon likviditeetin, spreadin sekä valuuttamuunnoksen.</p>
+  </section>
+
+  <section class="card">
     <h2>Jatka kehitystä</h2>
     <p class="muted">Paperisalkku tallennetaan GitHubiin, mutta välittäjätileihin ei olla yhteydessä.
     Tämän testimallin seuraavat vaiheet ovat todellisten kaupankäyntikulujen tarkistus,
@@ -308,6 +315,46 @@ function renderStrategyLab(report) {
     "Verovaraus ei ole verottajan lasku. Voitot voivat palautua markkinoille, mutta varattu vero ei."));
   wrap.append(node("p","note",lab.caveat));
 }
+async function loadIpoResearch() {
+  const wrap=$("ipo-research");
+  if(!wrap) return;
+  let data;
+  try {
+    const urls=[
+      "https://raw.githubusercontent.com/jaheinone-lang/swing-bot-iphone/main/docs/ipo_research.json?t="+Date.now(),
+      "./ipo_research.json?t="+Date.now()
+    ];
+    for(const url of urls) {
+      try {
+        const r=await fetch(url,{cache:"no-store"});
+        if(r.ok){data=await r.json();break}
+      } catch(_) {}
+    }
+    if(!data || !Array.isArray(data.ipo_examples))throw new Error("not available");
+  }catch(_){
+    wrap.replaceChildren(node("p","muted","IPO-katsausta ei voi ladata tällä hetkellä."));
+    return;
+  }
+  wrap.replaceChildren(node("p","muted","Tutkimus koottu: "+data.as_of+" · Tilikohtainen Trading 212 -katalogi: ei yhdistetty"));
+  for(const item of data.ipo_examples) {
+    const row=node("div","lab-item");
+    row.append(node("h3","",item.ticker+" · "+item.name));
+    const offer=item.offering_price_usd===null?"Ei saatavilla":euro(item.offering_price_usd).replace(" €"," $");
+    row.append(node("p","muted","Listautumispäivä: "+item.planned_first_trade+" · Merkintähinta: "+offer));
+    if(item.first_day_vs_offering_pct!==undefined) {
+      row.append(node("p","note","Ensimmäisen päivän muutos listautumishintaan: "+
+        percent(item.first_day_vs_offering_pct)+(item.first_day_return_approximate?" (arvio)":"")+
+        " — ei toteutettavissa oleva paperikauppa."));
+    }
+    row.append(node("p","warn",item.risk));
+    const link=node("a","","Yhtiön virallinen listautumistiedote ↗");
+    link.href=item.verified_exchange_debut_source;
+    link.target="_blank";
+    link.rel="noopener noreferrer";
+    row.append(link);
+    wrap.append(row);
+  }
+}
 async function load() {
   let report;
   try {
@@ -379,5 +426,6 @@ async function load() {
   $("warnings").textContent=Array.isArray(report.messages)?report.messages.join(" "):"";
 }
 load();
+loadIpoResearch();
 </script>
 </body></html>
