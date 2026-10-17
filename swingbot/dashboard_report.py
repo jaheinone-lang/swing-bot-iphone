@@ -16,6 +16,7 @@ from .bitvavo_data import bitvavo_eur_daily
 from .market_data import MarketDataError, stooq_eur_daily
 from .yahoo_data import yahoo_eur_daily
 from .portfolio import backtest
+from .research_metrics import compare_to_hold
 from .strategy import evaluate_signal
 
 # Keep price provenance attached to every displayed instrument.
@@ -37,6 +38,7 @@ def build_snapshot() -> dict:
         "max_new_entry_drawdown_pct": 25,
         "instruments": [],
         "portfolio_backtest": None,
+        "research_comparison": None,
         "paper_account": None,
         "messages": [
             "Oikeaa rahaa ei käytetä. Ei välittäjätiliyhteyttä eikä toimeksiantoja.",
@@ -93,6 +95,11 @@ def build_snapshot() -> dict:
                 "halted_new_entries": result["halted_new_entries"],
                 "trade_count": len(result["trade_events"]),
             }
+            # Comparison uses exactly the same dates and history as the
+            # completed historical replay; never overwrite forward paper data.
+            snapshot["research_comparison"] = compare_to_hold(
+                aligned, market_types, result
+            )
     else:
         snapshot["messages"].append(
             "Yhdistettyä tuottoa ei lasketa ennen kuin KAIKKIEN markkinoiden EUR-hintadata toimii."
