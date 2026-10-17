@@ -148,3 +148,12 @@ Koska näitä strategioita on jo ajateltu historiallisten tulosten perusteella, 
 **Data:** Kryptot Bitvavon julkisista EUR-päiväkynttilöistä ja SAP.DE epävirallisesta Yahoo Finance -rajapinnasta. Hintojen ajantasaisuus ja noteerausvaluutta tarkistetaan syötteissä, mutta osinkojen, osakesplittien, yhtiötapahtumien ja muiden datavirheiden täydellistä korjausta ei ole. Ensimmäisessä analyysissä on vain neljä instrumenttia ja noin kaksi vuotta historiaa; luotettava mallin optimointi edellyttää enemmän ajallista vaihtelua, muita osakkeita ja instrumentteja sekä pitkää uutta paperikauppajaksoa.
 
 Aja testit: `python -m unittest discover -s tests -v`. Ei API-kaupankäyntiavaimia, ei toimeksiantoja.
+
+
+### Jatkuvan paperisalkun verovaraus (lisätty)
+
+Myös `paper/state.json` sisältää nyt arviot `tax_reserved_eur` ja `disposals`: simuloidun myynnin yhteydessä kirjataan verotettava EUR-voitto tai -tappio täysimääräiseen hankinta- ja myyntikuluun perustuen. Uudet positiot mitoitetaan **salkun arvosta vähennetyn verovarauksen** ja **kassan verovarauksesta vapaan osuuden** mukaan. Bruttokäteinen ei muutu varauksen takia, mutta osa siitä on laskennallisesti lukittu pois kaupankäynnistä. Paperisalkun näkymä näyttää sekä varauksen että uudelleensijoitettavissa olevan käteisen.
+
+Vanhan `paper/state.json`-muodon kertaluonteinen muunnos sallitaan vain, kun tilillä ei ole vanhoja kauppoja tai positioita. Jos vanhaa kaupankäyntihistoriaa on, päivitys pysähtyy ja vaatii manuaalisen verokirjanpidon tarkistuksen; mitään ei nollata tai lasketa arvaamalla. Sama koskee myöhempiä epäluotettavia hintasyötteitä.
+
+**Verovaraus ei vastaa maksettua veroa eikä täydellistä tulevan veron määrää:** avoimet voitot, muut pääomatulot, osingot, 1000 € luovutussääntö, hankintameno-olettama, vaihtoehtoiset tilimuodot ja yhtiön kautta sijoittaminen vaativat erillisen mallin. Tämä on henkilön EUR-arvopaperien ja spot-kryptojen tutkimuskäyttöä; ei johdannaisia tai lainoitusta.
