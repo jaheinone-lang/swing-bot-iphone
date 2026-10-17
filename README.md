@@ -115,3 +115,36 @@ Vertailu käyttää täsmälleen samoja EUR-hintapäiviä ja samaa 5 000 € lä
 Tärkeää: **ostettu ja koko ajan sijoitettuna pidetty salkku kantaa enemmän markkinariskiä** kuin strategia, joka usein pitää käteistä. Tästä syystä tuottojen ero ei suoraan osoita parempaa riskikorjattua sijoitusmenetelmää. Osta ja pidä -vertailu on vain yksi vertailupohja eikä itsessään sijoitussuositus. Yhtiötapahtumat, osingot, delistaukset, maksuerot, valuuttariskit, verotus ja kaupankäyntikelpoisuus voivat vääristää molempia tuloksia. **Viimeisten 180 päivän osuus ei ole riippumaton tulevaisuustesti**, koska malli on jo kehitetty samoja historiallisia hintoja tarkastelemalla.
 
 Sharpen luku annualisoidaan 365 päivän perusteella päivätuottojen keskihajonnasta. Osakkeiden sulkeutuneina päivinä käytetään edellistä tunnettua päätöshintaa. Tämä ei mittaa todellista päivänsisäistä riskiä, ja epäsynkroniset pörssipäivät voivat vääristää lukuja. Vasta pidempi ilman jälkikäteen tehtyjä sääntömuutoksia suoritettu paperijakso antaa luotettavampaa näyttöä mallin toiminnasta.
+
+
+## Strategialaboratorio 4.0 (17.10.2026)
+
+**Tämä on erillinen historiallinen tutkimus.** Jatkuva paperisalkku jatkaa nykyisillä säännöillään eikä oppiminen muuta sen kauppoja tai käytä oikeaa rahaa.
+
+Kolme etukäteen määriteltyä versiota:
+
+| Versio | Läpimurto | Trendi | Stop | Positioraja | 200 päivän filtteri | Momentum-ranking | Aikapoistuminen |
+|---|---:|---:|---:|---:|---|---|---|
+| A – Nykyinen | 20 | 50 | 2,0 ATR | 20 % | ei | ei | ei |
+| B – Nopeampi | 15 | 50 | 2,5 ATR | 25 % | kyllä | 2 parhainta signaalia | 20 kynttilää ilman +2 % nousua |
+| C – Aggressiivinen | 10 | 30 | 3,0 ATR | 30 % | kyllä | 2 parhainta signaalia | 15 kynttilää ilman +2 % nousua |
+
+Kaikissa 1 % laskennallinen positioriski, *vain long*, seuraavan täyden päiväkynttilän avaukseen sijoitetut historialliset täytöt, arvioidut Bitvavon/Trading 212:n kaupankäyntikulut ja -liukuma, sekä 25 % laskuun pysäyttävä uusien ostojen kielto. Kurssihypyt voivat aiheuttaa yli 25 % tappion, koska stop ei takaa toteutushintaa. 200 päivän filtteri tarkoittaa, että päätöskurssi on viimeisten 200 päätöskurssin keskiarvon yläpuolella (ei kahden keskiarvon risteämää). Momentum perustuu 60 kynttilän tuottoon. Aikapoistuminen pannaan täytäntöön vasta seuraavan avauksen kautta.
+
+### Korkoa korolle ja vero
+
+**Uudet sijoituskoot lasketaan joka kaupalle uudestaan salkun senhetkisestä verovarauksen jälkeisestä arvosta.** Sijoitusrahat kasvavat voitoista ja pienenevät tappioista. Malli kohdistaa yhden ostolotin kerrallaan instrumenttia kohti, joten luovutusten kustannusperuste on yksiselitteinen ilman avoimien eri-ikäisten FIFO-lottien yhteensovitusta.
+
+Veroarvio perustuu oletukseen: **Suomessa verotettava yksityishenkilö**, 30 % pääomatulon osuudesta 30 000 euroon asti ja 34 % ylittävältä osalta. Veroa varataan EUR-määräisistä **realisoiduista myyntivoitoista**, hankinta- ja luovutuskulujen jälkeen; realisoituneet tappiot vähennetään verovuoden voitoista ja ylijäävä osuus yksinkertaistetusti enintään viiden seuraavan vuoden voitoista. Kasvanut laskennallinen verovaraus vähentää ostamiseen käytettävissä olevaa käteistä, mutta veroa ei oikeasti makseta. **Avoimien positioiden laskennallista veroa ei varata**; loppupääoma on tältä osin vain osittainen verojen jälkeinen luku.
+
+Rajoituksia: muiden henkilökohtaisten pääomatulojen määrä oletetaan nollaksi; todelliset vähennykset, osinkovero, tappioiden käyttö muita pääomatuloja vastaan, alle 1 000 € myynnit, hankintameno-olettama, osakesäästötili, yhteisöverotus, kryptovaihdot, valuuttamuunnokset sekä muu tosiasiallinen verotieto eivät ole mukana. Tämä on **turvallisuutta parantava arvio**, ei verolaskelma tai ohje veroilmoitukseen. Lisätietoja: https://www.vero.fi/henkiloasiakkaat/verokortti-ja-veroilmoitus/tulot/paaomatulot/ ja https://www.vero.fi/henkiloasiakkaat/omaisuus/sijoitukset/virtuaalivaluutat/
+
+### Historiasta oppiminen ilman tulevaisuustietoa
+
+Jokainen kolmesta kiinteästä strategiasta testataan samalla EUR-historialla. Data jaetaan ajallisesti ensimmäiseen 65 % kehitysjaksoon ja viimeiseen 35 % myöhempään arviointijaksoon. **Kehitysjaksolla** pisteet muodostuvat kaavalla: tuotto %-yksikköä miinus 1,5 × suurin arvonlasku %-yksikköä. Vain kehitysjaksolla parhaiten pisteytettyä mallia tarkastellaan seuraavaksi myöhemmällä jaksolla. **Testitulokset eivät automaattisesti muuta tuotannossa olevaa paperisalkkua, eivätkä johda oikeisiin toimeksiantoihin.**
+
+Koska näitä strategioita on jo ajateltu historiallisten tulosten perusteella, myöhempää testijaksoa ei voi pitää täysin riippumattomana todistuksena. Todellinen uusi ulkopuolinen data kertyy vasta tulevilla päivillä lukittujen sääntöjen jälkeen. Pelkkä takaisin testattu vuosituotto ei kerro riittävästi; myös kulut, voittojen kesto, riskikorjattu tuotto, arvonlasku, kaupankäyntitiheys ja verovaraus on tarkasteltava.
+
+**Data:** Kryptot Bitvavon julkisista EUR-päiväkynttilöistä ja SAP.DE epävirallisesta Yahoo Finance -rajapinnasta. Hintojen ajantasaisuus ja noteerausvaluutta tarkistetaan syötteissä, mutta osinkojen, osakesplittien, yhtiötapahtumien ja muiden datavirheiden täydellistä korjausta ei ole. Ensimmäisessä analyysissä on vain neljä instrumenttia ja noin kaksi vuotta historiaa; luotettava mallin optimointi edellyttää enemmän ajallista vaihtelua, muita osakkeita ja instrumentteja sekä pitkää uutta paperikauppajaksoa.
+
+Aja testit: `python -m unittest discover -s tests -v`. Ei API-kaupankäyntiavaimia, ei toimeksiantoja.
