@@ -118,6 +118,12 @@
   </section>
 
   <section class="card">
+    <h2>Datalähteiden valmiustilanne</h2>
+    <p class="note">Työkalu voi olla rakennettu ja testattu, vaikka sen tilikohtainen tai maksullinen datayhteys ei vielä ole käytössä. Yksityisiä API-avaimia ei julkaista.</p>
+    <div id="source-readiness"><p class="muted">Ladataan lähteitä…</p></div>
+  </section>
+
+  <section class="card">
     <h2>Jatka kehitystä</h2>
     <p class="muted">Paperisalkku tallennetaan GitHubiin, mutta välittäjätileihin ei olla yhteydessä.
     Tämän testimallin seuraavat vaiheet ovat todellisten kaupankäyntikulujen tarkistus,
@@ -355,6 +361,32 @@ async function loadIpoResearch() {
     wrap.append(row);
   }
 }
+function renderSources(report) {
+  const wrap=$("source-readiness");
+  wrap.replaceChildren();
+  const sources=report.data_source_readiness;
+  if(!Array.isArray(sources) || !sources.length) {
+    wrap.append(node("p","muted","Tietolähteiden valmiustietoa ei vielä raportoitu."));
+    return;
+  }
+  const statuses={
+    ACTIVE_PUBLIC:"Toimiva julkinen syöte",
+    ACTIVE_LIMITED:"Toimiva rajoitettu lähde",
+    ADAPTER_TESTED_NOT_CONNECTED:"Sovitin valmis – ei yhdistetty",
+    ADAPTER_TESTED_NEEDS_SEC_USER_AGENT:"Sovitin valmis – tunniste tarvitaan",
+    ADAPTER_TESTED_NEEDS_PRIVATE_TOKEN_AND_LICENSE:"Sovitin valmis – datatilaus puuttuu",
+    AWAITING_ACCOUNT_AND_READ_ONLY_APPROVAL:"Odottaa Trading 212 -tiliä",
+    RESEARCH_RULES_ONLY:"Tutkimussäännöt valmiit",
+  };
+  for(const item of sources) {
+    const row=node("div","asset");
+    row.append(node("strong","",item.name));
+    row.append(node("p","muted",item.role));
+    row.append(node("p","note","Tila: "+(statuses[item.status]||"Ei vahvistettu")));
+    row.append(node("p","note",item.limitation));
+    wrap.append(row);
+  }
+}
 async function load() {
   let report;
   try {
@@ -407,6 +439,7 @@ async function load() {
   renderPaper(report);
   renderBenchmark(report);
   renderStrategyLab(report);
+  renderSources(report);
   const perf=$("performance");
   perf.replaceChildren();
   const p=report.portfolio_backtest;
