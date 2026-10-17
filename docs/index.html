@@ -152,10 +152,12 @@ function renderPaper(report) {
   wrap.append(status);
   const grid=node("div","grid");
   grid.append(
-    metric("Paperisalkun arvo",euro(a.equity_eur)),
-    metric("Vapaa käteinen",euro(a.cash_eur)),
+    metric("Paperisalkun arvo (verovaraus vähennetty)",euro(a.equity_eur)),
+    metric("Uudelleensijoitettava käteinen",euro(a.cash_available_for_trades_eur??a.cash_eur)),
     metric("Tuotto alusta",percent(a.return_pct)),
-    metric("Arvonlasku huipusta","−"+percent(a.drawdown_pct))
+    metric("Arvonlasku huipusta","−"+percent(a.drawdown_pct)),
+    metric("Arvioitu verovaraus",euro(a.tax_reserved_eur??0)),
+    metric("Käteinen yhteensä",euro(a.cash_eur))
   );
   wrap.append(grid);
   const line=Array.isArray(a.equity_history)?a.equity_history:[];
