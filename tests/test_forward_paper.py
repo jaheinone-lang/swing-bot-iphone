@@ -6,7 +6,7 @@ from datetime import date, timedelta
 from pathlib import Path
 from unittest.mock import patch
 
-from swingbot.forward_paper import advance_paper, public_paper_summary
+from swingbot.forward_paper import advance_paper, public_paper_summary, _sell
 from swingbot.dashboard_report import refresh_snapshot_and_paper
 from swingbot.market_data import MarketDataError
 from swingbot.portfolio import Bar
@@ -81,6 +81,50 @@ class PaperLedgerTests(unittest.TestCase):
             for event in sold["events"]
         ))
         self.assertLess(sold["cash_eur"], 5000)
+
+    def test_profitable_exit_reserves_tax_and_removes_it_from_spending_cash(self):
+        bars = prices(63)
+        data, market = one_feed(bars[:61])
+        state = advance_paper(data, market, as_of=bars[60].day+timedelta(days=1))
+        data, _ = one_feed(bars[:62])
+        state = advance_paper(data, market, state, as_of=bars[61].day+timedelta(days=1))
+        data, _ = one_feed(bars[:63])
+        state = advance_paper(data, market, state, as_of=bars[62].day+timedelta(days=1))
+        self.assertIn("FAKE", state["positions"])
+        from copy import deepcopy
+        modified=deepcopy(state)
+        _sell(modified,"FAKE",180,"stock",bars[62].day+timedelta(days=1),
+              "TEST_PROFIT")
+        self.assertGreater(modified["tax_reserved_eur"],0)
+        view=public_paper_summary(modified)
+        self.assertEqual(view["cash_available_for_trades_eur"],
+                         round(max(0,modified["cash_eur"]-
+                                   modified["tax_reserved_eur"]),2))
+        self.assertGreater(view["cash_eur"],view["cash_available_for_trades_eur"])
+        self.assertLess(view["equity_eur"],round(modified["cash_eur"],2))
+
+    def test_safe_migration_without_trades_keeps_initial_balance(self):
+        bars=prices(62)
+        data,market=one_feed(bars)
+        state=advance_paper(data,market,as_of=bars[-1].day+timedelta(days=1))
+        state.pop("tax_reserved_eur")
+        state.pop("disposals")
+        migrated=advance_paper(data,market,state,
+                               as_of=bars[-1].day+timedelta(days=1))
+        self.assertEqual(migrated["tax_reserved_eur"],0)
+        self.assertEqual(migrated["cash_eur"],5000)
+        self.assertEqual(migrated["events"],[])
+        self.assertNotIn("tax_reserved_eur",state)
+
+    def test_tax_migration_with_legacy_trades_fails_safely(self):
+        bars=prices(62)
+        data,market=one_feed(bars)
+        state=advance_paper(data,market,as_of=bars[-1].day+timedelta(days=1))
+        state["events"].append({"side":"BUY"})
+        state.pop("tax_reserved_eur")
+        with self.assertRaises(ValueError):
+            advance_paper(data,market,state,
+                          as_of=bars[-1].day+timedelta(days=1))
 
     def test_corrupt_or_mismatched_state_cannot_be_reset(self):
         bars = prices(62)
