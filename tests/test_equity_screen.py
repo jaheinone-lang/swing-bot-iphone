@@ -42,8 +42,9 @@ class EquityGatesTests(unittest.TestCase):
                   as_of=bars[-1].day+timedelta(days=1),
                   adjusted_for_corporate_actions=True,verified_spread_bps=5)
         self.assertEqual(screen_equity(**{**args,"currency":"USD"})["status"],"REJECTED")
-        self.assertEqual(screen_equity(**{**args,"verified_spread_bps":None})["status"],"REJECTED")
-        self.assertEqual(screen_equity(**{**args,"verified_spread_bps":60})["status"],"REJECTED")
+        self.assertEqual(screen_equity(**{**args,"verified_spread_bps":None})["status"],"WATCH_ONLY_NO_EXECUTION")
+        self.assertEqual(screen_equity(**{**args,"verified_spread_bps":60})["status"],"WATCH_ONLY_NO_EXECUTION")
+        self.assertEqual(screen_equity(**{**args,"verified_spread_bps":None})["spread_status"],"UNKNOWN")
         self.assertEqual(screen_equity(**{**args,"candles":fixture(low_volume=True)})["status"],"REJECTED")
 
     def test_future_filing_does_not_boost(self):
