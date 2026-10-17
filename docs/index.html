@@ -103,10 +103,24 @@ function metric(label, value) {
 async function load() {
   let report;
   try {
-    const result=await fetch("./data.json",{cache:"no-store"});
-    if(!result.ok) throw new Error("Raporttia ei ole vielä luotu");
-    report=await result.json();
-    if(report.schema_version !== 1 || !Array.isArray(report.instruments)) throw new Error("Tuntematon raporttimuoto");
+    const sources=[
+      "https://raw.githubusercontent.com/jaheinone-lang/swing-bot-iphone/main/docs/data.json?ts="+Date.now(),
+      "./data.json?ts="+Date.now()
+    ];
+    let lastError;
+    for (const source of sources) {
+      try {
+        const result=await fetch(source,{cache:"no-store"});
+        if(!result.ok) throw new Error("Raportin lataus epäonnistui");
+        const candidate=await result.json();
+        if(candidate.schema_version !== 1 || !Array.isArray(candidate.instruments)) {
+          throw new Error("Tuntematon raporttimuoto");
+        }
+        report=candidate;
+        break;
+      } catch(error) { lastError=error; }
+    }
+    if(!report) throw lastError||new Error("Raporttia ei ole vielä luotu");
   } catch(err) {
     $("freshness").textContent="Uusinta markkinaraporttia ei voida ladata. Tarkista GitHub Actions -ajo.";
     $("assets").replaceChildren(node("p","muted","Tämä ei tarkoita, ettei markkinoilla olisi ostosignaaleja."));
