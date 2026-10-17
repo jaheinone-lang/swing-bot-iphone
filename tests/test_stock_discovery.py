@@ -72,7 +72,10 @@ def ipo_bars(n=8,breakout=True,thin=False):
     for k in range(n):
         close=24 if k==n-1 and breakout else 20
         v=1000 if thin else (1500000 if k==n-1 else 1000000)
-        bars.append(IpoBar(d+timedelta(days=k),close-1,close+1,close-2,close,v))
+        # The breakout is a 7.5% opening gap, inside the <12% safety limit.
+        opening=(close-2.5) if (k==n-1 and breakout) else close-1
+        bars.append(IpoBar(d+timedelta(days=k),opening,close+1,
+                           min(opening,close)-.5,close,v))
     return bars
 
 
