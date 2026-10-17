@@ -157,3 +157,14 @@ Myös `paper/state.json` sisältää nyt arviot `tax_reserved_eur` ja `disposals
 Vanhan `paper/state.json`-muodon kertaluonteinen muunnos sallitaan vain, kun tilillä ei ole vanhoja kauppoja tai positioita. Jos vanhaa kaupankäyntihistoriaa on, päivitys pysähtyy ja vaatii manuaalisen verokirjanpidon tarkistuksen; mitään ei nollata tai lasketa arvaamalla. Sama koskee myöhempiä epäluotettavia hintasyötteitä.
 
 **Verovaraus ei vastaa maksettua veroa eikä täydellistä tulevan veron määrää:** avoimet voitot, muut pääomatulot, osingot, 1000 € luovutussääntö, hankintameno-olettama, vaihtoehtoiset tilimuodot ja yhtiön kautta sijoittaminen vaativat erillisen mallin. Tämä on henkilön EUR-arvopaperien ja spot-kryptojen tutkimuskäyttöä; ei johdannaisia tai lainoitusta.
+
+
+## Veroprofiili lukittu: henkilökohtainen sijoittaminen Suomessa
+
+Käyttäjän päätöksen perusteella Swing Bot käyttää jatkossa lähtökohtana Suomen verotuksessa yksityishenkilön henkilökohtaista sijoitussalkkua. Paperitili tallentaa veromallin `PERSONAL_FINLAND_ESTIMATE`, eikä siirtoa holding-yhtiöön ole mahdollista tehdä automaattisesti (`NO_AUTO_HOLDING_TRANSFER`).
+
+Tällä hetkellä ohjelma mallintaa pääomatuloveron 30 % ensimmäisiin 30 000 euroon asti ja 34 % ylimenevältä osalta; hankinta- ja myyntikulut, realisoidut EUR-myyntivoitot ja tappiot sekä yksinkertaistetun viiden seuraavan vuoden tappionsiirron. Todellisia muita pääomatuloja, alle 1 000 euron luovutusten erityissäännöksiä, osinkoja, arvo-osuustilien monilottista FIFOa tai hankintameno-olettamaa ei mallinneta täydellisesti. **Verovaraus on vain tutkimusarvio**, ei lopullinen verotuspäätös.
+
+Jos sijoittaminen myöhemmin tehdään holding-yhtiön kautta, kyseessä on uusi erillinen oikeudellinen sijoittaja, kirjanpito ja verotus. Henkilökohtaisesti omistettujen osakkeiden siirtäminen osakeyhtiöön apporttina on yleensä luovutus käyvästä arvosta ja voi aiheuttaa yksityishenkilön luovutusvoiton. Yhtiöön voidaan tulevaisuudessa sijoittaa erikseen uusia varoja, mutta olemassa olevan salkun arvopapereiden siirtoa ei saa käsitellä automaattisena verottomana tilisiirtona. Lopullinen järjestely kannattaa tarkistaa veroasiantuntijan kanssa ennen tekemistä.
+
+Lähteet: [Verohallinto — pääomatulot](https://www.vero.fi/henkiloasiakkaat/verokortti-ja-veroilmoitus/tulot/paaomatulot/), [Verohallinto — apportti](https://www.vero.fi/syventavat-vero-ohjeet/ohje-hakusivu/48935/omaisuuden-luovutusvoitot-ja-tappiot-luonnollisen-henkilon-tuloverotuksessa4/) ja [Verohallinto — osakkeiden myynti](https://www.vero.fi/henkiloasiakkaat/omaisuus/sijoitukset/osakkeiden_myynt/).
