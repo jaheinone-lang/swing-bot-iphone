@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.env
+.env.*
+!.env.example
+# Local API keys and secrets
+*.pem
+*.key
+# Local data and logs
+*.log
+*.sqlite
+*.db
