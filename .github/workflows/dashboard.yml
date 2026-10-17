@@ -9,6 +9,7 @@ on:
     paths:
       - '.github/workflows/dashboard.yml'
       - 'swingbot/dashboard_report.py'
+      - 'swingbot/forward_paper.py'
       - 'swingbot/market_data.py'
       - 'swingbot/bitvavo_data.py'
       - 'swingbot/yahoo_data.py'
@@ -29,13 +30,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Verify offline paper safety tests before publishing
+        run: python -m unittest discover -s tests -v
       - name: Produce read-only EUR market snapshot (no broker credentials)
         run: python -m swingbot.dashboard_report
-      - name: Commit snapshot to public docs folder
+      - name: Commit snapshot and paper state atomically to git
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add docs/data.json
+          if test -f paper/state.json; then git add paper/state.json; fi
           if git diff --cached --quiet; then
             echo 'Snapshot is unchanged'
             exit 0
@@ -43,6 +47,8 @@ jobs:
           git commit -m "Update public paper dashboard data [skip ci]"
           for retry in 1 2 3; do
             git fetch origin main
+            # Rebase is safe only for a single writer. After concurrent pushes,
+            # re-fetch and re-run on the next schedule if a ledger conflict occurs.
             git rebase origin/main
             if git push origin HEAD:main; then
               echo 'Snapshot successfully published'
