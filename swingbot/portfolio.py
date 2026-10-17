@@ -37,8 +37,11 @@ class Position:
     entry_day: date
 
 
-# Conservative ILLUSTRATIVE costs; actual fee tiers vary by broker / exchange.
-COST_BPS = {"stock": (10.0, 5.0), "crypto": (40.0, 15.0)}
+# Broker-aligned ILLUSTRATIVE costs: (fee bps, execution slippage bps)
+# Trading 212 EUR listings: 0 fee + 5 bps price slippage (other levies/FX excluded).
+# Bitvavo: 25 bps taker + 15 bps slippage each direction (unverified execution).
+# Actual fees, FX, spreads, taxes and liquidity can differ materially.
+COST_BPS = {"stock": (0.0, 5.0), "crypto": (25.0, 15.0)}
 MAX_DRAWDOWN = 0.25
 
 
