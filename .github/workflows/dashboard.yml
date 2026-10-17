@@ -8,6 +8,7 @@ on:
       - 'swingbot/dashboard_report.py'
       - 'swingbot/market_data.py'
       - 'swingbot/bitvavo_data.py'
+      - 'swingbot/yahoo_data.py'
       - 'docs/index.html'
 permissions:
   contents: write
