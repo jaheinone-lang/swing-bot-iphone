@@ -10,6 +10,8 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .forward_paper import advance_paper, public_paper_summary
+
 from .bitvavo_data import bitvavo_eur_daily
 from .market_data import MarketDataError, stooq_eur_daily
 from .yahoo_data import yahoo_eur_daily
@@ -35,6 +37,7 @@ def build_snapshot() -> dict:
         "max_new_entry_drawdown_pct": 25,
         "instruments": [],
         "portfolio_backtest": None,
+        "paper_account": None,
         "messages": [
             "Oikeaa rahaa ei käytetä. Ei välittäjätiliyhteyttä eikä toimeksiantoja.",
             "Päiväkynttilät ovat valmistuneita historiallisen datan havaintoja; signaalit eivät ole intraday-hälytyksiä.",
@@ -97,19 +100,86 @@ def build_snapshot() -> dict:
     return snapshot
 
 
-def main():
+def refresh_snapshot_and_paper(
+    *,
+    state_path: Path = Path("paper/state.json"),
+    report_path: Path = Path("docs/data.json"),
+) -> dict:
+    """Atomic-ish local write before GitHub commits both files together.
+
+    A missing or failed asset feed leaves the prior ledger unchanged.
+    Dashboard may show the previous validated ledger with a PAUSED marker.
+    Backtest remains separate from new forward paper account.
+    """
     snapshot = build_snapshot()
-    target = Path("docs/data.json")
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(
+    previous = None
+    if state_path.exists():
+        # Invalid state MUST raise; never silently start a fresh €5k account.
+        previous = json.loads(state_path.read_text(encoding="utf-8"))
+    valid_feed = all(i["status"] == "ok" for i in snapshot["instruments"])
+    if valid_feed:
+        # Fetch the same canonical data for forward trading; if this fails,
+        # retain the previous account and report the pause. Duplicated reads
+        # intentionally give a consistency check on feed day and closing quote.
+        data = {}
+        markets = {}
+        try:
+            for symbol, (market, loader, _source) in INSTRUMENTS.items():
+                bars = loader(symbol if market == "crypto" else symbol.lower())
+                first = next(x for x in snapshot["instruments"]
+                             if x["symbol"] == symbol)
+                if bars[-1].day.isoformat() != first["day"] or abs(
+                    bars[-1].close - first["last_completed_close_eur"]
+                ) > 0.000001:
+                    raise ValueError("Feed changed during refresh; retry next run")
+                data[symbol] = bars
+                markets[symbol] = market
+            next_state = advance_paper(data, markets, previous)
+        except (ValueError, MarketDataError) as error:
+            next_state = None
+            reason = f"Paper update paused: {str(error)[:140]}"
+    else:
+        next_state = None
+        reason = "Paper update paused: one or more price feeds unavailable"
+
+    if next_state is not None:
+        snapshot["paper_account"] = public_paper_summary(next_state)
+        # This ledger is public and contains only a fictional paper account.
+        state_path.parent.mkdir(parents=True, exist_ok=True)
+        temp = state_path.with_suffix(".json.tmp")
+        temp.write_text(
+            json.dumps(next_state, ensure_ascii=False, indent=2, allow_nan=False) + "\n",
+            encoding="utf-8",
+        )
+        temp.replace(state_path)
+    elif previous is not None:
+        snapshot["paper_account"] = public_paper_summary(
+            previous, status="PAUSED", reason=reason
+        )
+        snapshot["messages"].append(reason)
+    else:
+        snapshot["messages"].append(reason + "; paper account not started")
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    temp = report_path.with_suffix(".json.tmp")
+    temp.write_text(
         json.dumps(snapshot, ensure_ascii=False, indent=2, allow_nan=False) + "\n",
         encoding="utf-8",
     )
+    temp.replace(report_path)
+    return snapshot
+
+
+def main():
+    snapshot = refresh_snapshot_and_paper()
     print(json.dumps({
-        "output": str(target),
+        "output": "docs/data.json",
         "generated_at_utc": snapshot["generated_at_utc"],
         "statuses": {x["symbol"]: x["status"] for x in snapshot["instruments"]},
         "backtest_complete": snapshot["portfolio_backtest"] is not None,
+        "forward_paper_status": (
+            snapshot["paper_account"]["status"]
+            if snapshot["paper_account"] is not None else "NOT_STARTED"
+        ),
     }, ensure_ascii=False))
 
 
