@@ -103,6 +103,22 @@ class PaperLedgerTests(unittest.TestCase):
         self.assertGreater(view["cash_eur"],view["cash_available_for_trades_eur"])
         self.assertLess(view["equity_eur"],round(modified["cash_eur"],2))
 
+    def test_tax_owner_cannot_change_automatically(self):
+        bars = prices(62)
+        data, markets = one_feed(bars)
+        state = advance_paper(data, markets,
+                              as_of=bars[-1].day + timedelta(days=1))
+        self.assertEqual(state["tax_profile"], "PERSONAL_FINLAND_ESTIMATE")
+        self.assertEqual(state["holding_transfer_mode"],
+                         "NO_AUTO_HOLDING_TRANSFER")
+        from copy import deepcopy
+        corrupted = deepcopy(state)
+        corrupted["tax_profile"] = "HOLDING_COMPANY"
+        with self.assertRaises(ValueError):
+            advance_paper(data, markets, corrupted,
+                          as_of=bars[-1].day + timedelta(days=1))
+        self.assertEqual(state["cash_eur"], 5000)
+
     def test_safe_migration_without_trades_keeps_initial_balance(self):
         bars=prices(62)
         data,market=one_feed(bars)
