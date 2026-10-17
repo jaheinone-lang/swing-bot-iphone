@@ -104,3 +104,14 @@ Päivitys epäonnistuneen tai puuttuvan hintasyötteen aikana **ei nollaa** salk
 Läpinäkyvyys: molemmat tietotiedostot ovat **julkisessa GitHub-repositoriossa**; ne sisältävät vain fiktiivisen salkun. Älä lisää oikeita tilisaldoja, käyttäjätietoja, salasanoja tai kaupankäyntiavaimia näihin tiedostoihin.
 
 Päivittäin ajastettu [raporttipäivitys](https://github.com/jaheinone-lang/swing-bot-iphone/actions/workflows/dashboard.yml) hakee hintatiedot ja validoi ohjelmakoodin ennen paperitilin käsittelyä. GitHub Actions -aikataulu on parhaansa yrittävä ja voi viivästyä. Viimeisin tarkistettu raporttipäivä näkyy sovelluksessa. Testit: `python -m unittest discover -s tests -v`; myös iPhone-sivun JavaScriptin syntaksi tarkistetaan.
+
+
+## Tutkimusvertailu: Swing Bot vs. osta ja pidä (17.10.2026)
+
+iPhone-sovellus näyttää nyt molempien menetelmien **historiallisen kokonaistuoton, CAGR-vuosituoton, suurimman arvonlaskun, volatiliteetin sekä Sharpen luvun (0 % riskitön korko)**. Lisäksi näkyy viimeisten 180 päivän erittely. Vertailu on tutkimusta eikä anna kaupankäyntikäskyjä.
+
+Vertailu käyttää täsmälleen samoja EUR-hintapäiviä ja samaa 5 000 € lähtöpääomaa. Osta ja pidä hajauttaa summan neljään instrumenttiin yhtä suurella euromäärällä 51 havaintokynttilän lämmittelyn jälkeen, seuraavien avauskurssien perusteella. Laskennassa sallitaan osakkeille vain kokonaiskappaleet, kryptolle 8 desimaalia, eikä salkkua tasapainoteta uudelleen. Historiallinen Swing Bot käyttää samaa kulumallia: **osakkeet 0 bps välityspalkkio + 5 bps slippage, kryptot 25 bps palkkio + 15 bps slippage suuntaansa**. Osta ja pidä -vertailun kassavaroista vähennetään ostokulut, mutta lopullisten positioiden likvidointikuluja ei ole huomioitu. Kuluoletukset ovat tutkimusarvioita eivätkä kaupankäyntipalveluiden sitovia tarjouksia.
+
+Tärkeää: **ostettu ja koko ajan sijoitettuna pidetty salkku kantaa enemmän markkinariskiä** kuin strategia, joka usein pitää käteistä. Tästä syystä tuottojen ero ei suoraan osoita parempaa riskikorjattua sijoitusmenetelmää. Osta ja pidä -vertailu on vain yksi vertailupohja eikä itsessään sijoitussuositus. Yhtiötapahtumat, osingot, delistaukset, maksuerot, valuuttariskit, verotus ja kaupankäyntikelpoisuus voivat vääristää molempia tuloksia. **Viimeisten 180 päivän osuus ei ole riippumaton tulevaisuustesti**, koska malli on jo kehitetty samoja historiallisia hintoja tarkastelemalla.
+
+Sharpen luku annualisoidaan 365 päivän perusteella päivätuottojen keskihajonnasta. Osakkeiden sulkeutuneina päivinä käytetään edellistä tunnettua päätöshintaa. Tämä ei mittaa todellista päivänsisäistä riskiä, ja epäsynkroniset pörssipäivät voivat vääristää lukuja. Vasta pidempi ilman jälkikäteen tehtyjä sääntömuutoksia suoritettu paperijakso antaa luotettavampaa näyttöä mallin toiminnasta.
