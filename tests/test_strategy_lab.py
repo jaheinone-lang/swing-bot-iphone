@@ -88,6 +88,17 @@ class StrategyResearchTests(unittest.TestCase):
             self.assertTrue(all(t["side"] in ("BUY","SELL")
                                 for t in r["trade_events"]))
 
+    def test_later_market_data_cannot_change_earlier_paper_fills(self):
+        data,markets=sample_data(430)
+        cut=date(2024,10,10)
+        early={sym:[bar for bar in bars if bar.day<=cut] for sym,bars in data.items()}
+        first=research_backtest(early,markets,VARIANTS[1])
+        extended=research_backtest(data,markets,VARIANTS[1])
+        earlier_curve=[v for v in extended["daily_curve"] if v["day"]<=cut.isoformat()]
+        self.assertEqual(first["daily_curve"],earlier_curve)
+        prior_events=[t for t in extended["trade_events"] if t["day"]<=cut.isoformat()]
+        self.assertEqual(first["trade_events"],prior_events)
+
     def test_insufficient_history_refuses_training(self):
         data,markets=sample_data(250)
         with self.assertRaises(ValueError):
