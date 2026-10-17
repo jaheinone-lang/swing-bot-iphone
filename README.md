@@ -49,3 +49,21 @@ Krakenin julkisesta OHLC-rajapinnasta saadaan vain viimeisimmät noin 720 kyntti
 5. Erillinen käyttäjän hyväksyntä ennen oikeaa kaupankäyntiä.
 
 **GitHub-projekti on julkinen. Älä lisää siihen API-avaimia, salasanoja tai henkilötietoja.**
+
+## Edullisemmat välittäjät – 17.10.2026 valitut ehdokkaat
+
+**Osakkeet ja ETF:t: Trading 212 Invest.** EUR-noteeratuilla tuotteilla välityspalkkio 0 €, mutta kurssiero ja mahdolliset viranomaismaksut eivät häviä. Muun valuutan instrumenteissa 0,15 % FX-maksu oston ja myynnin yhteydessä. Virallinen API on beta-vaiheessa; Trading 212 tukee demo- ja live-ympäristöjä, ja API:n toimeksiannot ovat rajoitettuja tilin päävaluuttaan. **Tässä projektissa vain demo-tilin saldoa lukeva GET-adapteri**, jonka tunnukset annetaan paikallisesti ympäristömuuttujina `TRADING212_DEMO_KEY` / `TRADING212_DEMO_SECRET`. Oikeita tai demotoimeksiantoja ei tehdä.
+
+**Kryptot: Bitvavo.** Julkisesta markkinadatarajapinnasta voi hakea BTC-EUR-, ETH-EUR- ja SOL-EUR-päiväkynttilät ilman tunnuksia. Tämä ei edellytä Bitvavo-tilin avaamista eikä anna toimeksianto-oikeuksia. Kaupankäyntikulut ovat erillinen kysymys ja ne täytyy varmistaa tilikohtaisesti; strategiasimulaation nykyiset kuluoletukset ovat vielä alustavia.
+
+### Julkisen kryptomarkkinan lukutesti iPhonella
+
+[Bitvavon lukutesti GitHub Actionsissa](https://github.com/jaheinone-lang/swing-bot-iphone/actions/workflows/market-scan.yml)
+
+Avaa `Run workflow` → `Run workflow`. Testi hakee tuoreet **valmiit** EUR-päiväkynttilät Bitvavolta ja tulostaa ehdolliset `BUY` / `HOLD`-signaalit pelkkinä tutkimuslukemina. GitHub Actions on hetkellinen testiajoympäristö, ei kaupankäyntipalvelimen 24/7-korvike. Erillinen osakeskanneri vaatii luotettavan datalähteen varmistuksen.
+
+### Tietoturvarajaus
+
+**Älä koskaan lähetä kaupankäyntitilisi salasanoja, API-avaimia tai salaisuuksia ChatGPT-viestinä tai vie niitä julkiseen GitHub-koodiin.** Kun demoavain on ajankohtainen, sen voi lisätä yksityisen kehitysympäristön salaisuushallintaan. Myös automaattisten toimeksiantojen toteutus tarvitsee erillisen lupapäätöksen, käyttöoikeusrajaukset ja testatun täsmäytyksen, jotta uudelleenyritys ei tee tuplaostoa.
+
+Viralliset docs: https://docs.trading212.com/api ja https://docs.bitvavo.com/docs/rest-api/get-candlestick-data/
