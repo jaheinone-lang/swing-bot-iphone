@@ -88,3 +88,19 @@ Jotta saat verkkosivun Safariin:
 Huomautus: GitHub Actionsin `GITHUB_TOKEN`-commitit eivät välttämättä käynnistä Pagesin branch-julkaisua uudelleen. Siksi staattinen sivu hakee ensisijaisesti uusimman julkisen JSON-raportin suoraan GitHubin raw-tiedostosta ja käyttää Pagesin kopiota vain varavaihtoehtona. Raportin ajastettu GitHub Actions -ajo voi joskus viivästyä tai epäonnistua, ja GitHubin välimuistit voivat aiheuttaa viivettä. Sivun päiväys ja vanhentumismerkintä kertovat, milloin data on päivitetty.
 
 iPhone-näkymä käyttää SAP.DE-osakkeelle **epävirallista Yahoo Finance -historiadataa**, jonka EUR-valuutta, päivämäärät ja ajantasaisuus tarkistetaan ennen näyttämistä. Erillinen CLI käyttää edelleen Stooqia, joka saattaa vaatia API-avaimen. Jos osake- tai kryptosyöte ei vastaa, **osakekurssi tai yhdistetty tuottosimulaatio näytetään puuttuvana**. Bitvavon kryptodata toimii ilman tiliä. Historiallinen tuottosimulaatio perustuu useisiin oletuksiin eikä ole validoitu sijoitusstrategia. Tämä on tutkimusnäkymä, ei käyttäjän oikea salkku.
+
+
+## Jatkuva viiveellinen paperisalkku (lisätty 17.10.2026)
+
+iPhone-sivu näyttää nyt **kaksi eri laskentaa**:
+
+- **Historiallinen backtest**: jälkikäteen simuloitu tuotto vanhasta hintadatasta. Tulokset eivät ole toteutuneita tai tulevaisuuden ennusteita.
+- **Jatkuva paperisalkku**: **uusi 5 000 € fiktiivinen tili ilman takautuvia täyttöjä**. Tilatiedosto `paper/state.json` säilyttää käteisen, avoimet positiot, stopit, signaalit, päiväkohtaiset salkkuarvot ja simuloitujen kauppojen tapahtumat. Julkinen, suppeampi kooste näkyy `docs/data.json`-tiedostossa.
+
+Paperisalkku alustui 16.10.2026 valmistuneeseen dataan, lähtöarvo 5 000 €. Samasta päivästä uudelleen ajaminen **ei tee samoja ostoja kahdesti**. Ostoehto muodostetaan sulkeutuneesta päiväkynttilästä ja mahdollinen paperiosto kirjautuu vasta **seuraavan markkinapäivän kynttilän valmistuttua** käyttäen sen avaushintaa ja oletuskuluja. Näin kyse on **viiveellisestä forward-simulaatiosta, ei ajantasaisesta demo-toimeksiantojen toteutuksesta**. Kryptot päivittyvät myös viikonloppuna, osakkeet vain pörssipäivinä.
+
+Päivitys epäonnistuneen tai puuttuvan hintasyötteen aikana **ei nollaa** salkkua eikä keksi uusia kauppoja. Yli viikon viive vaatii tilan tarkistusta käsin. Uudet ostot pysähtyvät salkun arvonlaskun saavuttaessa 25 %, mutta toteutuva tappio voi olla suurempi, eikä tämä ole sijoituspääoman suoja.
+
+Läpinäkyvyys: molemmat tietotiedostot ovat **julkisessa GitHub-repositoriossa**; ne sisältävät vain fiktiivisen salkun. Älä lisää oikeita tilisaldoja, käyttäjätietoja, salasanoja tai kaupankäyntiavaimia näihin tiedostoihin.
+
+Päivittäin ajastettu [raporttipäivitys](https://github.com/jaheinone-lang/swing-bot-iphone/actions/workflows/dashboard.yml) hakee hintatiedot ja validoi ohjelmakoodin ennen paperitilin käsittelyä. GitHub Actions -aikataulu on parhaansa yrittävä ja voi viivästyä. Viimeisin tarkistettu raporttipäivä näkyy sovelluksessa. Testit: `python -m unittest discover -s tests -v`; myös iPhone-sivun JavaScriptin syntaksi tarkistetaan.
