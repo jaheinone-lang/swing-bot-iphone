@@ -38,6 +38,15 @@
     .btn{display:inline-block;padding:11px 15px;background:#28466b;color:white;text-decoration:none;border-radius:11px;font-size:14px}
     .note{color:#afbed1;font-size:12px;line-height:1.6}
     .ok{color:#a8edcf}
+    .trade{background:#0b1726;border:1px solid #304358;border-radius:12px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;gap:9px;align-items:center}
+    .trade strong{font-size:13px}
+    .trade small{display:block;color:#a2b1c9;font-size:11px;margin-top:4px}
+    .amount{font-size:14px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+    .section-sub{font-size:14px;margin:18px 0 10px}
+    .warn{background:#44311f;border:1px solid #8a6236;padding:11px;border-radius:11px;color:#ffe1a9;font-size:12px;line-height:1.6}
+    .good{color:#a8edcf}
+    .bad{color:#ffb2a8}
+    svg#equitychart{width:100%;height:145px;background:#0b1726;border-radius:12px;margin-top:14px;display:block}
     a{color:#aaccff}
     footer{font-size:12px;color:#9aacbf;margin-top:26px}
   </style>
@@ -61,6 +70,12 @@
   </section>
 
   <section class="card">
+    <h2>Jatkuva paperisalkku</h2>
+    <p class="note">Erillinen seurantajakso alkaa ensimmäisestä onnistuneesta päivityksestä. Ei historiallisten backtest-kauppojen uudelleenkirjausta. Simuloidut täytöt näkyvät viiveellä vasta seuraavan kynttilän valmistuttua.</p>
+    <div id="paper-account" aria-live="polite"><p class="muted">Ladataan paperisalkun tietoja...</p></div>
+  </section>
+
+  <section class="card">
     <h2>Markkinasignaalit</h2>
     <p class="muted" id="freshness" aria-live="polite">Ladataan edellistä raporttia…</p>
     <div class="list" id="assets" aria-live="polite"></div>
@@ -73,10 +88,10 @@
       vero- ja markkinavaikutukset voivat vääristää tulosta.</p>
   </section>
   <section class="card">
-    <h2>Seuraava vaihe</h2>
-    <p class="muted">Kun Trading 212:n demoyhteys ja Bitvavon julkinen data on validoitu,
-      teemme erillisen paperikauppaa seuraavan, jatkuvan simulaattorin.
-      Tämä näkymä on vain tilannekuva, ei jatkuvasti päivittyvä tilisaldo.</p>
+    <h2>Jatka kehitystä</h2>
+    <p class="muted">Paperisalkku tallennetaan GitHubiin, mutta välittäjätileihin ei olla yhteydessä.
+    Tämän testimallin seuraavat vaiheet ovat todellisten kaupankäyntikulujen tarkistus,
+    automaattinen hälytysten testaus ja demotoimeksiantojen erillinen hyväksyntä.</p>
     <a class="btn" href="https://github.com/jaheinone-lang/swing-bot-iphone/actions/workflows/dashboard.yml">Avaa raportin päivitys GitHubissa ↗</a>
   </section>
   <footer>
@@ -100,6 +115,82 @@ function metric(label, value) {
   wrap.append(node("small","",label),node("div","value sm",value));
   return wrap;
 }
+function renderPaper(report) {
+  const wrap=$("paper-account");
+  wrap.replaceChildren();
+  const a=report.paper_account;
+  if (!a) {
+    wrap.append(node("div","warn","Paperisalkkua ei vielä aloitettu: markkinadataa odotetaan. Vanhaa testituottoa ei kirjata alkupääomaan."));
+    return;
+  }
+  if(a.status==="PAUSED") wrap.append(node("div","warn","PÄIVITYS PYSÄYTETTY · "+a.reason));
+  const status=node("p","muted","Alkanut "+a.started_on+" · Viimeisin käsitelty päivä "+a.last_processed_day+" · "+
+    (a.halted_new_entries?"UUSIEN OSTOJEN ESTO VOIMASSA":a.status==="PAUSED"?"Odota uutta päivitystä":"Ei oikeita toimeksiantoja"));
+  wrap.append(status);
+  const grid=node("div","grid");
+  grid.append(
+    metric("Paperisalkun arvo",euro(a.equity_eur)),
+    metric("Vapaa käteinen",euro(a.cash_eur)),
+    metric("Tuotto alusta",percent(a.return_pct)),
+    metric("Arvonlasku huipusta","−"+percent(a.drawdown_pct))
+  );
+  wrap.append(grid);
+  const line=Array.isArray(a.equity_history)?a.equity_history:[];
+  if(line.length>1) {
+    const ns="http://www.w3.org/2000/svg";
+    const svg=document.createElementNS(ns,"svg");
+    svg.setAttribute("id","equitychart");
+    svg.setAttribute("viewBox","0 0 320 145");
+    svg.setAttribute("role","img");
+    svg.setAttribute("aria-label","Paperisalkun historiallinen arvokäyrä");
+    const vals=line.map(x=>Number(x.equity_eur)).filter(Number.isFinite);
+    if(vals.length>=2) {
+      let lo=Math.min(...vals),hi=Math.max(...vals);
+      if(hi===lo){hi+=1;lo-=1}
+      const pts=vals.map((v,i)=>(10+i*300/(vals.length-1)).toFixed(2)+","+(132-117*(v-lo)/(hi-lo)).toFixed(2)).join(" ");
+      const path=document.createElementNS(ns,"polyline");
+      path.setAttribute("points",pts);
+      path.setAttribute("fill","none");
+      path.setAttribute("stroke","#80c4f6");
+      path.setAttribute("stroke-width","2.6");
+      path.setAttribute("stroke-linejoin","round");
+      svg.append(path);
+      wrap.append(svg);
+    }
+  }
+  wrap.append(node("h3","section-sub","Avoimet simuloidut positiot ("+a.positions.length+")"));
+  if(a.positions.length===0) {
+    wrap.append(node("p","muted","Ei avoimia positioita."));
+  } else {
+    for(const p of a.positions) {
+      const line=node("div","trade");
+      const name=node("div","");
+      name.append(node("strong","",p.symbol),node("small","","Määrä "+p.quantity+" · viimeisin hinta "+euro(p.last_close_eur)));
+      const amount=node("div","amount");
+      amount.append(node("div","",euro(p.market_value_eur)),node("small","","Stop "+euro(p.stop_eur)));
+      line.append(name,amount);wrap.append(line);
+    }
+  }
+  if(Array.isArray(a.pending)&&a.pending.length)
+    wrap.append(node("p","warn","Odottaa seuraavan päivän kynttilää: "+a.pending.map(p=>p.symbol).join(", ")));
+  wrap.append(node("h3","section-sub","Viimeisimmät simuloidut kaupat"));
+  if(!a.events.length){
+    wrap.append(node("p","muted","Kauppoja ei ole vielä. Uusi paperisalkku alkaa 5 000 eurosta."));
+  }else{
+    for(const item of a.events.slice(0,12)) {
+      const trade=node("div","trade");
+      const name=node("div","");
+      name.append(node("strong","",item.symbol+" · "+(item.side==="BUY"?"OSTO":"MYYNTI")),
+                  node("small","",item.day+" · "+item.reason));
+      const amount=node("div","amount");
+      amount.append(node("div","",euro(item.quantity*item.price_eur)),
+                    node("small","","Palkkio "+euro(item.fee_eur)));
+      trade.append(name,amount);wrap.append(trade);
+    }
+  }
+  wrap.append(node("p","note","Kulut yhteensä: "+euro(a.fees_eur)+" (oletus). Paperitila ei vastaa todellista toimeksiannon toteutusta. Tila tallennetaan julkiseen GitHubiin."));
+}
+
 async function load() {
   let report;
   try {
@@ -149,6 +240,7 @@ async function load() {
     }
     $("assets").append(card);
   }
+  renderPaper(report);
   const perf=$("performance");
   perf.replaceChildren();
   const p=report.portfolio_backtest;
