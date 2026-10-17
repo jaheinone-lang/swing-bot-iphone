@@ -17,6 +17,7 @@ from .market_data import MarketDataError, stooq_eur_daily
 from .yahoo_data import yahoo_eur_daily
 from .portfolio import backtest
 from .research_metrics import compare_to_hold
+from .strategy_lab import walkforward_research
 from .strategy import evaluate_signal
 
 # Keep price provenance attached to every displayed instrument.
@@ -39,6 +40,7 @@ def build_snapshot() -> dict:
         "instruments": [],
         "portfolio_backtest": None,
         "research_comparison": None,
+        "strategy_lab": None,
         "paper_account": None,
         "messages": [
             "Oikeaa rahaa ei käytetä. Ei välittäjätiliyhteyttä eikä toimeksiantoja.",
@@ -100,6 +102,16 @@ def build_snapshot() -> dict:
             snapshot["research_comparison"] = compare_to_hold(
                 aligned, market_types, result
             )
+            # No automatic production strategy changes; lab is historical
+            # and entirely separate from the persistent paper account.
+            if all(len(bars) >= 270 for bars in aligned.values()):
+                snapshot["strategy_lab"] = walkforward_research(
+                    aligned, market_types, starting_eur=PAPER_CAPITAL_EUR
+                )
+            else:
+                snapshot["messages"].append(
+                    "Strategy laboratory unavailable: <270 historical candles per asset."
+                )
     else:
         snapshot["messages"].append(
             "Yhdistettyä tuottoa ei lasketa ennen kuin KAIKKIEN markkinoiden EUR-hintadata toimii."
