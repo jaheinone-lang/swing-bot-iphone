@@ -85,6 +85,6 @@ Jotta saat verkkosivun Safariin:
    `https://jaheinone-lang.github.io/swing-bot-iphone/` – linkki ei ole toimiva ennen kuin Pages-julkaisu on valmistunut.
 5. Lisää toimiva sivu iPhonen Safari-valikosta kohtaan **Lisää Koti-valikkoon**.
 
-Huomautus: GitHub Actionsin automaattisesti tekemät `GITHUB_TOKEN`-commitit eivät välttämättä käynnistä Pagesin branch-julkaisua uudelleen. Tämän vuoksi verkkosivu voi näyttää vanhaa raporttia, vaikka `docs/data.json` olisi tuore. Seuraavassa versiossa siirrymme tarvittaessa GitHub Actions -pohjaiseen Pages-julkaisuun. Sivun päiväys ja vanhentumismerkintä kertovat, milloin data on päivitetty.
+Huomautus: GitHub Actionsin `GITHUB_TOKEN`-commitit eivät välttämättä käynnistä Pagesin branch-julkaisua uudelleen. Siksi staattinen sivu hakee ensisijaisesti uusimman julkisen JSON-raportin suoraan GitHubin raw-tiedostosta ja käyttää Pagesin kopiota vain varavaihtoehtona. Raportti ei päivity itsestään ilman GitHub Actions -ajoa, ja GitHubin välimuistit voivat aiheuttaa viivettä. Sivun päiväys ja vanhentumismerkintä kertovat, milloin data on päivitetty.
 
 Osakepuolen Stooq-lähde vaatii mahdollisesti oman API-avaimen. Kun se ei toimi, **osakekurssi ja yhdistetty tuottosimulaatio näytetään puuttuvana**. Kryptojen Bitvavo-data toimii ilman tiliä. Tämä on aikaisemman datan tutkintanäkymä, ei käyttäjän oikea salkku.
