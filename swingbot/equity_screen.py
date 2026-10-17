@@ -60,12 +60,14 @@ def screen_equity(ticker:str,asset_type:str,currency:str,
     if not adjusted_for_corporate_actions:
         result["reason"]="Need split-adjusted corporate actions to avoid false momentum"
         return result
-    if verified_spread_bps is None or not isfinite(verified_spread_bps):
-        result["reason"]="Missing contemporaneous observed bid/ask spread"
+    # A missing live spread must not make historical discovery impossible.
+    # Flag such signals as watch-only pending an actual tradability check.
+    spread_available = (verified_spread_bps is not None
+                        and isfinite(verified_spread_bps))
+    if spread_available and verified_spread_bps<0:
+        result["reason"]="Invalid negative spread"
         return result
-    if verified_spread_bps<0 or verified_spread_bps>40:
-        result["reason"]="Too wide a verified trading spread (> 0.40%)"
-        return result
+    spread_wide = spread_available and verified_spread_bps>40
     if len(candles)<201 or candles[-1].day>=as_of:
         result["reason"]="Need >=201 completed sessions strictly before as_of"
         return result
@@ -99,7 +101,7 @@ def screen_equity(ticker:str,asset_type:str,currency:str,
     points+=20 if breakout else 0
     points+=15 if .05<=momentum60<=.5 else 0
     points+=15 if 0.012<=atrp<=.07 else 0
-    points+=10 if verified_spread_bps<=10 else 0
+    points+=10 if spread_available and verified_spread_bps<=10 else 0
     points+=10 if avg20_turnover>=10_000_000 else 0
     fundamental_status="NO_VERIFIED_FUNDAMENTALS"
     # ETF holdings/methodology require different, fund-specific research.
@@ -115,12 +117,18 @@ def screen_equity(ticker:str,asset_type:str,currency:str,
             if sec_fundamentals.get("source_url"):
                 points+=min(15,max(0,sec_fundamentals.get("points",0)))
     result.update({
-        "status":"SCREENED",
+        "status":"SCREENED" if spread_available and not spread_wide
+                  else "WATCH_ONLY_NO_EXECUTION",
         "signal":"RESEARCH_CANDIDATE" if points>=65 and moving and breakout
                   else "WATCH",
+        "spread_status":"VERIFIED" if spread_available and not spread_wide
+                         else "SPREAD_TOO_WIDE" if spread_wide else "UNKNOWN",
         "points":round(points,1),
-        "max_points":120,
-        "reason":"Point-in-time EUR technical screen; no order permission",
+        "max_points":110,
+        "reason":"Point-in-time EUR technical screen; no order permission; "
+                 + ("spread must be checked" if not spread_available
+                    else "spread exceeds limit" if spread_wide
+                    else "research only"),
         "source_quality":"OHLCV_ADJUSTED_EUR",
         "fundamental_status":fundamental_status,
         "latest_close_eur":round(close,6),
@@ -128,7 +136,7 @@ def screen_equity(ticker:str,asset_type:str,currency:str,
         "momentum60_pct":round(momentum60*100,2),
         "atr14_pct":round(atrp*100,2),
         "average_daily_turnover_eur":round(avg20_turnover,2),
-        "spread_bps":round(verified_spread_bps,2),
+        "spread_bps":round(verified_spread_bps,2) if spread_available else None,
         "close_above_50_above_200":moving,
         "twenty_day_high_breakout":breakout,
     })
