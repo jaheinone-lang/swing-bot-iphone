@@ -201,3 +201,39 @@ Kaikki nämä ovat **hypoteeseja**, ei todistettua positiivista alfa-tuottoa:
 Mikään näistä tutkimusmoduuleista **ei muuta nykyisen paperisalkun sääntöjä**, ota käyttöön API:n kauppaoikeuksia tai siirrä varoja. Verrataan eri historiajaksoissa, erillisessä myöhemmässä validoinnissa sekä tulevissa forward-paperitesteissä ennen muutospäätöstä.
 
 **Tietoturva:** API-avaimia ei lähetetä ChatGPT-viesteihin eikä tallenneta julkiseen GitHub-projektiin. Tilikohtaisen tiedon käyttö on rakennettava erilliseen yksityiseen ympäristöön, jossa on vain lukuoikeudet, tarkoituksenmukaiset rajaukset, audit-loki ja käyttöehdoilla sallittu datan käsittely.
+
+
+## Markkinadatan lähteet valmisteltu ilman Trading 212 -tiliä (17.10.2026)
+
+**Tärkeää:** sovittimien luominen ja offline-testien läpäisy ei tarkoita, että ulkoiset API-yhteydet olisivat oikeasti käytössä tai koko välittäjän instrumenttivalikoima seurannassa. Näiden laajojen markkinoiden tuloksia ei näytetä valmiina BUY-signaaleina.
+
+| Lähde | Tutkimuksen tarkoitus | Tila | Mitä puuttuu |
+|---|---|---|---|
+| Bitvavo public OHLC | BTC/ETH/SOL EUR-päiväkynttilät | käytössä nykyisessä raportissa | instrumenttikattavuuden laajennus |
+| Yahoo epävirallinen | SAP.DE:n EUR-historian vertailu | nykyisessä raportissa, rajoitettu | yritystapahtumat, tuen pysyvyys |
+| [EKP:n viitekurssit / Frankfurter v2](https://frankfurter.dev/) | USD/GBP/CHF/NOK/SEK/DKK -> EUR | `swingbot/ecb_fx.py`, offline-testeissä | tuotantovirtaan yhdistäminen, toteutuskurssin tarkistaminen |
+| [SEC EDGAR](https://www.sec.gov/search-filings/edgar-application-programming-interfaces) | viralliset US-GAAP tilinpäätökset | `swingbot/sec_fundamentals.py` | SEC-tunniste, CIK-yhdistys, datan aikarajaus |
+| [SEC ticker/exchange/CIK](https://www.sec.gov/files/company_tickers_exchange.json) | US-yhtiöiden identiteettien yhdistys | `swingbot/sec_identity.py`, offline-testeissä | ticker-/pörssi- ja ISIN-varmistus; ei arvaavaa symbolimuunnosta |
+| SEC submissions (S-1/F-1/424B4) | IPO-hakemusten löytyminen | `swingbot/sec_ipo_filings.py`, offline-testeissä | SEC-tunniste, vahvistettu listautumispäivä, toteutunut jälkimarkkinadata |
+| [EODHD historical EOD](https://eodhd.com/financial-apis/api-for-historical-data-and-volumes) | osakkeiden ja ETF:ien maailmanlaajuinen OHLCV | `swingbot/eodhd_feed.py`, offline-testeissä | oma API-tili, sopiva käyttöoikeus ja split-/osinkooikaisujen tarkistus |
+| Trading 212 Invest DEMO metadata | tilikohtainen STOCK-/ETF-universumi | `swingbot/trading212_universe.py`, odottaa | käyttäjän tili ja vain lukuoikeudelliset tunnukset suojattuun ympäristöön |
+
+### Datan laatua koskevat kiellot
+
+- Valuutta ei saa muuttua euroksi pelkällä tickerin nimeämisellä. SEK, GBP ja USD tarvitsevat oikean päiväkohtaisen FX-viitekurssin; verotus ja kaupankäynti vaativat erikseen toteutuneen valuutanvaihtokurssin/kulut.
+- ECB-julkaisupäivä saa olla enintään havainnointipäivä, eikä tulevaisuuden kurssia saa käyttää historiassa. Julkinen EKP:n keskikurssi ei ole toteutunut kaupankäynnin FX-kurssi.
+- EODHD:n raakaa OHLCV:tä ei julisteta split- tai osinkokorjatuksi automaattisesti. Yhtiötapahtumien oikaisu, delistatut osakkeet ja historiallisen universumin rajaus ovat välttämättömiä kunnolliseen backtestiin.
+- Yhtiön SEC-raportin *filed*-päivä on se hetki, jolloin tieto tulee käytettäväksi historialliseen malliin; tilikauden päättymispäivän kohdalle tietoa ei saa siirtää.
+- IPO:n S-1/F-1-hakemus ei tarkoita, että osake varmasti listautuu. Trading 212:n `addedOn` ei ole pörssin IPO-päivä. IPO-merkintähinta ei välttämättä ole yksityissijoittajan toteutettavissa.
+- Symbolia/ISINiä/CIKiä ei yhdistetä arvauksen, samankaltaisen nimen tai valuuttamismatchin perusteella.
+- Markkinadataa ei tallenneta julkiselle GitHub Pages -sivulle ilman toimittajan lupaa. SEC:n julkinen tieto ja kaupallisesti lisensoitu EODHD-data käsitellään eri tavoin.
+
+### Kun Trading 212 -tili on avattu
+
+1. Tilin ja Invest/DEMO-vaihtoehdon vahvistaminen. Aluksi ei talletusta eikä oikeita kauppoja.
+2. Vain lukuoikeudellinen tilikohtaisen instrumenttilistan haku erillisessä salaisuuksia suojaavassa ympäristössä. Salaisuuksia ei lähetetä ChatGPT-keskusteluun, julkaista GitHubiin tai lisätä selainkoodiin.
+3. Tunnisteiden, ISINien, pörssin ja noteerausvaluuttojen yhdistäminen SEC:iin/markkinadataan. Puuttuvat tunnisteet jätetään pois; ei tekaistuja osakehintoja.
+4. Aluksi suppea otos (esim. 30–100 likvidiä instrumenttia), jotta datalaatu, ETF-tyypit ja lähteen rajat voidaan tarkistaa. Koko valikoiman skannaus vasta riittävillä datan käyttöoikeuksilla, API-kapasiteetilla ja laskentabudjetilla.
+5. Ei muutoksia tuotantopaperisalkun sääntöihin ennen erillistä ajallista validointia, tulevia paperituloksia ja käyttäjän hyväksyntää.
+
+Tämän vaiheen uudet tiedostot ovat **turvallisia offline-sovittimia**, eivät valmiita tuotantoskannereita.
