@@ -1,6 +1,9 @@
 name: Update iPhone paper dashboard
 on:
   workflow_dispatch:
+  # Run after UTC daily close. Best effort; GitHub cron may run late.
+  schedule:
+    - cron: '17 4 * * *'
   push:
     branches: [main]
     paths:
