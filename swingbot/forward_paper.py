@@ -11,6 +11,7 @@ from math import floor, isfinite
 from typing import Mapping, Sequence
 
 from .portfolio import Bar, COST_BPS, _atr, _validated
+from .fi_tax_estimate import annual_tax_schedule
 from .strategy import evaluate_signal
 
 INITIAL_EUR = 5000.0
@@ -28,10 +29,21 @@ def _money(amount: float) -> float:
 
 
 def _equity(state: dict) -> float:
-    return state["cash_eur"] + sum(
+    """Net of ESTIMATED taxes on realized gains; not actual account wealth."""
+    gross = state["cash_eur"] + sum(
         p["quantity"] * state["last_closes_eur"][symbol]
         for symbol, p in state["positions"].items()
     )
+    return gross - state.get("tax_reserved_eur", 0.0)
+
+
+def _migrate_tax_state(state: dict) -> None:
+    """One-time safe migration. Refuses if legacy account has trading activity."""
+    if "tax_reserved_eur" not in state or "disposals" not in state:
+        if state.get("positions") or state.get("events"):
+            raise ValueError("Historical paper trades need manual tax migration")
+        state["tax_reserved_eur"] = 0.0
+        state["disposals"] = []
 
 
 def _check_state(state: dict, expected_symbols: set[str]) -> None:
@@ -49,6 +61,13 @@ def _check_state(state: dict, expected_symbols: set[str]) -> None:
         raise ValueError("Unrecognized open position")
     if not set(state["pending"]).issubset(expected_symbols):
         raise ValueError("Unrecognized pending order")
+    if not (isfinite(state.get("tax_reserved_eur", 0))
+            and 0 <= state.get("tax_reserved_eur", 0) <=
+            state["cash_eur"] + sum(
+                p["quantity"] * state["last_closes_eur"][s]
+                for s,p in state["positions"].items()
+            )):
+        raise ValueError("Invalid paper tax reserve")
 
 
 def initialize_paper(data: Mapping[str, Sequence[Bar]], markets: Mapping[str, str]) -> dict:
@@ -71,6 +90,8 @@ def initialize_paper(data: Mapping[str, Sequence[Bar]], markets: Mapping[str, st
         "daily_equity": [{"day": started.isoformat(), "equity_eur": INITIAL_EUR,
                           "drawdown_pct": 0.0}],
         "fees_eur": 0.0,
+        "tax_reserved_eur": 0.0,
+        "disposals": [],
         "halted_new_entries": False,
     }
 
@@ -99,6 +120,7 @@ def advance_paper(
 
     import copy
     state = copy.deepcopy(previous)
+    _migrate_tax_state(state)
     _check_state(state, set(data))
     last_day = date.fromisoformat(state["last_processed_day"])
     if (today - last_day).days > MAX_MISSED_DAYS + 1:
@@ -145,7 +167,8 @@ def advance_paper(
             qty = min(
                 budget_equity * RISK_FRACTION / stop_distance,
                 budget_equity * POSITION_CAP / price,
-                state["cash_eur"] / (price * (1 + fee_bps / 10000)),
+                max(0.0, state["cash_eur"] - state["tax_reserved_eur"]) /
+                (price * (1 + fee_bps / 10000)),
             )
             precision = 0 if markets[symbol] == "stock" else 8
             qty = floor(max(0.0, qty) * 10 ** precision) / 10 ** precision
@@ -157,6 +180,7 @@ def advance_paper(
             state["positions"][symbol] = {
                 "quantity": qty, "entry_price_eur": _money(price),
                 "entry_day": day.isoformat(), "stop_eur": _money(price - stop_distance),
+                "basis_eur": _money(qty * price + fee),
             }
             _event(state, day, symbol, "BUY", qty, price, fee, "NEXT_BAR_OPEN")
             if bar.low <= price - stop_distance:
@@ -222,7 +246,14 @@ def _sell(state: dict, symbol: str, price: float, market: str,
     fee = gross * fee_bps / 10000
     state["cash_eur"] = _money(state["cash_eur"] + gross - fee)
     state["fees_eur"] = _money(state["fees_eur"] + fee)
+    # Full-lot sales only, with purchase+sale costs in the net gain.
+    gain = gross - fee - p["basis_eur"]
+    state["disposals"].append({"year": day.year, "gain_eur": gain})
+    state["tax_reserved_eur"] = annual_tax_schedule(state["disposals"])[
+        "total_estimated_tax_eur"
+    ]
     _event(state, day, symbol, "SELL", p["quantity"], fill, fee, reason)
+    state["events"][-1]["realized_gain_eur"] = _money(gain)
 
 
 def public_paper_summary(state: dict, *, status: str = "ACTIVE",
@@ -238,6 +269,9 @@ def public_paper_summary(state: dict, *, status: str = "ACTIVE",
         "last_processed_day": state["last_processed_day"],
         "initial_eur": state["initial_eur"],
         "cash_eur": round(state["cash_eur"], 2),
+        "cash_available_for_trades_eur": round(
+            max(0, state["cash_eur"] - state.get("tax_reserved_eur", 0.0)), 2),
+        "tax_reserved_eur": round(state.get("tax_reserved_eur", 0.0), 2),
         "equity_eur": round(equity, 2),
         "pnl_eur": round(equity - state["initial_eur"], 2),
         "return_pct": round(100 * (equity / state["initial_eur"] - 1), 2),
