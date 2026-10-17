@@ -10,17 +10,16 @@ from datetime import date, datetime, timezone
 from math import floor, isfinite
 from typing import Mapping, Sequence
 
-from .portfolio import Bar, _atr, _validated
+from .portfolio import Bar, COST_BPS, _atr, _validated
 from .strategy import evaluate_signal
 
 INITIAL_EUR = 5000.0
 RISK_FRACTION = 0.01
 POSITION_CAP = 0.20
 HALT_DRAWDOWN = 0.25
-# Illustrative costs, not verified broker execution quotes:
-# Trading 212 EUR share: zero trading commission + 5 bps slippage.
-# Bitvavo: assumed taker 25 bps + 15 bps slippage per direction.
-PAPER_COST_BPS = {"stock": (0.0, 5.0), "crypto": (25.0, 15.0)}
+# Use the SAME cost assumptions as the historical replay and benchmark.
+# Illustrative EUR-specific assumptions, never an execution quote.
+PAPER_COST_BPS = COST_BPS
 MAX_MISSED_DAYS = 7
 
 
