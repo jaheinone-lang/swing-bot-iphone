@@ -17,6 +17,7 @@ on:
       - 'swingbot/market_data.py'
       - 'swingbot/bitvavo_data.py'
       - 'swingbot/yahoo_data.py'
+      - 'swingbot/source_registry.py'
       - 'docs/index.html'
 permissions:
   contents: write
