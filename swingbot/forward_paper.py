@@ -22,6 +22,9 @@ HALT_DRAWDOWN = 0.25
 # Illustrative EUR-specific assumptions, never an execution quote.
 PAPER_COST_BPS = COST_BPS
 MAX_MISSED_DAYS = 7
+# Simulation tax policy. No automatic transfer to a legal entity.
+TAX_PROFILE = "PERSONAL_FINLAND_ESTIMATE"
+TRANSFER_MODE = "NO_AUTO_HOLDING_TRANSFER"
 
 
 def _money(amount: float) -> float:
@@ -39,11 +42,14 @@ def _equity(state: dict) -> float:
 
 def _migrate_tax_state(state: dict) -> None:
     """One-time safe migration. Refuses if legacy account has trading activity."""
-    if "tax_reserved_eur" not in state or "disposals" not in state:
+    if ("tax_reserved_eur" not in state or "disposals" not in state
+            or "tax_profile" not in state):
         if state.get("positions") or state.get("events"):
             raise ValueError("Historical paper trades need manual tax migration")
         state["tax_reserved_eur"] = 0.0
         state["disposals"] = []
+        state["tax_profile"] = TAX_PROFILE
+        state["holding_transfer_mode"] = TRANSFER_MODE
 
 
 def _check_state(state: dict, expected_symbols: set[str]) -> None:
@@ -53,6 +59,9 @@ def _check_state(state: dict, expected_symbols: set[str]) -> None:
         raise ValueError("Paper account symbols changed; manual migration required")
     if state["initial_eur"] != INITIAL_EUR:
         raise ValueError("Unexpected paper initial balance")
+    if (state.get("tax_profile") != TAX_PROFILE
+            or state.get("holding_transfer_mode") != TRANSFER_MODE):
+        raise ValueError("Unsupported tax owner profile: manual review required")
     if not (isfinite(state["cash_eur"]) and state["cash_eur"] >= -0.000001
             and isfinite(state["peak_equity_eur"])
             and state["peak_equity_eur"] > 0):
@@ -80,6 +89,8 @@ def initialize_paper(data: Mapping[str, Sequence[Bar]], markets: Mapping[str, st
         "started_on": started.isoformat(),
         "last_processed_day": started.isoformat(),
         "initial_eur": INITIAL_EUR,
+        "tax_profile": TAX_PROFILE,
+        "holding_transfer_mode": TRANSFER_MODE,
         "cash_eur": INITIAL_EUR,
         "peak_equity_eur": INITIAL_EUR,
         "last_closes_eur": {s: bars[-1].close for s, bars in data.items()},
@@ -265,6 +276,8 @@ def public_paper_summary(state: dict, *, status: str = "ACTIVE",
         "status": status,
         "reason": reason,
         "mode": "DELAYED_FORWARD_PAPER",
+        "tax_profile": state.get("tax_profile", TAX_PROFILE),
+        "holding_transfer_mode": state.get("holding_transfer_mode", TRANSFER_MODE),
         "started_on": state["started_on"],
         "last_processed_day": state["last_processed_day"],
         "initial_eur": state["initial_eur"],
