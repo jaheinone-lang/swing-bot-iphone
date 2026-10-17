@@ -17,13 +17,24 @@ def fixture_prices():
     return result
 
 
+def fake_ok(symbol):
+    return fixture_prices()
+
+
+def fake_error(symbol):
+    raise MarketDataError("API not available")
+
+
 class DashboardTests(unittest.TestCase):
     def test_all_feeds_produce_a_snapshot(self):
-        with patch("swingbot.dashboard_report.bitvavo_eur_daily",
-                   return_value=fixture_prices()), patch(
-            "swingbot.dashboard_report.stooq_eur_daily",
-            return_value=fixture_prices()
-        ):
+        instruments = {
+            "BTC-EUR": ("crypto", fake_ok, "mock"),
+            "ETH-EUR": ("crypto", fake_ok, "mock"),
+            "SOL-EUR": ("crypto", fake_ok, "mock"),
+            "SAP.DE": ("stock", fake_ok, "mock"),
+        }
+        with patch.dict("swingbot.dashboard_report.INSTRUMENTS", instruments,
+                        clear=True):
             report = build_snapshot()
         self.assertEqual(len(report["instruments"]), 4)
         self.assertTrue(all(x["status"] == "ok" for x in report["instruments"]))
@@ -32,11 +43,14 @@ class DashboardTests(unittest.TestCase):
         self.assertEqual(report["initial_eur"], 5000.0)
 
     def test_failure_does_not_fabricate_portfolio_results(self):
-        with patch("swingbot.dashboard_report.bitvavo_eur_daily",
-                   return_value=fixture_prices()), patch(
-            "swingbot.dashboard_report.stooq_eur_daily",
-            side_effect=MarketDataError("API not available")
-        ):
+        instruments = {
+            "BTC-EUR": ("crypto", fake_ok, "mock"),
+            "ETH-EUR": ("crypto", fake_ok, "mock"),
+            "SOL-EUR": ("crypto", fake_ok, "mock"),
+            "SAP.DE": ("stock", fake_error, "mock"),
+        }
+        with patch.dict("swingbot.dashboard_report.INSTRUMENTS", instruments,
+                        clear=True):
             report = build_snapshot()
         self.assertIsNone(report["portfolio_backtest"])
         stock = next(x for x in report["instruments"] if x["market"] == "stock")
