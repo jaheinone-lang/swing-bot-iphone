@@ -150,6 +150,7 @@ function renderPaper(report) {
   const status=node("p","muted","Alkanut "+a.started_on+" · Viimeisin käsitelty päivä "+a.last_processed_day+" · "+
     (a.halted_new_entries?"UUSIEN OSTOJEN ESTO VOIMASSA":a.status==="PAUSED"?"Odota uutta päivitystä":"Ei oikeita toimeksiantoja"));
   wrap.append(status);
+  wrap.append(node("p","note","Veromalli: "+(a.tax_profile==="PERSONAL_FINLAND_ESTIMATE"?"Suomessa sijoittava yksityishenkilö (arvio)":"Tarkista veroprofiili")+" · Holding-siirto vain erillisellä veroselvityksellä."));
   const grid=node("div","grid");
   grid.append(
     metric("Paperisalkun arvo (verovaraus vähennetty)",euro(a.equity_eur)),
