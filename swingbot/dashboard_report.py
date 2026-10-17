@@ -19,6 +19,7 @@ from .portfolio import backtest
 from .research_metrics import compare_to_hold
 from .strategy_lab import walkforward_research
 from .strategy import evaluate_signal
+from .source_registry import public_source_readiness
 
 # Keep price provenance attached to every displayed instrument.
 INSTRUMENTS = {
@@ -42,6 +43,7 @@ def build_snapshot() -> dict:
         "research_comparison": None,
         "strategy_lab": None,
         "paper_account": None,
+        "data_source_readiness": public_source_readiness(),
         "messages": [
             "Oikeaa rahaa ei käytetä. Ei välittäjätiliyhteyttä eikä toimeksiantoja.",
             "Päiväkynttilät ovat valmistuneita historiallisen datan havaintoja; signaalit eivät ole intraday-hälytyksiä.",
