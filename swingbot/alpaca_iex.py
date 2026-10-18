@@ -39,9 +39,11 @@ class AlpacaUnavailable(RuntimeError):
     pass
 
 
-def parse_iex_pages(pages: list[dict], *, symbol: str, as_of: date
-                    ) -> FreeMarketHistory:
-    """Reject incomplete/paginated, stale, duplicate or mismatched IEX bars."""
+def parse_iex_pages(pages: list[dict], *, symbol: str, as_of: date,
+                    feed: str="iex") -> FreeMarketHistory:
+    """Reject incomplete/paginated, stale, duplicate or mismatched EOD bars."""
+    if feed not in ("iex", "sip"):
+        raise AlpacaUnavailable("Invalid historical feed")
     if not ALLOWED_SYMBOL.fullmatch(symbol) or symbol not in US_WATCHLIST_50:
         raise AlpacaUnavailable("Ticker outside 50-symbol allowlist")
     if not pages or len(pages) > MAX_PAGES:
@@ -85,7 +87,8 @@ def parse_iex_pages(pages: list[dict], *, symbol: str, as_of: date
         raise AlpacaUnavailable("IEX data stale or from the future")
     return FreeMarketHistory(
         ticker=symbol, currency="USD",
-        source="ALPACA_BASIC_IEX_ONLY_NOT_CONSOLIDATED",
+        source=("ALPACA_BASIC_IEX_ONLY_NOT_CONSOLIDATED" if feed=="iex"
+                else "ALPACA_DELAYED_SIP_CONSOLIDATED_HISTORICAL"),
         adjustment="SPLIT_ADJUSTED_NOT_DIVIDEND_ADJUSTED",
         bars=tuple(bars),
     )
@@ -95,9 +98,16 @@ def fetch_iex_bars(
     symbol: str, *,
     key_id: str | None=None, secret_key: str | None=None,
     as_of: date | None=None,
+    feed: str="iex",
     urlopen: Callable=urllib.request.urlopen,
 ) -> FreeMarketHistory:
-    """Only historical split-adjusted IEX GETs with bounded pagination."""
+    """Only historical split-adjusted GETs, explicit feed, bounded pagination.
+
+    Basic may access >=15-min-old SIP historical bars depending on account
+    entitlements. A 403 must FAIL, never silently downgrade to IEX.
+    """
+    if feed not in ("iex", "sip"):
+        raise AlpacaUnavailable("Invalid historical feed")
     key = (key_id if key_id is not None
            else os.getenv("ALPACA_DATA_KEY_ID","")).strip()
     secret = (secret_key if secret_key is not None
@@ -116,7 +126,7 @@ def fetch_iex_bars(
         query={
             "start":start.isoformat(),"end":end.isoformat(),
             "timeframe":"1Day","adjustment":"split",
-            "feed":"iex","sort":"asc","limit":"10000",
+            "feed":feed,"sort":"asc","limit":"10000",
         }
         if token:
             query["page_token"]=token
@@ -149,7 +159,7 @@ def fetch_iex_bars(
         data.append(page)
         token=page.get("next_page_token")
         if not token:
-            return parse_iex_pages(data,symbol=symbol,as_of=now)
+            return parse_iex_pages(data,symbol=symbol,as_of=now,feed=feed)
         if (not isinstance(token,str) or not (1<=len(token)<=512)
             or token in seen):
             raise AlpacaUnavailable("Invalid/repeated pagination token")
@@ -165,7 +175,9 @@ def preliminary_iex_score(
     IEX venue volumes cannot support whole-US-market liquidity thresholds.
     No live/paper trade authorization and no transaction-cost backtest.
     """
-    if (feed.source!="ALPACA_BASIC_IEX_ONLY_NOT_CONSOLIDATED" or
+    if (feed.source not in (
+          "ALPACA_BASIC_IEX_ONLY_NOT_CONSOLIDATED",
+          "ALPACA_DELAYED_SIP_CONSOLIDATED_HISTORICAL") or
         feed.currency!="USD" or
         feed.adjustment!="SPLIT_ADJUSTED_NOT_DIVIDEND_ADJUSTED"):
         raise AlpacaUnavailable("Unexpected data source/currency/adjustment")
@@ -201,8 +213,11 @@ def preliminary_iex_score(
         "breakout":breakout,"trend":trend,
         "atr_14d_pct":round(atrp*100,2),
         "data_day":h[-1].day.isoformat(),
-        "coverage":"IEX_ONLY_PARTIAL_US_MARKET",
-        "consolidated_volume_verified":False,
+        "coverage":("DELAYED_SIP_CONSOLIDATED_US" if
+                    feed.source=="ALPACA_DELAYED_SIP_CONSOLIDATED_HISTORICAL"
+                    else "IEX_ONLY_PARTIAL_US_MARKET"),
+        "consolidated_volume_verified":(
+            feed.source=="ALPACA_DELAYED_SIP_CONSOLIDATED_HISTORICAL"),
         "broker_tradability_verified":False,
         "fx_to_eur_verified":False,
         "paper_trade_authorized":False,
@@ -213,7 +228,8 @@ def preliminary_iex_score(
 def private_iex_50_scan(*, today: date | None=None,
                         symbols: tuple[str,...]=US_WATCHLIST_50,
                         loader: Callable=fetch_iex_bars,
-                        research_permission_confirmed: bool=False) -> dict:
+                        research_permission_confirmed: bool=False,
+                        feed: str="iex") -> dict:
     """Aggregate statuses only. No per-symbol data committed or logged.
 
     Research is intended for PERSONAL noncommercial experimentation.
@@ -227,6 +243,8 @@ def private_iex_50_scan(*, today: date | None=None,
             "broker_orders_enabled":False,
         }
     as_of=today or datetime.now(timezone.utc).date()
+    if feed not in ("iex","sip"):
+        raise ValueError("Unrecognized historical feed")
     if len(set(symbols))!=len(symbols) or any(s not in US_WATCHLIST_50 for s in symbols):
         raise ValueError("Invalid research watchlist")
     ranks=[]
@@ -235,22 +253,33 @@ def private_iex_50_scan(*, today: date | None=None,
     for symbol in symbols:
         attempted+=1
         try:
-            feed=loader(symbol,as_of=as_of)
-            if feed.ticker!=symbol:
+            history=(loader(symbol,as_of=as_of,feed=feed)
+                     if loader is fetch_iex_bars
+                     else loader(symbol,as_of=as_of))
+            if history.ticker!=symbol:
                 raise AlpacaUnavailable("Ticker mismatch")
-            ranks.append(preliminary_iex_score(feed,as_of=as_of))
+            expected_source=(
+                "ALPACA_DELAYED_SIP_CONSOLIDATED_HISTORICAL" if feed=="sip"
+                else "ALPACA_BASIC_IEX_ONLY_NOT_CONSOLIDATED"
+            )
+            if history.source!=expected_source:
+                raise AlpacaUnavailable("Wrong requested feed; no silent downgrade")
+            ranks.append(preliminary_iex_score(history,as_of=as_of))
         except AlpacaUnavailable:
             failures+=1
     # Ordering is computed transiently, NOT saved or included in output.
     ranks.sort(key=lambda r:(-r["score"],-r["momentum_60d_pct"],r["symbol"]))
     return {
-        "status":("IEX_RESEARCH_PRELIMINARY" if ranks else "PRICE_FEED_UNAVAILABLE"),
+        "status":("SIP_HISTORICAL_RESEARCH_PRELIMINARY" if ranks and feed=="sip"
+                  else "IEX_RESEARCH_PRELIMINARY" if ranks
+                  else "PRICE_FEED_UNAVAILABLE"),
         "attempted":attempted,"verified":len(ranks),
         "failed":failures,
         "top20_count":min(len(ranks),20),
-        "coverage":"IEX_ONLY_PARTIAL_US_MARKET",
-        "consolidated_volume_verified":False,
-        "full_us_liquidity_verified":False,
+        "coverage":("DELAYED_SIP_CONSOLIDATED_US" if feed=="sip"
+                    else "IEX_ONLY_PARTIAL_US_MARKET"),
+        "consolidated_volume_verified":(bool(ranks) and feed=="sip"),
+        "full_us_liquidity_verified":(bool(ranks) and feed=="sip"),
         "trading212_matched":False,
         "price_data_redistributed":False,
         "ranks_published":False,
@@ -261,7 +290,9 @@ def private_iex_50_scan(*, today: date | None=None,
 
 def main():
     approved=os.getenv("ALPACA_PERSONAL_RESEARCH_OK","").lower()=="true"
-    result=private_iex_50_scan(research_permission_confirmed=approved)
+    requested_feed=os.getenv("ALPACA_HISTORICAL_FEED","iex").strip().lower()
+    result=private_iex_50_scan(research_permission_confirmed=approved,
+                              feed=requested_feed)
     print(json.dumps(result,ensure_ascii=False))
 
 
