@@ -50,8 +50,8 @@
       "risk": "Offering repriced below initial $20-24 range; much of offering secondary; historical quote and liquidity need direct verification"
     }
   ],
-  "account_scan_status": "NOT_CONNECTED",
+  "account_scan_status": "PRACTICE_METADATA_COUNTS_VERIFIED_IPO_SYMBOL_MATCHING_NOT_RUN",
   "price_data_status": "IPO_OHLCV_SPREAD_NOT_CONFIGURED",
   "auto_trade_authorized": false,
-  "caveat": "A public Trading 212 instrument page is not proof a security is enabled on the user's account. Offering price is not a retail execution price. Do not equate broker addedOn with exchange debut."
+  "caveat": "Trading 212 Invest Practice Metadata-only API confirmed on 18 Oct 2026. Specific IPO examples here have NOT been matched with that private catalog, and no price/volume/spread feed is configured. A public Trading 212 instrument page is not proof a security is enabled on the user's account. Trading 212 addedOn is not the exchange listing date."
 }
