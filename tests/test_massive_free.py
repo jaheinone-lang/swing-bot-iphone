@@ -38,7 +38,10 @@ class MassiveFreeTests(unittest.TestCase):
         self.assertEqual(feed.currency,"USD")
         self.assertEqual(len(feed.bars),240)
         self.assertFalse(feed.paper_trade_authorized)
-        r=private_us_research_score(feed,as_of=as_of)
+        # Do not perform strategy/derived analysis on Massive personal API data.
+        with self.assertRaises(PermissionError):
+            private_us_research_score(feed,as_of=as_of)
+        r=private_us_research_score(replace(feed,source="SYNTHETIC_TEST_FIXTURE"),as_of=as_of)
         self.assertEqual(r["symbol"],"AAPL")
         self.assertEqual(r["research_status"],"WATCHLIST_ONLY_NO_BROKER_OR_FX_VERIFICATION")
         self.assertFalse(r["paper_trade_authorized"])
