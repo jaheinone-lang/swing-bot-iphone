@@ -271,3 +271,20 @@ Kokeessa saatiin 10 372 osaketta, 6 749 ETF:ää, 13 121 erillistä ISIN-tunnust
 - `docs/universe_research.json`: **ainoastaan luku- ja valuuttatilastot**, ei yhtään täydellistä instrumenttiriviä, API-tunnusta, saldoa, käyttäjän tietoa eikä toimeksiantoa. Jälkimmäisen työtehtävän julkaisu tarkistaa sallitut JSON-kentät ja estää julkaisun, jos niissä on yllättävää sisältöä.
 
 **Seuraava tietoriippuvuus:** erillinen lähde vähintään 201 valmistuneelle OHLCV-päivälle per instrumentti, yhtiötapahtumien split-oikaisut, quote currency -varmistus sekä riittävä likviditeetti ja spread. Lisäksi SEC-/issuer-lähde aidolle pörssidebyytille (Trading 212:n `addedOn` ei ole IPO-päivä). Vasta näiden jälkeen 20 varmennetun ehdokkaan riskirajattu vertailu; aluksi paperisalkussa, ei live-ostoja.
+
+
+## Maksuton US-osakedata (Massive US Stocks Basic)
+
+18.10.2026 valmisteltu `swingbot/massive_free.py` ja [manuaalinen tutkimusajo](https://github.com/jaheinone-lang/swing-bot-iphone/actions/workflows/massive-free-research.yml).
+
+**Palvelun viralliset tiedot:** [Massive Stocks -hinnoittelu](https://massive.com/pricing?product=stocks): Basic $0/kk, 2 vuotta historiallista US-osakedataa, enintään 5 API-kutsua minuutissa ja End of Day -data. Maksullinen Starter $29/kk (5 vuoden historia ja rajattomat kutsut palvelun ilmoituksen mukaan), Developer $79/kk (10 vuoden historia). Hinnoittelu voi muuttua. [Päiväkynttilöiden rajapinta](https://massive.com/docs/rest/stocks/aggregates/custom-bars).
+
+**Käyttöönotto, kun käyttäjä päättää aloittaa:**
+1. Rekisteröidy Massive-palveluun [massive.com](https://massive.com/), valitse maksuton **Stocks Basic** ja talleta API Key iPhonen Salasanat-sovellukseen. Älä lähetä avainta keskusteluun tai julkiseen GitHub-tiedostoon.
+2. GitHub → tämän repon Settings → Secrets and variables → Actions → **New repository secret**. Anna nimeksi täsmälleen `MASSIVE_API_KEY`. Syötä API Key vain GitHubin salaiseen Value-kenttään.
+3. Actions → [Free US stock EOD research test](https://github.com/jaheinone-lang/swing-bot-iphone/actions/workflows/massive-free-research.yml) → Run workflow. Ajo suorittaa ensin offline-turvatestit ja yrittää sitten hakea kahdeksan ennalta rajatun US-osakkeen valmiit USD-päiväkynttilät.
+4. Ajo tulostaa vain kokonaismäärät `attempted/validated/failed`. Se EI tallenna eikä julkaise kaupallista per-instrumenttihintadataa tai rankingia, ei julkaise osaketunnuksia, eikä anna toimeksiantoja. Käyttöehdot on varmistettava ennen per-osakekohtaista julkaisua.
+
+**Ajo on manuaalinen**, eikä Massive-avainta ole vielä kytketty tai sen toimivuutta varmennettu. Koodi on testattu keinotekoisilla tietueilla; ne **eivät** ole todellisia kursseja. Esimerkkiseurantalista: AAPL, MSFT, NVDA, AMZN, JPM, XOM, CAT, UNH. Haku on rajattu USD/US:ään, ei koko Trading 212 -valikoimaan.
+
+**Rajaukset:** tiedot ovat vain osakespliteillä oikaistuja, eivät osingoilla, välittäjän symbolivastaavuutta (ISIN / kaupankäyntipaikka) ei ole varmennettu, reaaliaikaista spreadia ei ole mitattu eikä USD→EUR -konversiota ole todennettu. Riskiseulonnan esimerkkipisteet ovat tutkimushavaintoja; ne eivät vielä täytä 5 000 €:n EUR-paperisalkun hyväksyntäehtoja. Maksuton palvelu voi riittää noin 8–50 osakkeen tutkimiseen päivittäin, mutta koko US-markkinan ajantasainen päivittäinen läpikäynti vaatisi enemmän aikaa ja mahdollisesti maksullisen käyttöoikeuden. Paid provider does not imply improved strategy returns.
