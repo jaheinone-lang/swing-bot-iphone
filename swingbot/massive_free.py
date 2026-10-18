@@ -174,7 +174,11 @@ def check_free_feed(*, api_key: str | None = None,
                     today: date | None = None,
                     sleep: Callable[[float], None] = time.sleep,
                     symbols: tuple[str, ...] = WATCHLIST_USD) -> dict:
-    """Check curated 8-share watchlist with 13s pacing; no public symbol results."""
+    """Validate access and price completeness only; no unlicensed strategy analysis.
+
+    This function must not be executed as unattended or non-display research
+    without a separate license; the workflow gates it off by default.
+    """
     key=api_key if api_key is not None else os.getenv("MASSIVE_API_KEY","")
     if not key.strip():
         return {"status":"AWAITING_MASSIVE_FREE_API_KEY",
@@ -192,7 +196,9 @@ def check_free_feed(*, api_key: str | None = None,
             feed=fetch_massive_us_daily(symbol,api_key=key,as_of=now)
             if feed.ticker != symbol:
                 raise FreeMarketFeedUnavailable("Price response mismatch")
-            _=private_us_research_score(feed,as_of=now)
+            # No score, strategy calculation, or derived work in this check.
+            if len(feed.bars) < 201:
+                raise FreeMarketFeedUnavailable("History insufficient")
             valid+=1
         except FreeMarketFeedUnavailable:
             missing+=1
