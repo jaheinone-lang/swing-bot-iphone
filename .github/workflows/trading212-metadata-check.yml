@@ -1,0 +1,66 @@
+# Manual-only Trading 212 Invest Practice catalog check.
+# Needs exactly TWO GitHub Actions repository secrets:
+# TRADING212_DEMO_KEY and TRADING212_DEMO_SECRET.
+# NO orders, no account balances, no public file changes, no schedules.
+name: Check Trading 212 DEMO metadata (read-only)
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trading212-demo-metadata-read
+  cancel-in-progress: true
+
+jobs:
+  read-only-metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check out research code (no persisted GitHub credential)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify metadata API safely, NEVER log key or instrument list
+        env:
+          TRADING212_DEMO_KEY: ${{ secrets.TRADING212_DEMO_KEY }}
+          TRADING212_DEMO_SECRET: ${{ secrets.TRADING212_DEMO_SECRET }}
+        run: |
+          python - <<'PY'
+          import json
+          from swingbot.trading212_universe import (
+              UniverseUnavailable, load_demo_universe, summarize_universe
+          )
+
+          # API adapter only has an HTTP GET to demo.trading212.com
+          # /api/v0/equity/metadata/instruments.
+          # Neither real-money endpoint nor order permissions are used.
+          try:
+              instruments = load_demo_universe()
+              if not instruments:
+                  raise UniverseUnavailable(
+                      "No stocks or ETFs returned; review demo permissions"
+                  )
+              counts = summarize_universe(instruments)
+          except UniverseUnavailable as exc:
+              # Exception is sanitized in the adapter, no headers / credentials.
+              print("READ-ONLY DEMO metadata check FAILED:", str(exc))
+              raise SystemExit(1)
+          print("SUCCESS: Trading 212 Invest Practice catalog metadata received.")
+          # Public GitHub Actions logs: aggregate counts ONLY; never raw list.
+          print(json.dumps({
+              "stocks": counts["stock_instruments"],
+              "etfs": counts["etf_instruments"],
+              "unique_isins": counts["unique_isins"],
+              "currency_counts": counts["currencies"],
+              "platform_additions_30d": counts["platform_additions_30d"],
+              "ipo_verified": False,
+              "price_history_included": False,
+              "real_orders_enabled": False,
+          }, ensure_ascii=False))
+          PY
