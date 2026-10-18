@@ -126,7 +126,20 @@
     </div>
     <p class="note">Pisteytys perustuu 20 päivän hintaläpimurtoon, 50/200 päivän trendiin, 60 päivän momentumiin, 14 päivän ATR-volatiliteettiin ja likviditeettiin. Maksuttoman Massive-rajapinnan kahdeksan teknistä datatestiä onnistuivat 18.10.2026.</p>
     <p class="warn">Massiven henkilökohtainen datalisenssi ei sellaisenaan oikeuta automatisoituun non-display-sijoitusstrategian analyysiin. Siksi TOP 20 -tuloksia EI luoda Massiven datasta ilman erillistä vahvistettua käyttölupaa. A/B/C-testit suoritetaan toistaiseksi keinotekoisella testidatalla; niistä ei voi päätellä odotettavaa tuottoa.</p>
-    <p class="note">Uusi maksuton vaihtoehto: Alpaca Markets Basic (IEX). Sen 50 osakkeen haku- ja tutkimussovitin on valmisteltu GitHubiin. Tunnukset tulee luoda vain Alpaca PAPER -tililtä; IEX-hinta- ja volyymidata kattaa vain yhden pörssin. <a href="https://github.com/jaheinone-lang/swing-bot-iphone/actions/workflows/alpaca-free-iex.yml">Avaa Alpaca-testi GitHubissa ↗</a></p>
+    <p class="note">Uusi maksuton vaihtoehto: Alpaca Markets Basic. Sen 50 osakkeen haku- ja tutkimussovitin on valmisteltu GitHubiin. Avaimet tulee luoda vain Alpaca PAPER -tililtä. Valittavana on IEX-rajatut päivätiedot sekä erikseen kokeiltava yli 15 min vanha SIP-historia, jos tilin oikeudet sallivat. <a href="https://github.com/jaheinone-lang/swing-bot-iphone/actions/workflows/alpaca-free-iex.yml">Avaa Alpaca-yhteystesti GitHubissa ↗</a></p>
+    <details>
+      <summary>A/B/C-strategiat ja riskienhallinta</summary>
+      <p class="note"><strong>A – perus:</strong> 20 päivän hintaläpimurto, 50 päivän trendi, ATR-stop x 2,0.</p>
+      <p class="note"><strong>B – trendi:</strong> 15 päivän läpimurto, 50/200 päivän trendiehdot, ATR-stop x 2,5, enintään 25 havainnon pitoaika.</p>
+      <p class="note"><strong>C – aggressiivinen:</strong> 10 päivän läpimurto, 30/200 päivän trendiehdot, ATR-stop x 3,0, enintään 18 havainnon pitoaika.</p>
+      <p class="note">Simulaation perusoletukset: 1 % riskibudjetti avauksessa, 20 % enimmäisposition arvo, 5 samanaikaista positiota, 25 % salkun arvonlasku estää uudet avaukset myös aamun kurssigapin jälkeen, 0,10 % palkkio ja 0,10 % liukuma per kauppasuunta. Stop ei takaa tappiorajaa kurssigapissa.</p>
+      <p class="note">Tulosten laadunvarmistus sisältää suljettujen kauppojen voittoprosentin, tappion pahimmalta päivältä, position kesto-/altistusseurannan ja erillisen myöhemmän tarkistusjakson. Teoreettinen tasapainotettu vertailusalkku ei ole sijoitettava markkinaindeksi. Keinotekoinen testidata ei voi nostaa strategiaa hyväksytyksi voittajaksi.</p>
+    </details>
+    <details>
+      <summary>Turvatestit ja huomisen käyttöönotto</summary>
+      <p class="note">18.10.2026: 102 ohjelmistotestiä ja 4 keinotekoista markkinaskenaariota läpäisty. Testit eivät osoita historiallista tuottoa. <a href="https://github.com/jaheinone-lang/swing-bot-iphone/actions/runs/39151548673">Katso GitHubin tarkistusajon tulos ↗</a></p>
+      <p class="note">Huomenna: avaa <a href="https://app.alpaca.markets/">Alpaca ↗</a>, luo maksuton paper-only-harjoittelutili ja ota sen API-avaimet talteen yksityisesti. Älä syötä live-avaimia tai julkaise tunnuksia. Kun avaimet on tallennettu GitHubin Actions Secrets -asetuksiin, voimme testata rajatun historiallisen datan saatavuuden. Mitään oikeita toimeksiantoja ei tehdä.</p>
+    </details>
     <details>
       <summary>Katso 50 osakkeen tutkimusjoukko</summary>
       <p class="note">Teknologia: AAPL, MSFT, NVDA, AMZN, GOOGL, META, AVGO, AMD, ORCL, CRM, ADBE, NOW, CSCO, QCOM, TXN, AMAT</p>
