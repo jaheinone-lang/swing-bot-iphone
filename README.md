@@ -237,3 +237,24 @@ Mikään näistä tutkimusmoduuleista **ei muuta nykyisen paperisalkun sääntö
 5. Ei muutoksia tuotantopaperisalkun sääntöihin ennen erillistä ajallista validointia, tulevia paperituloksia ja käyttäjän hyväksyntää.
 
 Tämän vaiheen uudet tiedostot ovat **turvallisia offline-sovittimia**, eivät valmiita tuotantoskannereita.
+
+
+## Trading 212 INVEST Practice -tilin lukuoikeudellinen yhteystesti (18.10.2026)
+
+Käyttäjän pyynnöstä luotu turvallinen ja VAIN MANUAALISESTI KÄYNNISTETTÄVÄ GitHub Actions -workflow:
+[Check Trading 212 DEMO metadata (read-only)](https://github.com/jaheinone-lang/swing-bot-iphone/actions/workflows/trading212-metadata-check.yml).
+
+- Lukee vain https://demo.trading212.com/api/v0/equity/metadata/instruments -päätettä (HTTP GET).
+- Tulostaa onnistuneen ajon jälkeen pelkästään osakkeiden/ETF:ien kappalemäärät, yksilöllisten ISINien määrän, valuuttojen lukumäärät ja viimeisen 30 vrk:n alustalle lisättyjen instrumenttien määrän. Ei tulosta tai tallenna koko tilikohtaista instrumenttilistaa, saldoja, API-avaimia eikä toimeksiantoja. Trading 212:n addedOn ei ole pörssilistautumisen päivä.
+- Workflowlla on vain contents: read -oikeus GitHub-repoon. Se ei tee Git-committeja eikä muuta paperisalkkua.
+- Ei käytä API:n order-endpointeja eikä live.trading212.comia. Vaatii API-avaimen, jolla on **vain Metadata-lukuoikeus**.
+
+**Tunnukset syötetään vain GitHubin salattuihin Repository Secrets -kenttiin (EI README:hen, GitHub-issueen, keskusteluun tai workflow-tiedostoon):**
+
+1. Safari (iPhone) → [repository secrets](https://github.com/jaheinone-lang/swing-bot-iphone/settings/secrets/actions). GitHubin Settings → Secrets and variables → Actions, tarvittaessa Safari → Request Desktop Website.
+2. New repository secret: `TRADING212_DEMO_KEY` = Trading 212:n näyttämä **API Key** (ei API Secret).
+3. New repository secret: `TRADING212_DEMO_SECRET` = Trading 212:n näyttämä **API Secret**. Molemmat kentät ovat salaisuuksia eikä niitä saa lähettää ChatGPT:lle tai näyttää kuvakaappauksessa.
+4. Actions → Check Trading 212 DEMO metadata (read-only) → Run workflow → main → Run workflow.
+5. Avauduajon tulos on julkisesti luettavissa, joten tulosteessa on ainoastaan koostetietoja. Virhekoodi ei tulosta salaisia tunnuksia. Jos tietojen lukeminen ei onnistu, tarkistetaan käyttöoikeus, environment ja salaisuuksien oikeellisuus **tulostamatta itse arvoja**.
+
+**Tila:** workflow valmiina, mutta yhteyttä ei ole vielä testattu käyttäjän oikeilla tunnuksilla. Trading 212 -avaimen IP-rajausta ei oteta käyttöön ennen kuin pysyvä/kiinteä palvelin-IP on käytössä. Nykyisen Github-hosted Actions -ympäristön lähde-IP voi muuttua. Jos tokenille myönnetään vahingossa kaupankäyntioikeudet, se tulee mitätöidä Trading 212:ssa ja luoda uudelleen minimioikeuksin.
