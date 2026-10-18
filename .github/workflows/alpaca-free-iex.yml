@@ -1,0 +1,63 @@
+# Optional US EOD market-data feed. No orders, no account reads, no outputs
+# containing licensed ticker data. Alpaca credentials MUST be from a PAPER-ONLY
+# account and are NEVER passed to Trading 212 or any order endpoint.
+name: Alpaca free IEX stock research (manual)
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_paper_only_and_personal_use:
+        description: 'I confirm these are Alpaca PAPER-only keys and personal internal market-data research is allowed'
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alpaca-iex-personal-research
+  cancel-in-progress: true
+
+jobs:
+  offline-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run offline correctness and safety tests
+        run: python -m unittest discover -s tests -v
+      - name: Require explicit consent for optional API call
+        run: |
+          echo 'Offline validation passed.'
+          echo 'IEX bars are partial US-volume observations, not SIP market tape.'
+          echo 'No orders, public recommendations or ticker-level market data.'
+          echo 'Actual Alpaca API requests run ONLY after explicit manual approval.'
+
+  opt-in-private-scan:
+    if: ${{ inputs.confirm_paper_only_and_personal_use == true }}
+    needs: offline-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Read-only 50-symbol IEX metadata and provisional research
+        env:
+          ALPACA_DATA_KEY_ID: ${{ secrets.ALPACA_PAPER_DATA_KEY_ID }}
+          ALPACA_DATA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_DATA_SECRET_KEY }}
+          ALPACA_PERSONAL_RESEARCH_OK: 'true'
+        run: |
+          python -m swingbot.alpaca_iex
+          # No tokens or ticker-level licensed quotes or rankings in logs.
+          # No order-capable API URL. Keys must come from PAPER-only dashboard.
