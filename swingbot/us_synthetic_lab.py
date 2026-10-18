@@ -361,7 +361,9 @@ def compare_abc_offline(
     # BEFORE a strategy can receive a qualified recommendation.
     candidates=[
         variant for variant in variants
-        if variant["training"]["completed_round_trips"]>=15
+        if licensed_non_display_use
+        and all(h.source!="SYNTHETIC_TEST_FIXTURE" for h in histories.values())
+        and variant["training"]["completed_round_trips"]>=15
         and split-WARMUP>=80
     ]
     leader=max(variants,key=lambda v:(
