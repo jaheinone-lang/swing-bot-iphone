@@ -24,10 +24,17 @@ jobs:
           python-version: '3.12'
       - name: Verify offline source, parsing and safety checks
         run: python -m unittest discover -s tests -v
-      - name: Optional 8-symbol EOD research (aggregate status only)
+      - name: Explain permission needed before market-data research
+        if: ${{ vars.MASSIVE_NON_DISPLAY_LICENSE_VERIFIED != 'true' }}
+        run: |
+          echo 'Offline tests complete. Live Massive data fetch disabled.'
+          echo 'Personal market-data terms restrict non-display strategy research.'
+          echo 'Requires an independently confirmed license; no API calls made.'
+      - name: Optional Massive fetch ONLY with confirmed separate non-display permission
+        if: ${{ vars.MASSIVE_NON_DISPLAY_LICENSE_VERIFIED == 'true' }}
         env:
           MASSIVE_API_KEY: ${{ secrets.MASSIVE_API_KEY }}
         run: |
           python -m swingbot.massive_free
-          # Note: this job never writes or prints ticker-specific history,
-          # never commits any raw provider data and never calls broker APIs.
+          # This only checks EOD data completeness, no per-symbol price/score.
+          # Never enable this without provider-confirmed data usage rights.
