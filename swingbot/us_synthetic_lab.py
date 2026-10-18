@@ -132,19 +132,28 @@ def _simulation(aligned, dates, cfg: Strategy, start: int, end: int) -> dict:
     max_dd=0.0
     equity_curve=[]
     sides = {"BUY": 0, "SELL": 0}
+    closed_pnls=[]
+    stop_gap_count=0
+    exposed_sessions=0
+    max_entry_planned_risk_pct=0.0
+    max_open_position_count=0
 
     def exit_at(symbol, raw_price: float, reason: str):
-        nonlocal cash, trades, fees_paid, stop_exits
+        nonlocal cash, trades, fees_paid, stop_exits, stop_gap_count
         pos=positions.pop(symbol)
         fill=max(0, raw_price*(1-SLIPPAGE_BPS/10_000))
         gross=pos["quantity"]*fill
         fee=gross*FEE_BPS/10_000
         cash+=gross-fee
+        closed_pnls.append(gross-fee-pos["entry_cost_including_fee"])
         fees_paid+=fee
         trades+=1
         sides["SELL"]+=1
         if reason=="STOP":
             stop_exits+=1
+        if reason=="GAP_STOP":
+            stop_exits+=1
+            stop_gap_count+=1
 
     for idx in range(start,end):
         # Open fills occur BEFORE intraday high/low is known. Exits triggered
@@ -160,9 +169,19 @@ def _simulation(aligned, dates, cfg: Strategy, start: int, end: int) -> dict:
                 exit_at(symbol,barseries[idx].open,"TIME_OR_TREND")
                 exited_at_open.add(symbol)
 
+        # Critical: if overnight gaps breach -25%, block opening new risk
+        # TODAY, not after today's session has already ended.
+        open_equity=cash+sum(
+            p["quantity"]*aligned[sym][idx].open
+            for sym,p in positions.items()
+        )
+        peak=max(peak,open_equity)
+        if peak>0 and 1-open_equity/peak >= DRAWDOWN_CIRCUIT:
+            halted=True
+
         if not halted:
-            # Yesterday's closes are all we may use to estimate available
-            # capital and generate candidate entry signals at today's open.
+            # Yesterday's closes are all we may use to generate candidate
+            # entry signals; cash is taken from today's actual opening fills.
             equity_before=cash+sum(p["quantity"]*aligned[sym][idx-1].close
                                    for sym,p in positions.items())
             candidates=[]
@@ -189,12 +208,17 @@ def _simulation(aligned, dates, cfg: Strategy, start: int, end: int) -> dict:
                 if quantity < 1:
                     continue
                 fee=quantity*price*FEE_BPS/10_000
+                max_entry_planned_risk_pct=max(
+                    max_entry_planned_risk_pct,
+                    100*quantity*distance/max(equity_before,0.01)
+                )
                 cash-=quantity*price+fee
                 fees_paid+=fee
                 trades+=1
                 sides["BUY"]+=1
                 positions[symbol]={
-                    "quantity":quantity,"stop":price-distance,"bars":0
+                    "quantity":quantity,"stop":price-distance,"bars":0,
+                    "entry_cost_including_fee":quantity*price+fee
                 }
 
         # Only AFTER all opening fills may today's actual low trigger stop
@@ -203,7 +227,10 @@ def _simulation(aligned, dates, cfg: Strategy, start: int, end: int) -> dict:
         for symbol in tuple(positions):
             today=aligned[symbol][idx]
             if today.low<=positions[symbol]["stop"]:
-                exit_at(symbol,min(today.open,positions[symbol]["stop"]),"STOP")
+                if today.open<positions[symbol]["stop"]:
+                    exit_at(symbol,today.open,"GAP_STOP")
+                else:
+                    exit_at(symbol,positions[symbol]["stop"],"STOP")
         for symbol,pos in list(positions.items()):
             pos["bars"]+=1
             # Trailing stop computed after the close, never for today's fill.
@@ -211,6 +238,8 @@ def _simulation(aligned, dates, cfg: Strategy, start: int, end: int) -> dict:
             atr = _atr(barseries[:idx+1])
             pos["stop"]=max(pos["stop"],
                             barseries[idx].close-cfg.stop_atr*atr)
+        exposed_sessions += bool(positions)
+        max_open_position_count=max(max_open_position_count,len(positions))
         last_equity=cash+sum(p["quantity"]*aligned[s][idx].close
                              for s,p in positions.items())
         peak=max(peak,last_equity)
@@ -219,6 +248,18 @@ def _simulation(aligned, dates, cfg: Strategy, start: int, end: int) -> dict:
         if dd >= DRAWDOWN_CIRCUIT:
             halted=True
         equity_curve.append((dates[idx].isoformat(),round(last_equity,2)))
+    winners=[p for p in closed_pnls if p>0]
+    losers=[p for p in closed_pnls if p<0]
+    profit_factor=(round(sum(winners)/(-sum(losers)),3)
+                   if losers else None)
+    win_rate=(round(100*len(winners)/len(closed_pnls),2)
+              if closed_pnls else None)
+    daily_changes=[]
+    prev_value=START_USD
+    for _,value in equity_curve:
+        if prev_value>0:
+            daily_changes.append(100*(value/prev_value-1))
+        prev_value=value
     return {
         "status":"SYNTHETIC_OR_LICENSED_RESEARCH_ONLY",
         "start": dates[start].isoformat(),
@@ -228,9 +269,26 @@ def _simulation(aligned, dates, cfg: Strategy, start: int, end: int) -> dict:
         "return_pct": round(100*(last_equity/START_USD-1),2),
         "max_drawdown_pct": round(100*max_dd,2),
         "estimated_fees_usd": round(fees_paid,2),
-        "round_trip_events": trades,
+        "round_trip_events": trades,  # legacy alias; events are NOT round trips
+        "order_event_count":trades,
+        "completed_round_trips":len(closed_pnls),
+        "winning_closed_trades":len(winners),
+        "losing_closed_trades":len(losers),
+        "closed_trade_win_rate_pct":win_rate,
+        "net_realized_closed_pnl_usd":round(sum(closed_pnls),2),
+        "mean_closed_pnl_usd":(round(mean(closed_pnls),2)
+                                if closed_pnls else None),
+        "closed_trade_profit_factor":profit_factor,
+        "worst_closed_trade_usd":(round(min(closed_pnls),2)
+                                  if closed_pnls else None),
+        "worst_day_pct":(round(min(daily_changes),2)
+                         if daily_changes else None),
+        "sessions_with_open_position_pct":round(100*exposed_sessions/(end-start),2),
+        "maximum_concurrent_positions":max_open_position_count,
+        "max_planned_stop_risk_pct_of_equity":round(max_entry_planned_risk_pct,4),
         "buy_events": sides["BUY"], "sell_events": sides["SELL"],
         "stop_exits": stop_exits,
+        "overnight_gap_stop_exits":stop_gap_count,
         "open_positions_not_liquidated":len(positions),
         "halted_new_entries":halted,
         "real_order_authorized":False,
