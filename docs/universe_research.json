@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-10-18T14:44:05+00:00",
+  "as_of": "2026-10-18",
+  "status": "TRADING212_DEMO_METADATA_CONNECTED",
+  "data_mode": "BROKER_INSTRUMENT_METADATA_ONLY",
+  "instruments": {
+    "stocks": 10372,
+    "etfs": 6749,
+    "total": 17121,
+    "unique_isins": 13121,
+    "by_currency": {
+      "CAD": 541,
+      "CHF": 386,
+      "EUR": 6343,
+      "GBP": 577,
+      "GBX": 1896,
+      "USD": 7378
+    },
+    "platform_additions_last_30d": 923
+  },
+  "screening": {
+    "feed_matched": 0,
+    "feed_rejected_or_unmatched": 0,
+    "candidates_checked": 0,
+    "top_candidates": [],
+    "price_data_connected": false,
+    "ranking_status": "AWAITING_LICENSED_PRICE_DATA",
+    "rank_is_investment_advice": false,
+    "paper_order_authorized": false,
+    "live_order_authorized": false
+  },
+  "ipo_status": "NO_VERIFIED_EXCHANGE_IPO_FEED",
+  "recent_platform_additions_are_ipos": false,
+  "price_history_available_from_trading212": false,
+  "fundamental_data_available_from_trading212": false,
+  "catalog_is_full_market_data_scan": false,
+  "private_instrument_list_published": false,
+  "auto_trading_enabled": false,
+  "note": "Initial verified API aggregate from 18 Oct 2026 read-only GitHub Actions run 39137310503. Daily automatic refresh will replace this initial summary. Trading 212 addedOn is not exchange IPO date. No price-based ranking without verified OHLCV and no orders."
+}
