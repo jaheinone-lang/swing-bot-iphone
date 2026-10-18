@@ -296,6 +296,41 @@ def _simulation(aligned, dates, cfg: Strategy, start: int, end: int) -> dict:
     }
 
 
+def _equal_weight_reference(aligned, dates, start: int, end: int) -> dict:
+    """Theoretical equal-weight buy-and-hold USD reference, NOT tradable.
+
+    Uses fractional positions for comparability even when the strategy
+    requires whole shares. Charges opening fee and slippage once, but not a
+    terminal liquidation (both strategies show mark-to-market end equity).
+    It is NOT SPY, S&P 500 or an investable benchmark. The curated survivors
+    can produce extreme survivorship bias on historical date ranges.
+    """
+    count=len(aligned)
+    allotment=START_USD/count
+    qty={}
+    for sym, series in aligned.items():
+        entry=series[start].open*(1+SLIPPAGE_BPS/10_000)
+        qty[sym]=allotment/(entry*(1+FEE_BPS/10_000))
+    peak=START_USD
+    max_dd=0.0
+    finish=START_USD
+    for idx in range(start,end):
+        finish=sum(qty[sym]*aligned[sym][idx].close for sym in aligned)
+        peak=max(peak,finish)
+        max_dd=max(max_dd,1-finish/peak)
+    return {
+        "reference":"THEORETICAL_EQUAL_WEIGHT_WATCHLIST_NOT_INVESTABLE",
+        "starting_usd":START_USD,
+        "ending_mark_to_market_usd":round(finish,2),
+        "return_pct":round(100*(finish/START_USD-1),2),
+        "max_drawdown_pct":round(100*max_dd,2),
+        "fee_bps_open":FEE_BPS,
+        "slippage_bps_open":SLIPPAGE_BPS,
+        "fractional_shares_assumed":True,
+        "survivorship_bias":True,
+    }
+
+
 def compare_abc_offline(
     histories: Mapping[str, FreeMarketHistory], *,
     as_of: date, licensed_non_display_use: bool=False,
@@ -319,6 +354,16 @@ def compare_abc_offline(
         variants.append({"strategy":cfg.name,"breakout_days":cfg.breakout,
                          "trend_days":cfg.trend,"stop_atr":cfg.stop_atr,
                          "training":training,"holdout":holdout})
+    baseline_training=_equal_weight_reference(aligned,dates,WARMUP,split)
+    baseline_holdout=_equal_weight_reference(aligned,dates,split,len(dates))
+    # A single lucky winner is not evidence of persistent edge.
+    # At least 15 completed trades and 80 training sessions must exist
+    # BEFORE a strategy can receive a qualified recommendation.
+    candidates=[
+        variant for variant in variants
+        if variant["training"]["completed_round_trips"]>=15
+        and split-WARMUP>=80
+    ]
     leader=max(variants,key=lambda v:(
         v["training"]["return_pct"]-
         1.5*v["training"]["max_drawdown_pct"],
@@ -336,6 +381,23 @@ def compare_abc_offline(
         "variants":variants,
         "training_selected_strategy":leader["strategy"],
         "selected_holdout":leader["holdout"],
+        "research_candidate_only":True,
+        "qualified_strategy":(
+            max(candidates,key=lambda v:(
+                v["training"]["return_pct"]-
+                1.5*v["training"]["max_drawdown_pct"],
+                -v["training"]["max_drawdown_pct"],
+                v["strategy"]
+            ))["strategy"] if candidates else None
+        ),
+        "minimum_training_completed_trades":15,
+        "minimum_training_sessions":80,
+        "qualified_comparison_available":bool(candidates),
+        "benchmark_training":baseline_training,
+        "benchmark_holdout":baseline_holdout,
+        "selected_holdout_excess_vs_reference_pct":round(
+            leader["holdout"]["return_pct"]-baseline_holdout["return_pct"],2
+        ),
         "fee_bps_each_side":FEE_BPS,
         "slippage_bps_each_side":SLIPPAGE_BPS,
         "risk_per_trade_pct":RISK_PER_POSITION*100,
@@ -344,7 +406,10 @@ def compare_abc_offline(
         "warning":("USD only; no FX, spread, borrow fees, taxes, dividends "
                    "or trading venue confirmations. Fixed selected watchlist "
                    "has survivorship bias; synthetic tests have NO "
-                   "predictive value. Strategy selection based on training ONLY."),
+                   "predictive value. Fractional, biased equal-weight reference "
+                   "is NOT an investable benchmark. No qualified winner "
+                   "without >=15 completed training trades and >=80 training "
+                   "sessions. Strategy selection based on training ONLY."),
         "eur_paper_modified":False,
         "real_order_authorized":False,
     }
