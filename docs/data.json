@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-10-18T15:17:11+00:00",
+  "generated_at_utc": "2026-10-18T15:51:06+00:00",
   "mode": "READ_ONLY_RESEARCH",
   "initial_eur": 5000.0,
   "max_new_entry_drawdown_pct": 25,
@@ -372,10 +372,10 @@
     },
     {
       "name": "Massive US Stocks Basic (maksuton)",
-      "role": "8 yhdysvaltalaisen osakkeen split-oikaistu USD-päiväkurssitutkimus",
-      "status": "ADAPTER_TESTED_NEEDS_MASSIVE_FREE_KEY",
+      "role": "US-osakkeiden EOD-datan tekninen luku: 8/8 testattu 18.10.2026",
+      "status": "MASSIVE_API_VERIFIED_STRATEGY_LICENSE_UNCONFIRMED",
       "needs_user_action": true,
-      "limitation": "Maksuton 5 API-pyyntöä/min, 2 vuoden historia; vain US, ei osinkokorjausta eikä EUR-paperikauppoja. API-avain ei ole vielä kytketty"
+      "limitation": "API-testi onnistui, mutta Massiven käyttöehdot rajoittavat non-display sijoitusstrategia-analyysiä; automaattinen käyttö estetty kunnes erillinen lupa varmistetaan. 50 osakkeen ranking on offline-valmis vain synteettiselle tai lisensoidulle datalle"
     },
     {
       "name": "Trading 212 Invest DEMO",
