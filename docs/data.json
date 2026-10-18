@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-10-18T15:52:56+00:00",
+  "generated_at_utc": "2026-10-18T16:14:20+00:00",
   "mode": "READ_ONLY_RESEARCH",
   "initial_eur": 5000.0,
   "max_new_entry_drawdown_pct": 25,
@@ -369,6 +369,13 @@
       "status": "ADAPTER_TESTED_NEEDS_PRIVATE_TOKEN_AND_LICENSE",
       "needs_user_action": true,
       "limitation": "Ei tilattua hintadataa; oikaisut pitää varmentaa"
+    },
+    {
+      "name": "Alpaca Markets Basic · IEX (maksuton)",
+      "role": "50 US-osakkeen historiallinen USD-päivädata ja alustava hintatrenditutkimus",
+      "status": "ALPACA_ADAPTER_OFFLINE_TESTED_PAPER_KEYS_NEEDED",
+      "needs_user_action": true,
+      "limitation": "Maksuton paperitili ja API-avainpari tarvitaan; IEX kattaa vain yhden pörssin. Ei konsolidoitua vaihto-, spread- tai Trading 212 -saatavuustodennusta. Ei ostoja/myyntejä eikä julkista TOP 20 -rankingia"
     },
     {
       "name": "Massive US Stocks Basic (maksuton)",
