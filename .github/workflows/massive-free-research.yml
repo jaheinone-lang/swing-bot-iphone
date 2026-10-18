@@ -1,0 +1,33 @@
+# Opt-in US stock EOD research; no trading, no public symbol data.
+# The only secret is an API key for a market-data service, NOT a broker key.
+name: Free US stock EOD research test
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: free-us-eod-research
+  cancel-in-progress: true
+
+jobs:
+  validate-free-feed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify offline source, parsing and safety checks
+        run: python -m unittest discover -s tests -v
+      - name: Optional 8-symbol EOD research (aggregate status only)
+        env:
+          MASSIVE_API_KEY: ${{ secrets.MASSIVE_API_KEY }}
+        run: |
+          python -m swingbot.massive_free
+          # Note: this job never writes or prints ticker-specific history,
+          # never commits any raw provider data and never calls broker APIs.
