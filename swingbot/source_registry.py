@@ -30,7 +30,7 @@ def public_source_readiness() -> list[dict]:
          "role":"50 US-osakkeen historiallinen USD-päivädata ja alustava hintatrenditutkimus",
          "status":"ALPACA_ADAPTER_OFFLINE_TESTED_PAPER_KEYS_NEEDED",
          "needs_user_action":True,
-         "limitation":"Maksuton paperitili ja API-avainpari tarvitaan; IEX kattaa vain yhden pörssin. Ei konsolidoitua vaihto-, spread- tai Trading 212 -saatavuustodennusta. Ei ostoja/myyntejä eikä julkista TOP 20 -rankingia"},
+         "limitation":"Maksuton PAPER-tili ja API-avainpari tarvitaan; valittavissa IEX tai yli 15 min vanha SIP-historia, jos tilin oikeudet sallivat. Ei todellista spread- tai Trading 212 -saatavuustodennusta. Ei ostoja/myyntejä eikä julkista TOP 20 -rankingia"},
         {"name":"Massive US Stocks Basic (maksuton)",
          "role":"US-osakkeiden EOD-datan tekninen luku: 8/8 testattu 18.10.2026",
          "status":"MASSIVE_API_VERIFIED_STRATEGY_LICENSE_UNCONFIRMED",
