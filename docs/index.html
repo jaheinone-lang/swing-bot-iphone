@@ -66,8 +66,8 @@
   <h1>Oma paperisalkku</h1>
   <div class="muted">Trading 212 · Osakkeet / ETF:t &nbsp; | &nbsp; Bitvavo · Kryptot</div>
   <div style="margin-top:13px"><span class="tag">TUTKIMUSVERSIO — EI OIKEITA KAUPPOJA</span></div>
-  <div class="alert" role="note">Tämä sivu ei ole välittäjätiliin yhdistetty salkku eikä tee ostoja tai myyntejä.
-    Raportissa näkyvät vain julkisesta markkinadatasta lasketut signaalit ja mahdollinen historiallinen simulaatio.</div>
+  <div class="alert" role="note">Trading 212 Practice -tilin instrumenttiluettelon lukuoikeus on testattu. Tämä EI ole oikea välittäjäsalkku eikä tee ostoja tai myyntejä.
+    Raportissa näkyy metadataan perustuva laskentakatsaus ja erillinen historiallinen simulaatio.</div>
 
   <section class="card" aria-labelledby="capital"><h2 id="capital">Pääoma ja riskirajat</h2>
     <div class="grid">
@@ -111,8 +111,14 @@
   </section>
 
   <section class="card">
+    <h2>Trading 212 · Osake- ja ETF-katalogi</h2>
+    <p class="note">Harjoittelutilin rajapinnasta haetaan päivittäin yhteenveto koko instrumenttiluettelosta. Katalogitiedot eivät sisällä luotettavaa kurssihistoriaa tai yritystuloksia, joten TOP 20 -hintaranking pysyy odottamassa erillistä varmennettua datalähdettä. Koko henkilökohtainen instrumenttilista ja API-avaimet eivät näy tällä sivulla.</p>
+    <div id="broker-universe" aria-live="polite"><p class="muted">Ladataan Trading 212 -katalogin tietoja…</p></div>
+  </section>
+
+  <section class="card">
     <h2>Osakeseulonta ja uudet pörssilistautumiset</h2>
-    <p class="note">Kaikkien Trading 212:n osakkeiden ja ETF:ien tilikohtainen skannaus vaatii erillisen rajatun API-yhteyden sekä markkinadatan käyttöoikeudet. Vielä EI käytössä. Alla on tutkimusesimerkkejä vahvistetuista listautumisista, ei ostosignaaleja.</p>
+    <p class="note">Trading 212:n metadatahaku toimii, mutta varsinainen kurssi-, tulos- ja IPO-seulonta odottaa varmennettua hintadataa ja listautumistietoja. Alla on tutkimusesimerkkejä; ne eivät ole ostosignaaleja.</p>
     <div id="ipo-research"><p class="muted">Ladataan IPO-tutkimuksen esimerkit…</p></div>
     <p class="note">IPOn ensimmäisen päivän nousu listautumishinnasta ei ole sama kuin tavallisen sijoittajan saavutettava tuotto. Botin sääntö vaatii vähintään viisi valmistunutta kaupankäyntipäivää, aidon likviditeetin, spreadin sekä valuuttamuunnoksen.</p>
   </section>
@@ -125,9 +131,8 @@
 
   <section class="card">
     <h2>Jatka kehitystä</h2>
-    <p class="muted">Paperisalkku tallennetaan GitHubiin, mutta välittäjätileihin ei olla yhteydessä.
-    Tämän testimallin seuraavat vaiheet ovat todellisten kaupankäyntikulujen tarkistus,
-    automaattinen hälytysten testaus ja demotoimeksiantojen erillinen hyväksyntä.</p>
+    <p class="muted">Paperisalkku tallennetaan GitHubiin. Trading 212 Practice -metadataa luetaan erikseen, ilman salkkutietoja tai toimeksiantoja.
+    Seuraavat vaiheet ovat varmennetun hintadatan liittäminen, rankingin luotettavuustestaus ja simuloitujen riskisääntöjen tarkistus.</p>
     <a class="btn" href="https://github.com/jaheinone-lang/swing-bot-iphone/actions/workflows/dashboard.yml">Avaa raportin päivitys GitHubissa ↗</a>
   </section>
   <footer>
@@ -321,6 +326,60 @@ function renderStrategyLab(report) {
     "Verovaraus ei ole verottajan lasku. Voitot voivat palautua markkinoille, mutta varattu vero ei."));
   wrap.append(node("p","note",lab.caveat));
 }
+async function loadBrokerUniverse() {
+  const wrap=$("broker-universe");
+  if(!wrap) return;
+  let data=null;
+  const urls=[
+    "https://raw.githubusercontent.com/jaheinone-lang/swing-bot-iphone/main/docs/universe_research.json?t="+Date.now(),
+    "./universe_research.json?t="+Date.now()
+  ];
+  for(const url of urls) {
+    try {
+      const response=await fetch(url,{cache:"no-store"});
+      if(!response.ok) continue;
+      const candidate=await response.json();
+      if(candidate.schema_version!==1 ||
+         candidate.status!=="TRADING212_DEMO_METADATA_CONNECTED" ||
+         !candidate.instruments || !candidate.screening) continue;
+      data=candidate;
+      break;
+    } catch(_) {}
+  }
+  wrap.replaceChildren();
+  if(!data) {
+    wrap.append(node("p","warn","Yhteystesti onnistui 18.10.2026, mutta päivittäistä katalogiraporttia ei ole vielä julkaistu. Ensimmäinen ajokerta odottaa."));
+    return;
+  }
+  const last=new Date(data.generated_at_utc);
+  const stale=!Number.isFinite(last.getTime()) ||
+              Date.now()-last.getTime()>48*3600*1000 ||
+              last.getTime()-Date.now()>5*60*1000;
+  wrap.append(node("p","muted","API: Invest Practice · raportti "+
+    (Number.isFinite(last.getTime())?
+      last.toLocaleString("fi-FI",{dateStyle:"short",timeStyle:"short",timeZone:"Europe/Helsinki"}):
+      "tuntematon")+(stale?" · TIETO VANHENTUNUT":"")));
+  const i=data.instruments;
+  const count=new Intl.NumberFormat("fi-FI");
+  const grid=node("div","grid");
+  grid.append(
+    metric("Osakeinstrumentit",count.format(i.stocks)),
+    metric("ETF-instrumentit",count.format(i.etfs)),
+    metric("Yhteensä",count.format(i.total)),
+    metric("Lisätty alustalle 30 vrk:ssa",count.format(i.platform_additions_last_30d))
+  );
+  wrap.append(grid);
+  const currencies=Object.entries(i.by_currency||{})
+    .map(([c,n])=>c+": "+count.format(n)).join(" · ");
+  wrap.append(node("p","note","Valuutat: "+currencies+". Sama ISIN voi esiintyä useissa valuutoissa tai noteerauksissa."));
+  if(data.screening.ranking_status==="AWAITING_LICENSED_PRICE_DATA") {
+    wrap.append(node("p","warn","TOP 20 osaketta ja ETF:ää: odottaa varmennettua, yhtiötapahtumaoikaistua hintahistoriaa. Metadata ei yksin riitä rankingin laskentaan eikä ostosignaaleihin."));
+  } else {
+    wrap.append(node("p","warn","Hintarankingin tila on muuttunut. Tarkista datan lähde, lisenssi ja koko seulontajakson laatu ennen johtopäätöksiä."));
+  }
+  wrap.append(node("p","note","Alustalle lisääminen ≠ uusi pörssilistautuminen. Tämä on vain välittäjän instrumenttivalikoiman yhteenveto; ei sijoitussuositus eikä automaattinen kaupankäynti."));
+}
+
 async function loadIpoResearch() {
   const wrap=$("ipo-research");
   if(!wrap) return;
@@ -341,7 +400,7 @@ async function loadIpoResearch() {
     wrap.replaceChildren(node("p","muted","IPO-katsausta ei voi ladata tällä hetkellä."));
     return;
   }
-  wrap.replaceChildren(node("p","muted","Tutkimus koottu: "+data.as_of+" · Tilikohtainen Trading 212 -katalogi: ei yhdistetty"));
+  wrap.replaceChildren(node("p","muted","Tutkimus koottu: "+data.as_of+" · Trading 212 -katalogin metadata toimii; IPO-kohtainen saatavuus ei ole varmennettu"));
   for(const item of data.ipo_examples) {
     const row=node("div","lab-item");
     row.append(node("h3","",item.ticker+" · "+item.name));
@@ -376,6 +435,7 @@ function renderSources(report) {
     ADAPTER_TESTED_NEEDS_SEC_USER_AGENT:"Sovitin valmis – tunniste tarvitaan",
     ADAPTER_TESTED_NEEDS_PRIVATE_TOKEN_AND_LICENSE:"Sovitin valmis – datatilaus puuttuu",
     AWAITING_ACCOUNT_AND_READ_ONLY_APPROVAL:"Odottaa Trading 212 -tiliä",
+    DEMO_METADATA_COUNTS_VERIFIED:"Harjoittelutilin metadata vahvistettu",
     RESEARCH_RULES_ONLY:"Tutkimussäännöt valmiit",
   };
   for(const item of sources) {
@@ -459,6 +519,7 @@ async function load() {
   $("warnings").textContent=Array.isArray(report.messages)?report.messages.join(" "):"";
 }
 load();
+loadBrokerUniverse();
 loadIpoResearch();
 </script>
 </body></html>
