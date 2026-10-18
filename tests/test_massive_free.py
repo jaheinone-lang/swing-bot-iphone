@@ -3,6 +3,7 @@ import io
 import json
 import unittest
 from datetime import date, datetime, timedelta, timezone
+from dataclasses import replace
 from unittest.mock import patch
 from urllib.error import HTTPError
 
@@ -97,7 +98,7 @@ class MassiveFreeTests(unittest.TestCase):
         sleep=[]
         feed=parse_massive_daily(sample(),ticker="AAPL",as_of=date(2026,7,30))
         with patch("swingbot.massive_free.fetch_massive_us_daily",
-                   side_effect=lambda sym,**kwargs: calls.append(sym) or feed):
+                   side_effect=lambda sym,**kwargs: calls.append(sym) or replace(feed,ticker=sym)):
             result=check_free_feed(api_key="PRIVATE_KEY_XYZ",
                                    today=date(2026,7,30),
                                    sleep=sleep.append,
