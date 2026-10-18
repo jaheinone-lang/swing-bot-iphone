@@ -53,6 +53,42 @@ class AlpacaTests(unittest.TestCase):
         self.assertFalse(score["consolidated_volume_verified"])
         self.assertFalse(score["live_order_authorized"])
 
+    def test_historical_sip_is_explicit_and_no_iex_downgrade(self):
+        as_of=date(2025,11,6)
+        consolidated=parse_iex_pages(
+            [fixture()],symbol="AAPL",as_of=as_of,feed="sip"
+        )
+        self.assertEqual(consolidated.source,
+                         "ALPACA_DELAYED_SIP_CONSOLIDATED_HISTORICAL")
+        x=preliminary_iex_score(consolidated,as_of=as_of)
+        self.assertTrue(x["consolidated_volume_verified"])
+        self.assertFalse(x["live_order_authorized"])
+        calls=[]
+        def opener(req, timeout):
+            calls.append(req.full_url)
+            return FakeHTTP(fixture())
+        h=fetch_iex_bars("AAPL",key_id="PAPER_ONLY_X",
+                         secret_key="PAPER_ONLY_Y",feed="sip",
+                         as_of=as_of,urlopen=opener)
+        self.assertIn("feed=sip",calls[0])
+        self.assertEqual(h.source,consolidated.source)
+        with self.assertRaises(AlpacaUnavailable):
+            fetch_iex_bars("AAPL",key_id="PAPER_ONLY_X",
+                            secret_key="PAPER_ONLY_Y",feed="unknown",
+                            as_of=as_of,urlopen=opener)
+
+    def test_reject_wrong_feed_without_downgrade(self):
+        as_of=date(2025,11,6)
+        only_iex=parse_iex_pages([fixture()],symbol="AAPL",as_of=as_of)
+        def loader(symbol,as_of):
+            return only_iex
+        result=private_iex_50_scan(
+            today=as_of,symbols=("AAPL",),loader=loader,
+            research_permission_confirmed=True,feed="sip")
+        self.assertEqual(result["failed"],1)
+        self.assertEqual(result["verified"],0)
+        self.assertEqual(result["status"],"PRICE_FEED_UNAVAILABLE")
+
     def test_no_permission_means_no_api_requests_or_trades(self):
         calls=[]
         def unsafe_loader(*args,**kwargs):
