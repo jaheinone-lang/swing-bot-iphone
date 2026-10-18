@@ -130,8 +130,11 @@ def fetch_massive_us_daily(symbol: str, *, api_key: str | None = None,
     return parse_massive_daily(payload,ticker=symbol,as_of=now)
 
 
-def private_us_research_score(feed: FreeMarketHistory, *, as_of: date) -> dict:
-    """Technical momentum rank; USD watchlist only, never an order signal."""
+def private_us_research_score(feed: FreeMarketHistory, *, as_of: date,
+                              licensed_non_display_use: bool = False) -> dict:
+    """Technical rank ONLY on synthetic input or separately licensed strategy data."""
+    if not licensed_non_display_use and feed.source != "SYNTHETIC_TEST_FIXTURE":
+        raise PermissionError("Non-display/derived investment-strategy license not verified")
     h=feed.bars
     if feed.currency!="USD" or len(h)<201 or h[-1].day>=as_of:
         raise FreeMarketFeedUnavailable("US research history invalid")
