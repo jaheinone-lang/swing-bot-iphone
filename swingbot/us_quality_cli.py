@@ -65,7 +65,7 @@ def run_offline_quality_gate() -> dict:
         assert ranking["paper_trade_authorized"] is False
         assert lab["data_use_rights"]=="SYNTHETIC_TEST_FIXTURES_ONLY"
         assert lab["real_order_authorized"] is False
-        assert lab["qualified_strategy"] is None  # <80 train sessions
+        assert lab["qualified_strategy"] is None  # synthetic cannot qualify
         assert len(lab["variants"])==len(SPECS)==3
         assert lab["benchmark_holdout"]["fractional_shares_assumed"] is True
         for variant in lab["variants"]:
