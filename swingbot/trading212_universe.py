@@ -30,6 +30,9 @@ def load_demo_universe(*, api_key: str | None = None,
     secret = api_secret if api_secret is not None else os.getenv(
         "TRADING212_DEMO_SECRET", ""
     )
+    # Copy/paste from mobile password managers can introduce a newline
+    # around either credential. Remove surrounding whitespace only.
+    key, secret = key.strip(), secret.strip()
     if not key or not secret:
         raise UniverseUnavailable("Trading 212 DEMO API credentials not configured")
     basic = base64.b64encode((key + ":" + secret).encode()).decode()
