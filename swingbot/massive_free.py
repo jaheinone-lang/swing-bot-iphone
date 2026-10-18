@@ -53,7 +53,8 @@ def parse_massive_daily(payload: object, *, ticker: str,
     """Strict validation of a completed, split-adjusted USD time series."""
     if not _SYMBOL.fullmatch(ticker):
         raise FreeMarketFeedUnavailable("Unsupported stock symbol")
-    if not isinstance(payload, dict) or payload.get("ticker") != ticker:
+    if (not isinstance(payload, dict) or payload.get("ticker") != ticker
+            or payload.get("status") not in ("OK", "DELAYED")):
         raise FreeMarketFeedUnavailable("Unexpected stock data response")
     if payload.get("adjusted") is not True:
         raise FreeMarketFeedUnavailable("Split adjustment not verified")
@@ -189,6 +190,8 @@ def check_free_feed(*, api_key: str | None = None,
         checked+=1
         try:
             feed=fetch_massive_us_daily(symbol,api_key=key,as_of=now)
+            if feed.ticker != symbol:
+                raise FreeMarketFeedUnavailable("Price response mismatch")
             _=private_us_research_score(feed,as_of=now)
             valid+=1
         except FreeMarketFeedUnavailable:
