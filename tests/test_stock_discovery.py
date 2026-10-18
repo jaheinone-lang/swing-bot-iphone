@@ -38,6 +38,26 @@ class BrokerUniverseTests(unittest.TestCase):
             with self.assertRaises(UniverseUnavailable):
                 load_demo_universe()
 
+    def test_403_html_block_vs_json_permission_without_leaking_secret(self):
+        from email.message import Message
+        from urllib.error import HTTPError
+        for mime, expected in [
+            ("text/html", "HTML_ACCESS_BLOCK_POSSIBLY_EDGE_SECURITY"),
+            ("application/json", "JSON_FORBIDDEN_VERIFY_METADATA_SCOPE_AND_ENVIRONMENT"),
+        ]:
+            with self.subTest(mime=mime):
+                headers = Message()
+                headers["Content-Type"] = mime + "; charset=utf-8"
+                failure = HTTPError("https://demo.trading212.com/api/v0/equity/metadata/instruments",
+                                    403, "Forbidden", headers, None)
+                with patch("swingbot.trading212_universe.urllib.request.urlopen",
+                           side_effect=failure):
+                    with self.assertRaises(UniverseUnavailable) as ctx:
+                        load_demo_universe(api_key="SUPER_SECRET_KEY_123",
+                                           api_secret="SUPER_SECRET_VALUE_456")
+                self.assertIn(expected, str(ctx.exception))
+                self.assertNotIn("SUPER_SECRET", str(ctx.exception))
+
 
 class FundamentalsTests(unittest.TestCase):
     def test_prevent_future_filing_and_restatement_leakage(self):
