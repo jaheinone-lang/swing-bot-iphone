@@ -279,7 +279,8 @@ def private_iex_50_scan(*, today: date | None=None,
         "coverage":("DELAYED_SIP_CONSOLIDATED_US" if feed=="sip"
                     else "IEX_ONLY_PARTIAL_US_MARKET"),
         "consolidated_volume_verified":(bool(ranks) and feed=="sip"),
-        "full_us_liquidity_verified":(bool(ranks) and feed=="sip"),
+        # Even SIP historical trade volume does not prove live spread or fills.
+        "full_us_liquidity_verified":False,
         "trading212_matched":False,
         "price_data_redistributed":False,
         "ranks_published":False,
