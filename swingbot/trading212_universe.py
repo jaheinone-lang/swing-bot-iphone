@@ -56,6 +56,19 @@ def load_demo_universe(*, api_key: str | None = None,
             429: "RATE_LIMIT_RETRY_LATER",
         }
         label = categories.get(status, "REMOTE_HTTP_ERROR")
+        # Content-Type is safe diagnostic metadata. Never log HTTP body:
+        # a Cloudflare HTML block and a Trading 212 JSON permission rejection
+        # may both use 403 yet need different follow-up.
+        try:
+            media_type = (exc.headers.get("Content-Type", "")
+                          .split(";", 1)[0].strip().lower())
+        except (AttributeError, TypeError):
+            media_type = ""
+        if status == 403:
+            if media_type == "text/html":
+                label = "HTML_ACCESS_BLOCK_POSSIBLY_EDGE_SECURITY"
+            elif media_type == "application/json":
+                label = "JSON_FORBIDDEN_VERIFY_METADATA_SCOPE_AND_ENVIRONMENT"
         raise UniverseUnavailable(
             f"Trading 212 DEMO metadata HTTP {status} ({label}); no credentials exposed"
         ) from None
