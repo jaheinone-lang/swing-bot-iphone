@@ -180,10 +180,10 @@ def _simulation(aligned, dates, cfg: Strategy, start: int, end: int) -> dict:
             halted=True
 
         if not halted:
-            # Yesterday's closes are all we may use to generate candidate
-            # entry signals; cash is taken from today's actual opening fills.
-            equity_before=cash+sum(p["quantity"]*aligned[sym][idx-1].close
-                                   for sym,p in positions.items())
+            # Signal generation sees yesterday's completed bars only.
+            # Today-open equity is already observable at execution time and
+            # avoids overestimating size after a non-terminal overnight gap.
+            equity_before=open_equity
             candidates=[]
             for symbol, barseries in aligned.items():
                 if symbol in positions or symbol in exited_at_open:
