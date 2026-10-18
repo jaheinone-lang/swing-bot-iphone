@@ -51,7 +51,7 @@ class AlpacaTests(unittest.TestCase):
         score=preliminary_iex_score(feed,as_of=as_of)
         self.assertEqual(score["coverage"],"IEX_ONLY_PARTIAL_US_MARKET")
         self.assertFalse(score["consolidated_volume_verified"])
-        self.assertFalse(score["real_order_authorized"])
+        self.assertFalse(score["live_order_authorized"])
 
     def test_no_permission_means_no_api_requests_or_trades(self):
         calls=[]
