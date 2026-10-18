@@ -1,0 +1,109 @@
+# Trading 212 Practice demo: counts only. Scheduled research, NEVER orders.
+# Secrets exist only in the read-only fetch job. Public publish job has
+# GitHub contents:write but never receives broker credentials.
+name: Daily Trading 212 catalog research
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '37 5 * * *'
+
+concurrency:
+  group: swingbot-t212-public-catalog
+  cancel-in-progress: false
+
+jobs:
+  read-private-metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Offline tests (block publication if unsafe)
+        run: python -m unittest discover -s tests -v
+      - name: Broker metadata summary only (never save private catalog)
+        env:
+          TRADING212_DEMO_KEY: ${{ secrets.TRADING212_DEMO_KEY }}
+          TRADING212_DEMO_SECRET: ${{ secrets.TRADING212_DEMO_SECRET }}
+        run: python -m swingbot.universe_pipeline --output _safe_universe_report/universe_research.json
+      - name: Share safe aggregate report between isolated jobs
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-demo-metadata-counts
+          path: _safe_universe_report/universe_research.json
+          if-no-files-found: error
+          retention-days: 1
+
+  publish-aggregate-only:
+    runs-on: ubuntu-latest
+    needs: read-private-metadata
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: public-demo-metadata-counts
+          path: docs
+      - name: Validate schema and fail closed before public commit
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("docs/universe_research.json")
+          data=json.loads(p.read_text(encoding="utf-8"))
+          assert data["schema_version"] == 1
+          assert data["status"] == "TRADING212_DEMO_METADATA_CONNECTED"
+          assert data["data_mode"] == "BROKER_INSTRUMENT_METADATA_ONLY"
+          assert not data["auto_trading_enabled"]
+          assert not data["private_instrument_list_published"]
+          assert not data["catalog_is_full_market_data_scan"]
+          assert data["screening"]["top_candidates"] == []
+          assert data["screening"]["ranking_status"] == "AWAITING_LICENSED_PRICE_DATA"
+          assert 0 < data["instruments"]["total"] < 100000
+          assert data["instruments"]["stocks"]+data["instruments"]["etfs"] == data["instruments"]["total"]
+          # Whitelist public keys only, blocking accidental private data
+          assert set(data) == {
+             "schema_version","generated_at_utc","as_of","status","data_mode",
+             "instruments","screening","ipo_status",
+             "recent_platform_additions_are_ipos",
+             "price_history_available_from_trading212",
+             "fundamental_data_available_from_trading212",
+             "catalog_is_full_market_data_scan","private_instrument_list_published",
+             "auto_trading_enabled","note"
+          }
+          assert set(data["instruments"]) == {
+             "stocks","etfs","total","unique_isins",
+             "by_currency","platform_additions_last_30d"
+          }
+          assert set(data["screening"]) == {
+             "feed_matched","feed_rejected_or_unmatched","candidates_checked",
+             "top_candidates","price_data_connected","ranking_status",
+             "rank_is_investment_advice","paper_order_authorized",
+             "live_order_authorized"
+          }
+          assert all(isinstance(v,int) and v>=0 for v in data["instruments"]["by_currency"].values())
+          assert not data["screening"]["paper_order_authorized"]
+          assert not data["screening"]["live_order_authorized"]
+          PY
+      - name: Publish safe aggregate counts to iPhone dashboard
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/universe_research.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Refresh read-only public Trading 212 catalog counts [skip ci]'
+          for retry in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          echo 'Could not publish aggregate catalog update' >&2
+          exit 1
