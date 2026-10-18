@@ -75,7 +75,9 @@ def rank_us_research(
             rejected += 1
             continue
         try:
-            score = private_us_research_score(history, as_of=as_of)
+            score = private_us_research_score(
+                history, as_of=as_of,
+                licensed_non_display_use=licensed_non_display_use)
             if not score["liquidity_gate_ok"]:
                 rejected += 1
                 continue
