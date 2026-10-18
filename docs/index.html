@@ -116,6 +116,28 @@
     <div id="broker-universe" aria-live="polite"><p class="muted">Ladataan Trading 212 -katalogin tietoja…</p></div>
   </section>
 
+  <section class="card" aria-labelledby="us-rank">
+    <h2 id="us-rank">US-osakkeiden TOP 20 · kehitysvaihe</h2>
+    <div class="grid">
+      <div class="metric"><small>Ennalta määritelty seurantalista</small><div class="value">50</div></div>
+      <div class="metric"><small>Varmennettuja live-rankingin osakkeita</small><div class="value">0</div></div>
+      <div class="metric"><small>Offline-testistrategioita</small><div class="value">A / B / C</div></div>
+      <div class="metric"><small>Live- ja paperitoimeksiannot</small><div class="value">0</div></div>
+    </div>
+    <p class="note">Pisteytys perustuu 20 päivän hintaläpimurtoon, 50/200 päivän trendiin, 60 päivän momentumiin, 14 päivän ATR-volatiliteettiin ja likviditeettiin. Maksuttoman Massive-rajapinnan kahdeksan teknistä datatestiä onnistuivat 18.10.2026.</p>
+    <p class="warn">Massiven henkilökohtainen datalisenssi ei sellaisenaan oikeuta automatisoituun non-display-sijoitusstrategian analyysiin. Siksi TOP 20 -tuloksia EI luoda Massiven datasta ilman erillistä vahvistettua käyttölupaa. A/B/C-testit suoritetaan toistaiseksi keinotekoisella testidatalla; niistä ei voi päätellä odotettavaa tuottoa.</p>
+    <details>
+      <summary>Katso 50 osakkeen tutkimusjoukko</summary>
+      <p class="note">Teknologia: AAPL, MSFT, NVDA, AMZN, GOOGL, META, AVGO, AMD, ORCL, CRM, ADBE, NOW, CSCO, QCOM, TXN, AMAT</p>
+      <p class="note">Rahoitus: JPM, BAC, WFC, GS, MS, V, MA, AXP</p>
+      <p class="note">Terveydenhuolto: UNH, JNJ, PFE, ABBV, MRK, LLY, TMO, AMGN</p>
+      <p class="note">Teollisuus: CAT, DE, GE, HON, UNP, RTX</p>
+      <p class="note">Kuluttajayhtiöt: WMT, COST, HD, LOW, MCD, NKE, KO, PEP</p>
+      <p class="note">Energia: XOM, CVX, COP, SLB</p>
+      <p class="note">Nämä 50 nimeä ovat ennalta valittu harjoitusjoukko, eivät automaattisesti parhaita sijoituskohteita. Nykyinen lista voi aiheuttaa historiallisen selviytymisharhan.</p>
+    </details>
+  </section>
+
   <section class="card">
     <h2>Osakeseulonta ja uudet pörssilistautumiset</h2>
     <p class="note">Trading 212:n metadatahaku toimii, mutta varsinainen kurssi-, tulos- ja IPO-seulonta odottaa varmennettua hintadataa ja listautumistietoja. Alla on tutkimusesimerkkejä; ne eivät ole ostosignaaleja.</p>
@@ -435,6 +457,7 @@ function renderSources(report) {
     ADAPTER_TESTED_NEEDS_SEC_USER_AGENT:"Sovitin valmis – tunniste tarvitaan",
     ADAPTER_TESTED_NEEDS_PRIVATE_TOKEN_AND_LICENSE:"Sovitin valmis – datatilaus puuttuu",
     ADAPTER_TESTED_NEEDS_MASSIVE_FREE_KEY:"Maksuton tutkimussyöte valmisteltu – ilmainen API-avain puuttuu",
+    MASSIVE_API_VERIFIED_STRATEGY_LICENSE_UNCONFIRMED:"API testattu · strategiakäytön lisenssi varmistamatta",
     AWAITING_ACCOUNT_AND_READ_ONLY_APPROVAL:"Odottaa Trading 212 -tiliä",
     DEMO_METADATA_COUNTS_VERIFIED:"Harjoittelutilin metadata vahvistettu",
     RESEARCH_RULES_ONLY:"Tutkimussäännöt valmiit",
