@@ -35,7 +35,7 @@ US_WATCHLIST_50 = (
 
 def rank_us_research(
     histories: Mapping[str, FreeMarketHistory], *,
-    as_of: date, limit: int = 20,
+    as_of: date, limit: int = 20, licensed_non_display_use: bool = False,
 ) -> dict:
     """Score only exact, validated, USD split-adjusted WATCHLIST-50 histories.
 
@@ -46,6 +46,14 @@ def rank_us_research(
         raise ValueError("Ranking size must be in 1..50")
     if not isinstance(as_of, date):
         raise ValueError("as_of must be a date")
+    if not licensed_non_display_use and any(
+        history.source != "SYNTHETIC_TEST_FIXTURE"
+        for history in histories.values() if isinstance(history, FreeMarketHistory)
+    ):
+        raise PermissionError(
+            "Market-data non-display/strategy research license not verified; "
+            "only synthetic offline inputs allowed by default"
+        )
     if any(symbol not in US_WATCHLIST_50 for symbol in histories):
         raise ValueError("Input contains ticker outside predeclared watchlist")
     results = []
@@ -83,7 +91,10 @@ def rank_us_research(
         "eligible": len(results),
         "rejected": rejected,
         "ranking": results[:limit],
-        "price_data_provenance": "LICENSED_OR_SYNTHETIC_INPUT_REQUIRED",
+        "price_data_provenance": (
+            "LICENSED_NON_DISPLAY_RESEARCH" if licensed_non_display_use
+            else "SYNTHETIC_TEST_FIXTURE_ONLY"
+        ),
         "trading212_availability_checked": False,
         "eur_account_compatible": False,
         "paper_trade_authorized": False,
