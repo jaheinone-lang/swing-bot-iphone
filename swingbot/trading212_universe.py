@@ -43,10 +43,29 @@ def load_demo_universe(*, api_key: str | None = None,
             if len(raw) > 12_000_000:
                 raise UniverseUnavailable("Metadata response exceeds 12 MB")
         records = json.loads(raw)
-    except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError,
-            ValueError, UnicodeError) as exc:
+    except urllib.error.HTTPError as exc:
+        # Do not print HTTP body, request URL, Authorization or tracebacks.
+        # 403 can be entitlement or a provider CDN/IP policy; cannot
+        # distinguish those reliably from status alone.
+        status = int(exc.code)
+        categories = {
+            400: "BAD_REQUEST",
+            401: "AUTHENTICATION_REJECTED",
+            403: "FORBIDDEN_OR_PROVIDER_ACCESS_BLOCK",
+            408: "REQUEST_TIMEOUT",
+            429: "RATE_LIMIT_RETRY_LATER",
+        }
+        label = categories.get(status, "REMOTE_HTTP_ERROR")
         raise UniverseUnavailable(
-            "Trading 212 DEMO metadata request failed (check connection and permissions)"
+            f"Trading 212 DEMO metadata HTTP {status} ({label}); no credentials exposed"
+        ) from None
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise UniverseUnavailable(
+            "Trading 212 DEMO metadata NETWORK_ERROR; no credentials exposed"
+        ) from None
+    except (ValueError, UnicodeError) as exc:
+        raise UniverseUnavailable(
+            "Trading 212 DEMO metadata response INVALID_JSON; no credentials exposed"
         ) from None
     if not isinstance(records, list):
         raise UniverseUnavailable("Unrecognized Trading 212 metadata response")
