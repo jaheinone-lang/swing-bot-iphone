@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-10-18T08:50:32+00:00",
+  "generated_at_utc": "2026-10-18T14:52:18+00:00",
   "mode": "READ_ONLY_RESEARCH",
   "initial_eur": 5000.0,
   "max_new_entry_drawdown_pct": 25,
@@ -372,10 +372,10 @@
     },
     {
       "name": "Trading 212 Invest DEMO",
-      "role": "Tilikohtainen osake-/ETF-instrumenttiluettelo",
-      "status": "AWAITING_ACCOUNT_AND_READ_ONLY_APPROVAL",
-      "needs_user_action": true,
-      "limitation": "Ei tiliä, API-yhteyttä tai täydellistä instrumenttisyötettä"
+      "role": "Harjoittelutilin osake-/ETF-metatiedot (laskentatiedot)",
+      "status": "DEMO_METADATA_COUNTS_VERIFIED",
+      "needs_user_action": false,
+      "limitation": "API-yhteys testattu 18.10.2026; jatkuvan haun tila näkyy erillisessä katalogiraportissa. Ei kurssihistoriaa, yritystuloksia tai toimeksiantoja"
     },
     {
       "name": "IPO-watch",
