@@ -130,6 +130,20 @@ class USResearchTests(unittest.TestCase):
         self.assertEqual(report["order_event_count"],
                          report["buy_events"]+report["sell_events"])
 
+    def test_theoretical_reference_is_not_sp500_and_no_fake_winner(self):
+        a,b=synthetic("AAPL"),synthetic("MSFT")
+        report=compare_abc_offline(
+            {"AAPL":a,"MSFT":b},as_of=a.bars[-1].day+timedelta(days=1)
+        )
+        self.assertEqual(report["benchmark_training"]["reference"],
+                         "THEORETICAL_EQUAL_WEIGHT_WATCHLIST_NOT_INVESTABLE")
+        self.assertTrue(report["benchmark_holdout"]["survivorship_bias"])
+        self.assertTrue(report["benchmark_training"]["fractional_shares_assumed"])
+        self.assertEqual(report["minimum_training_completed_trades"],15)
+        self.assertIsNone(report["qualified_strategy"])
+        self.assertFalse(report["qualified_comparison_available"])
+        self.assertFalse(report["real_order_authorized"])
+
     def test_trade_accounting_has_explicit_closed_trade_metrics(self):
         a=synthetic("AAPL")
         result=compare_abc_offline(
