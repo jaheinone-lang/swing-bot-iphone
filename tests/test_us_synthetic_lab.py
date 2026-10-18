@@ -1,11 +1,12 @@
 """Offline reproducible tests. Prices are SYNTHETIC, not Massive quotes."""
 import unittest
 from dataclasses import replace
+from unittest.mock import patch
 from datetime import date, timedelta
 from swingbot.equity_screen import DailyBar
 from swingbot.massive_free import FreeMarketHistory
 from swingbot.us_watchlist import US_WATCHLIST_50, rank_us_research
-from swingbot.us_synthetic_lab import compare_abc_offline
+from swingbot.us_synthetic_lab import compare_abc_offline, _simulation, SPECS, WARMUP
 
 
 def synthetic(symbol="AAPL", count=310, shock=False):
@@ -100,6 +101,50 @@ class USResearchTests(unittest.TestCase):
             {"AAPL":replace(a,bars=a.bars+(extra,))},as_of=as_of
         )
         self.assertEqual(before,after)
+
+    def test_overnight_gap_triggers_halt_before_new_buy(self):
+        # Synthetic 3-position portfolio falls >25% at the morning open.
+        # Old logic evaluated circuit only at the close, so a forced new
+        # buy at that open would have violated the circuit breaker.
+        dates=[date(2025,1,1)+timedelta(days=i) for i in range(WARMUP+3)]
+        aligned={}
+        for symbol in ("AAPL","MSFT","JPM"):
+            rows=[]
+            for idx,d in enumerate(dates):
+                open_px=1.0 if idx==WARMUP+1 else 100.0
+                close_px=open_px
+                rows.append(DailyBar(d,open_px,open_px+1.0,
+                                     max(.01,open_px-1.0),
+                                     close_px,1_500_000))
+            aligned[symbol]=tuple(rows)
+        def forced_signal(history, cfg):
+            # Signal 3 buys before gap, then try repeatedly after gap.
+            return (.2,1.0) if len(history)>=WARMUP else None
+        with patch("swingbot.us_synthetic_lab._signal",side_effect=forced_signal):
+            report=_simulation(aligned,dates,SPECS[0],WARMUP,WARMUP+3)
+        self.assertTrue(report["halted_new_entries"])
+        self.assertEqual(report["buy_events"],3)
+        self.assertEqual(report["overnight_gap_stop_exits"],3)
+        self.assertGreater(report["max_drawdown_pct"],25.0)
+        self.assertEqual(report["completed_round_trips"],3)
+        self.assertEqual(report["order_event_count"],
+                         report["buy_events"]+report["sell_events"])
+
+    def test_trade_accounting_has_explicit_closed_trade_metrics(self):
+        a=synthetic("AAPL")
+        result=compare_abc_offline(
+            {"AAPL":a},as_of=a.bars[-1].day+timedelta(days=1))
+        for variant in result["variants"]:
+            for phase in ("training","holdout"):
+                stats=variant[phase]
+                self.assertEqual(stats["order_event_count"],
+                                 stats["buy_events"]+stats["sell_events"])
+                self.assertEqual(stats["completed_round_trips"],
+                                 stats["sell_events"])
+                self.assertLessEqual(stats["max_planned_stop_risk_pct_of_equity"],1.001)
+                self.assertIn("net_realized_closed_pnl_usd",stats)
+                self.assertIn("worst_day_pct",stats)
+                self.assertIn("closed_trade_profit_factor",stats)
 
     def test_25pct_halt_applies_to_new_entries(self):
         a=synthetic("AAPL",shock=True)
