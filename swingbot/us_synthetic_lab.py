@@ -147,26 +147,27 @@ def _simulation(aligned, dates, cfg: Strategy, start: int, end: int) -> dict:
             stop_exits+=1
 
     for idx in range(start,end):
-        opened=set()
-        # Only yesterday's completed history may generate today's signal.
-        for symbol, barseries in aligned.items():
-            if symbol not in positions:
-                continue
-            b=barseries[idx]
+        # Open fills occur BEFORE intraday high/low is known. Exits triggered
+        # at the PREVIOUS close are filled first at today's open.
+        exited_at_open=set()
+        for symbol in tuple(positions):
+            barseries=aligned[symbol]
             pos=positions[symbol]
             yesterday=barseries[idx-1]
             timed_out=(cfg.max_bars is not None and pos["bars"]>=cfg.max_bars)
             trend_exit=yesterday.close<mean(x.close for x in barseries[idx-cfg.trend:idx])
-            if b.low<=pos["stop"]:
-                exit_at(symbol, min(b.open,pos["stop"]), "STOP")
-            elif timed_out or trend_exit:
-                exit_at(symbol,b.open,"TIME_OR_TREND")
+            if timed_out or trend_exit:
+                exit_at(symbol,barseries[idx].open,"TIME_OR_TREND")
+                exited_at_open.add(symbol)
+
         if not halted:
-            equity_before=cash+sum(p["quantity"]*aligned[s][idx-1].close
-                                   for s,p in positions.items())
+            # Yesterday's closes are all we may use to estimate available
+            # capital and generate candidate entry signals at today's open.
+            equity_before=cash+sum(p["quantity"]*aligned[sym][idx-1].close
+                                   for sym,p in positions.items())
             candidates=[]
             for symbol, barseries in aligned.items():
-                if symbol in positions:
+                if symbol in positions or symbol in exited_at_open:
                     continue
                 sig=_signal(barseries[:idx],cfg)
                 if sig:
@@ -180,31 +181,32 @@ def _simulation(aligned, dates, cfg: Strategy, start: int, end: int) -> dict:
                 distance=cfg.stop_atr*atr
                 if distance<=0 or price<=distance:
                     continue
-                amount=min(
+                quantity=min(
                     floor(equity_before*MAX_POSITION/(price*(1+FEE_BPS/10_000))),
                     floor(equity_before*RISK_PER_POSITION/distance),
                     floor(cash/(price*(1+FEE_BPS/10_000))),
                 )
-                if amount < 1:
+                if quantity < 1:
                     continue
-                fee=amount*price*FEE_BPS/10_000
-                cash-=amount*price+fee
+                fee=quantity*price*FEE_BPS/10_000
+                cash-=quantity*price+fee
                 fees_paid+=fee
                 trades+=1
                 sides["BUY"]+=1
                 positions[symbol]={
-                    "quantity":amount,"stop":price-distance,"bars":0
+                    "quantity":quantity,"stop":price-distance,"bars":0
                 }
-                opened.add(symbol)
-                # Conservative stop treatment even on entry day; no cheating
-                # with knowledge of intraday price order.
-                if today.low <= price-distance:
-                    exit_at(symbol,min(today.open,price-distance),"STOP")
-                    opened.discard(symbol)
+
+        # Only AFTER all opening fills may today's actual low trigger stop
+        # exits. Entry-day stops are conservatively handled without
+        # knowing the intraday order of high and low.
+        for symbol in tuple(positions):
+            today=aligned[symbol][idx]
+            if today.low<=positions[symbol]["stop"]:
+                exit_at(symbol,min(today.open,positions[symbol]["stop"]),"STOP")
         for symbol,pos in list(positions.items()):
             pos["bars"]+=1
-            # Trailing stop is computed AFTER today's close, so it cannot
-            # affect a fill earlier today.
+            # Trailing stop computed after the close, never for today's fill.
             barseries=aligned[symbol]
             atr = _atr(barseries[:idx+1])
             pos["stop"]=max(pos["stop"],
