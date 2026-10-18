@@ -10,6 +10,13 @@ on:
         type: boolean
         required: true
         default: false
+      historical_feed:
+        description: 'Daily historical data: IEX only or 15min+ delayed SIP (if account entitled)'
+        type: choice
+        options:
+          - iex
+          - sip
+        default: iex
 
 permissions:
   contents: read
@@ -57,6 +64,7 @@ jobs:
           ALPACA_DATA_KEY_ID: ${{ secrets.ALPACA_PAPER_DATA_KEY_ID }}
           ALPACA_DATA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_DATA_SECRET_KEY }}
           ALPACA_PERSONAL_RESEARCH_OK: 'true'
+          ALPACA_HISTORICAL_FEED: ${{ inputs.historical_feed }}
         run: |
           python -m swingbot.alpaca_iex
           # No tokens or ticker-level licensed quotes or rankings in logs.
