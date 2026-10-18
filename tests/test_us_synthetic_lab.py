@@ -38,6 +38,22 @@ class USResearchTests(unittest.TestCase):
         self.assertFalse(x["paper_trade_authorized"])
         self.assertTrue(all(z["source_adjustment"]=="SPLIT_ADJUSTED_NOT_DIVIDEND_ADJUSTED" for z in x["ranking"]))
 
+    def test_all_50_names_supported_with_synthetic_data(self):
+        # Repeated synthetic trajectories are a software load test, never a
+        # representation of real market breadth or historical index membership.
+        all_data={ticker: synthetic(ticker,count=275)
+                  for ticker in US_WATCHLIST_50}
+        as_of=next(iter(all_data.values())).bars[-1].day+timedelta(days=1)
+        ranked=rank_us_research(all_data,as_of=as_of)
+        self.assertEqual(ranked["received"],50)
+        self.assertEqual(ranked["eligible"],50)
+        self.assertEqual(len(ranked["ranking"]),20)
+        self.assertFalse(ranked["real_order_authorized"])
+        lab=compare_abc_offline(all_data,as_of=as_of)
+        self.assertEqual(lab["symbol_count"],50)
+        self.assertEqual(len(lab["variants"]),3)
+        self.assertFalse(lab["eur_paper_modified"])
+
     def test_massive_non_display_block_by_default(self):
         a=synthetic()
         as_of=a.bars[-1].day+timedelta(days=1)
