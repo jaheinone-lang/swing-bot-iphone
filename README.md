@@ -52,7 +52,7 @@ Krakenin julkisesta OHLC-rajapinnasta saadaan vain viimeisimmät noin 720 kyntti
 
 ## Edullisemmat välittäjät – 17.10.2026 valitut ehdokkaat
 
-**Osakkeet ja ETF:t: Trading 212 Invest.** EUR-noteeratuilla tuotteilla välityspalkkio 0 €, mutta kurssiero ja mahdolliset viranomaismaksut eivät häviä. Muun valuutan instrumenteissa 0,15 % FX-maksu oston ja myynnin yhteydessä. Virallinen API on beta-vaiheessa; Trading 212 tukee demo- ja live-ympäristöjä, ja API:n toimeksiannot ovat rajoitettuja tilin päävaluuttaan. **Tässä projektissa vain demo-tilin saldoa lukeva GET-adapteri**, jonka tunnukset annetaan paikallisesti ympäristömuuttujina `TRADING212_DEMO_KEY` / `TRADING212_DEMO_SECRET`. Oikeita tai demotoimeksiantoja ei tehdä.
+**Osakkeet ja ETF:t: Trading 212 Invest.** EUR-noteeratuilla tuotteilla välityspalkkio 0 €, mutta kurssiero ja mahdolliset viranomaismaksut eivät häviä. Muun valuutan instrumenteissa 0,15 % FX-maksu oston ja myynnin yhteydessä. Virallinen API on beta-vaiheessa; Trading 212 tukee demo- ja live-ympäristöjä, ja API:n toimeksiannot ovat rajoitettuja tilin päävaluuttaan. **Tässä projektissa vain demo-tilin Metadata-luetteloa lukeva GET-sovitin ja erillinen kokeellinen saldo-sovitin (ei käytössä tässä yhteydessä)**, jonka tunnukset annetaan paikallisesti ympäristömuuttujina `TRADING212_DEMO_KEY` / `TRADING212_DEMO_SECRET`. Oikeita tai demotoimeksiantoja ei tehdä.
 
 **Kryptot: Bitvavo.** Julkisesta markkinadatarajapinnasta voi hakea BTC-EUR-, ETH-EUR- ja SOL-EUR-päiväkynttilät ilman tunnuksia. Tämä ei edellytä Bitvavo-tilin avaamista eikä anna toimeksianto-oikeuksia. Kaupankäyntikulut ovat erillinen kysymys ja ne täytyy varmistaa tilikohtaisesti; strategiasimulaation nykyiset kuluoletukset ovat vielä alustavia.
 
@@ -172,7 +172,7 @@ Lähteet: [Verohallinto — pääomatulot](https://www.vero.fi/henkiloasiakkaat/
 
 ## 5.0 Osakkeiden/ETF:ien laajamittainen seulonta ja listautumiset
 
-**Tila 17.10.2026:** turvallinen tutkimuskoodi ja ensimmäiset IPO-esimerkit julkaistu; **Trading 212 -tilin koko valikoimaa ei vielä ole haettu**. Sen tekeminen edellyttää käyttäjän Trading 212 Invest DEMO -tilin API-avainparia, jonka käyttöoikeudet ovat vain lukuoikeuksia, sekä kaupalliseen tai omaan käyttöön soveltuvaa erillistä kurssi- ja volyymidataa. Tähän julkiseen GitHub-repositorioon **ei koskaan viedä avaimia, raakoja asiakkaan tilitietoja, kaupankäyntihistoriaa tai tilikohtaista täydellistä metadataa**.
+**Tila 18.10.2026:** Trading 212 Invest Practice -tilin Metadata-only API -yhteys vahvistettu GitHub Actions -testissä: 10 372 osakeinstrumenttia ja 6 749 ETF-instrumenttia (17 121 yhteensä). Erillistä 200+ kaupankäyntipäivän varmennettua hinta-/volyymisyötettä ei vielä ole, joten TOP 20 -rankingiin tai osakepaperikauppoihin ei näiden lukumäärien perusteella siirrytä. Tähän julkiseen GitHub-repositorioon **ei koskaan viedä avaimia, raakoja asiakkaan tilitietoja, kaupankäyntihistoriaa tai tilikohtaista täydellistä metadataa**.
 
 ### Datalähteet ja valvonta
 
@@ -258,3 +258,16 @@ Käyttäjän pyynnöstä luotu turvallinen ja VAIN MANUAALISESTI KÄYNNISTETTÄV
 5. Avauduajon tulos on julkisesti luettavissa, joten tulosteessa on ainoastaan koostetietoja. Virhekoodi ei tulosta salaisia tunnuksia. Jos tietojen lukeminen ei onnistu, tarkistetaan käyttöoikeus, environment ja salaisuuksien oikeellisuus **tulostamatta itse arvoja**.
 
 **Tila:** workflow valmiina, mutta yhteyttä ei ole vielä testattu käyttäjän oikeilla tunnuksilla. Trading 212 -avaimen IP-rajausta ei oteta käyttöön ennen kuin pysyvä/kiinteä palvelin-IP on käytössä. Nykyisen Github-hosted Actions -ympäristön lähde-IP voi muuttua. Jos tokenille myönnetään vahingossa kaupankäyntioikeudet, se tulee mitätöidä Trading 212:ssa ja luoda uudelleen minimioikeuksin.
+
+## UUSI: Päivittäinen Trading 212 -katalogikatsaus ja TOP 20 -pisteytysrunko
+
+**Varmennettu API-koe 18.10.2026:** [GitHub Actions, onnistunut](https://github.com/jaheinone-lang/swing-bot-iphone/actions/runs/39137310503).
+Kokeessa saatiin 10 372 osaketta, 6 749 ETF:ää, 13 121 erillistä ISIN-tunnusta ja 923 Trading 212:een viimeisen 30 vuorokauden aikana lisättyä instrumenttia (ei 923 IPOa).
+
+- [Päivittäinen tutkimusajo](https://github.com/jaheinone-lang/swing-bot-iphone/actions/workflows/trading212-daily-research.yml): ajastettu kerran päivässä UTC 05.37, sekä manuaalinen Run workflow. GitHub Actionsin ajastus voi viivästyä. Demo-API-avainpari on vain yksityisen lukutyötehtävän käytössä; julkinen julkaisutehtävä ei saa näitä salaisuuksia.
+- [iPhonen seurantasivu](https://jaheinone-lang.github.io/swing-bot-iphone/): osakkeiden ja ETF:ien kokonaismäärät, markkinoiden valuutat, alustalle lisättyjen instrumenttien lukumäärä ja datalähteiden tila. Alkuarvot ovat 18.10.2026 onnistuneesta API-testistä; ensimmäisen automaattisen ajon jälkeen päivitys tapahtuu ajastetusti.
+- `swingbot/universe_pipeline.py`: vain varmennetulla omalla tilillä saatavilla olevalla EUR-instrumentilla sekä luotettavalla, yritystapahtumaoikaistulla OHLCV-historialla laskettava TOP 20 -tutkimusranking. Käytössä ei vielä ole tarvittavaa erillistä hintasyötettä; sovitin **palauttaa tyhjän TOP 20:n**. Tietoja ei arvata.
+- `tests/test_universe_pipeline.py`: testaa, ettei pelkkä metadatasyöte aiheuta rankingia, ettei rekisteröimättömiä tai väärän valuutan instrumentteja pääse mukaan ja ettei epäonnistunut API-haku korvaa edellistä raporttia.
+- `docs/universe_research.json`: **ainoastaan luku- ja valuuttatilastot**, ei yhtään täydellistä instrumenttiriviä, API-tunnusta, saldoa, käyttäjän tietoa eikä toimeksiantoa. Jälkimmäisen työtehtävän julkaisu tarkistaa sallitut JSON-kentät ja estää julkaisun, jos niissä on yllättävää sisältöä.
+
+**Seuraava tietoriippuvuus:** erillinen lähde vähintään 201 valmistuneelle OHLCV-päivälle per instrumentti, yhtiötapahtumien split-oikaisut, quote currency -varmistus sekä riittävä likviditeetti ja spread. Lisäksi SEC-/issuer-lähde aidolle pörssidebyytille (Trading 212:n `addedOn` ei ole IPO-päivä). Vasta näiden jälkeen 20 varmennetun ehdokkaan riskirajattu vertailu; aluksi paperisalkussa, ei live-ostoja.
