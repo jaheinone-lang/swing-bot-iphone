@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-10-18T17:53:57+00:00",
+  "generated_at_utc": "2026-10-19T09:52:30+00:00",
   "mode": "READ_ONLY_RESEARCH",
   "initial_eur": 5000.0,
   "max_new_entry_drawdown_pct": 25,
@@ -11,8 +11,8 @@
       "currency": "EUR",
       "source": "Bitvavo public OHLC",
       "status": "ok",
-      "day": "2026-10-17",
-      "last_completed_close_eur": 72468.0,
+      "day": "2026-10-18",
+      "last_completed_close_eur": 73069.0,
       "signal": "HOLD",
       "reason": "no_breakout_or_trend",
       "bars": 719
@@ -23,8 +23,8 @@
       "currency": "EUR",
       "source": "Bitvavo public OHLC",
       "status": "ok",
-      "day": "2026-10-17",
-      "last_completed_close_eur": 2136.52,
+      "day": "2026-10-18",
+      "last_completed_close_eur": 2145.29,
       "signal": "HOLD",
       "reason": "no_breakout_or_trend",
       "bars": 719
@@ -35,8 +35,8 @@
       "currency": "EUR",
       "source": "Bitvavo public OHLC",
       "status": "ok",
-      "day": "2026-10-17",
-      "last_completed_close_eur": 91.992,
+      "day": "2026-10-18",
+      "last_completed_close_eur": 92.669,
       "signal": "HOLD",
       "reason": "no_breakout_or_trend",
       "bars": 719
@@ -51,17 +51,17 @@
       "last_completed_close_eur": 199.22000122070312,
       "signal": "HOLD",
       "reason": "no_breakout_or_trend",
-      "bars": 507
+      "bars": 504
     }
   ],
   "portfolio_backtest": {
-    "start": "2024-10-29",
+    "start": "2024-10-30",
     "end": "2026-10-16",
     "starting_eur": 5000.0,
-    "final_equity_eur": 5519.66,
-    "return_pct": 10.39,
-    "max_drawdown_pct": 13.39,
-    "estimated_fees_eur": 143.58,
+    "final_equity_eur": 5474.81,
+    "return_pct": 9.5,
+    "max_drawdown_pct": 13.4,
+    "estimated_fees_eur": 142.42,
     "halted_new_entries": false,
     "trade_count": 99
   },
@@ -69,34 +69,34 @@
     "kind": "RESEARCH_ONLY_HISTORICAL_SIMULATION",
     "benchmark": "equal_EUR_buy_hold_no_rebalance",
     "benchmark_warmup_bars": 51,
-    "benchmark_invest_after": "2025-01-14",
+    "benchmark_invest_after": "2025-01-15",
     "method_note": "Sama EUR-historia ja lähtöpääoma. Osta ja pidä sijoittaa tasaisesti seuraavaan avaukseen 51 kynttilän lämmittelyn jälkeen, ilman uudelleentasapainotusta. Swing ostaa vain signaalista ja voi pitää käteistä. Ei sama markkinariski eikä validoitu etu.",
     "limitations": "Epävirallinen osakedata ei sisällä varmennettua osinkojen, splittien, delistausten tai verojen käsittelyä. Oletetut kulut eivät ole toteutuneita. Kryptomarkkinat ovat auki myös viikonloppuisin.",
     "swing": {
-      "period_start": "2024-10-29",
+      "period_start": "2024-10-30",
       "period_end": "2026-10-16",
-      "calendar_days": 717,
-      "total_return_pct": 10.39,
-      "cagr_pct": 5.16,
-      "max_drawdown_pct": 13.39,
-      "annualized_volatility_pct": 10.1,
-      "sharpe_zero_cash_rate": 0.55
+      "calendar_days": 716,
+      "total_return_pct": 9.5,
+      "cagr_pct": 4.73,
+      "max_drawdown_pct": 13.4,
+      "annualized_volatility_pct": 10.09,
+      "sharpe_zero_cash_rate": 0.51
     },
     "buy_hold": {
-      "period_start": "2024-10-29",
+      "period_start": "2024-10-30",
       "period_end": "2026-10-16",
-      "calendar_days": 717,
-      "total_return_pct": -30.82,
-      "cagr_pct": -17.1,
-      "max_drawdown_pct": 58.93,
-      "annualized_volatility_pct": 40.32,
-      "sharpe_zero_cash_rate": -0.26
+      "calendar_days": 716,
+      "total_return_pct": -33.32,
+      "cagr_pct": -18.67,
+      "max_drawdown_pct": 56.59,
+      "annualized_volatility_pct": 38.7,
+      "sharpe_zero_cash_rate": -0.34
     },
-    "excess_return_percentage_points": 41.21,
-    "benchmark_final_equity_eur": 3459.02,
+    "excess_return_percentage_points": 42.82,
+    "benchmark_final_equity_eur": 3333.95,
     "benchmark_buy_fees_eur": 9.35,
     "comparison_window": {
-      "start": "2024-10-29",
+      "start": "2024-10-30",
       "end": "2026-10-16"
     },
     "last_180_days": {
@@ -105,39 +105,39 @@
         "period_start": "2026-04-19",
         "period_end": "2026-10-16",
         "calendar_days": 180,
-        "total_return_pct": 11.27,
-        "cagr_pct": 24.17,
-        "max_drawdown_pct": 4.26,
-        "annualized_volatility_pct": 14.47,
+        "total_return_pct": 11.29,
+        "cagr_pct": 24.22,
+        "max_drawdown_pct": 4.27,
+        "annualized_volatility_pct": 14.48,
         "sharpe_zero_cash_rate": 1.57
       },
       "buy_hold": {
         "period_start": "2026-04-19",
         "period_end": "2026-10-16",
         "calendar_days": 180,
-        "total_return_pct": 20.14,
-        "cagr_pct": 45.09,
-        "max_drawdown_pct": 23.31,
-        "annualized_volatility_pct": 32.93,
-        "sharpe_zero_cash_rate": 1.29
+        "total_return_pct": 18.19,
+        "cagr_pct": 40.35,
+        "max_drawdown_pct": 22.01,
+        "annualized_volatility_pct": 30.87,
+        "sharpe_zero_cash_rate": 1.25
       }
     }
   },
   "strategy_lab": {
     "mode": "PRE_REGISTERED_HISTORICAL_WALK_FORWARD_RESEARCH",
-    "split_date": "2026-02-07",
-    "development_start": "2024-10-29",
+    "split_date": "2026-02-08",
+    "development_start": "2024-10-30",
     "validation_end": "2026-10-16",
     "selection_rule": "development return percentage - 1.5 x maximum drawdown percentage",
     "training_selected_variant": "B - Nopeampi",
     "holdout_of_selected": {
-      "period_start": "2026-02-07",
+      "period_start": "2026-02-08",
       "period_end": "2026-10-16",
-      "calendar_days": 251,
+      "calendar_days": 250,
       "total_return_pct": 7.83,
-      "cagr_pct": 11.59,
+      "cagr_pct": 11.64,
       "max_drawdown_pct": 6.26,
-      "annualized_volatility_pct": 11.31,
+      "annualized_volatility_pct": 11.33,
       "sharpe_zero_cash_rate": 1.03
     },
     "auto_trading_changes": false,
@@ -158,42 +158,42 @@
           "risk_per_trade_pct": 1.0
         },
         "development": {
-          "period_start": "2024-10-29",
-          "period_end": "2026-02-07",
+          "period_start": "2024-10-30",
+          "period_end": "2026-02-08",
           "calendar_days": 466,
-          "total_return_pct": -0.63,
-          "cagr_pct": -0.49,
-          "max_drawdown_pct": 10.99,
-          "annualized_volatility_pct": 8.49,
-          "sharpe_zero_cash_rate": -0.02
+          "total_return_pct": 0.46,
+          "cagr_pct": 0.36,
+          "max_drawdown_pct": 10.97,
+          "annualized_volatility_pct": 8.53,
+          "sharpe_zero_cash_rate": 0.08
         },
         "holdout": {
-          "period_start": "2026-02-07",
+          "period_start": "2026-02-08",
           "period_end": "2026-10-16",
-          "calendar_days": 251,
-          "total_return_pct": 7.41,
-          "cagr_pct": 10.95,
+          "calendar_days": 250,
+          "total_return_pct": 7.38,
+          "cagr_pct": 10.96,
           "max_drawdown_pct": 4.61,
-          "annualized_volatility_pct": 13.29,
+          "annualized_volatility_pct": 13.31,
           "sharpe_zero_cash_rate": 0.85
         },
         "full_period_after_tax": {
-          "period_start": "2024-10-29",
+          "period_start": "2024-10-30",
           "period_end": "2026-10-16",
-          "calendar_days": 717,
-          "total_return_pct": 6.73,
-          "cagr_pct": 3.37,
-          "max_drawdown_pct": 13.19,
-          "annualized_volatility_pct": 10.42,
-          "sharpe_zero_cash_rate": 0.37
+          "calendar_days": 716,
+          "total_return_pct": 7.88,
+          "cagr_pct": 3.94,
+          "max_drawdown_pct": 13.18,
+          "annualized_volatility_pct": 10.44,
+          "sharpe_zero_cash_rate": 0.42
         },
-        "after_tax_equity_eur": 5336.6,
-        "gross_final_equity_eur": 5454.87,
-        "gross_return_pct": 9.1,
-        "estimated_tax_reserve_eur": 118.27,
-        "estimated_fees_eur": 143.07,
-        "trade_count": 101,
-        "realized_disposals": 50,
+        "after_tax_equity_eur": 5393.88,
+        "gross_final_equity_eur": 5536.7,
+        "gross_return_pct": 10.73,
+        "estimated_tax_reserve_eur": 142.82,
+        "estimated_fees_eur": 141.61,
+        "trade_count": 99,
+        "realized_disposals": 49,
         "halted": false
       },
       {
@@ -209,8 +209,8 @@
           "risk_per_trade_pct": 1.0
         },
         "development": {
-          "period_start": "2024-10-29",
-          "period_end": "2026-02-07",
+          "period_start": "2024-10-30",
+          "period_end": "2026-02-08",
           "calendar_days": 466,
           "total_return_pct": -1.57,
           "cagr_pct": -1.23,
@@ -219,21 +219,21 @@
           "sharpe_zero_cash_rate": -0.23
         },
         "holdout": {
-          "period_start": "2026-02-07",
+          "period_start": "2026-02-08",
           "period_end": "2026-10-16",
-          "calendar_days": 251,
+          "calendar_days": 250,
           "total_return_pct": 7.83,
-          "cagr_pct": 11.59,
+          "cagr_pct": 11.64,
           "max_drawdown_pct": 6.26,
-          "annualized_volatility_pct": 11.31,
+          "annualized_volatility_pct": 11.33,
           "sharpe_zero_cash_rate": 1.03
         },
         "full_period_after_tax": {
-          "period_start": "2024-10-29",
+          "period_start": "2024-10-30",
           "period_end": "2026-10-16",
-          "calendar_days": 717,
+          "calendar_days": 716,
           "total_return_pct": 6.14,
-          "cagr_pct": 3.08,
+          "cagr_pct": 3.09,
           "max_drawdown_pct": 6.26,
           "annualized_volatility_pct": 7.73,
           "sharpe_zero_cash_rate": 0.43
@@ -260,8 +260,8 @@
           "risk_per_trade_pct": 1.0
         },
         "development": {
-          "period_start": "2024-10-29",
-          "period_end": "2026-02-07",
+          "period_start": "2024-10-30",
+          "period_end": "2026-02-08",
           "calendar_days": 466,
           "total_return_pct": -0.86,
           "cagr_pct": -0.68,
@@ -270,23 +270,23 @@
           "sharpe_zero_cash_rate": -0.08
         },
         "holdout": {
-          "period_start": "2026-02-07",
+          "period_start": "2026-02-08",
           "period_end": "2026-10-16",
-          "calendar_days": 251,
+          "calendar_days": 250,
           "total_return_pct": 6.63,
-          "cagr_pct": 9.78,
+          "cagr_pct": 9.83,
           "max_drawdown_pct": 4.66,
-          "annualized_volatility_pct": 9.13,
+          "annualized_volatility_pct": 9.15,
           "sharpe_zero_cash_rate": 1.07
         },
         "full_period_after_tax": {
-          "period_start": "2024-10-29",
+          "period_start": "2024-10-30",
           "period_end": "2026-10-16",
-          "calendar_days": 717,
+          "calendar_days": 716,
           "total_return_pct": 5.71,
           "cagr_pct": 2.87,
           "max_drawdown_pct": 7.41,
-          "annualized_volatility_pct": 7.38,
+          "annualized_volatility_pct": 7.39,
           "sharpe_zero_cash_rate": 0.42
         },
         "after_tax_equity_eur": 5285.41,
@@ -307,7 +307,7 @@
     "tax_profile": "PERSONAL_FINLAND_ESTIMATE",
     "holding_transfer_mode": "NO_AUTO_HOLDING_TRANSFER",
     "started_on": "2026-10-16",
-    "last_processed_day": "2026-10-17",
+    "last_processed_day": "2026-10-18",
     "initial_eur": 5000.0,
     "cash_eur": 5000.0,
     "cash_available_for_trades_eur": 5000.0,
@@ -329,6 +329,11 @@
       },
       {
         "day": "2026-10-17",
+        "equity_eur": 5000.0,
+        "drawdown_pct": 0.0
+      },
+      {
+        "day": "2026-10-18",
         "equity_eur": 5000.0,
         "drawdown_pct": 0.0
       }
