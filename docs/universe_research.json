@@ -1,23 +1,23 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-10-18T14:59:46+00:00",
-  "as_of": "2026-10-18",
+  "generated_at_utc": "2026-10-19T11:12:03+00:00",
+  "as_of": "2026-10-19",
   "status": "TRADING212_DEMO_METADATA_CONNECTED",
   "data_mode": "BROKER_INSTRUMENT_METADATA_ONLY",
   "instruments": {
-    "stocks": 10372,
-    "etfs": 6749,
-    "total": 17121,
-    "unique_isins": 13121,
+    "stocks": 10373,
+    "etfs": 6750,
+    "total": 17123,
+    "unique_isins": 13123,
     "by_currency": {
-      "CAD": 541,
-      "CHF": 386,
+      "CAD": 542,
+      "CHF": 387,
       "EUR": 6343,
       "GBP": 577,
       "GBX": 1896,
       "USD": 7378
     },
-    "platform_additions_last_30d": 923
+    "platform_additions_last_30d": 689
   },
   "screening": {
     "feed_matched": 0,
