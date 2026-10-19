@@ -1,0 +1,121 @@
+# Read-only, opt-in personal USD research. Absolutely no order endpoints.
+name: SIP A-B-C historical swing comparison
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_paper_and_personal_backtest_rights:
+        description: 'I confirm PAPER-only keys and my personal Alpaca agreement permits this internal historical strategy backtest'
+        type: boolean
+        required: true
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: us-sip-abc-private-manual
+  cancel-in-progress: true
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify software and safety tests
+        run: python -m unittest discover -s tests -v
+  compare-historical-sip:
+    needs: offline-tests
+    if: ${{ inputs.confirm_paper_and_personal_backtest_rights == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Privately compare A-B-C with completed SIP historical data
+        env:
+          ALPACA_DATA_KEY_ID: ${{ secrets.ALPACA_PAPER_DATA_KEY_ID }}
+          ALPACA_DATA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_DATA_SECRET_KEY }}
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from swingbot.alpaca_iex import AlpacaUnavailable, fetch_iex_bars
+          from swingbot.us_synthetic_lab import compare_abc_offline
+          from swingbot.us_watchlist import US_WATCHLIST_50
+
+          today = datetime.now(timezone.utc).date()
+          collected = {}
+          errors = 0
+          for ticker in US_WATCHLIST_50:
+              try:
+                  row = fetch_iex_bars(ticker, as_of=today, feed="sip")
+                  if (row.ticker != ticker or
+                      row.source != "ALPACA_DELAYED_SIP_CONSOLIDATED_HISTORICAL" or
+                      row.currency != "USD" or
+                      row.adjustment != "SPLIT_ADJUSTED_NOT_DIVIDEND_ADJUSTED"):
+                      raise AlpacaUnavailable("Wrong market-data feed")
+                  collected[ticker] = row
+              except (AlpacaUnavailable, ValueError, TypeError, AttributeError):
+                  errors += 1
+          if errors:
+              print(json.dumps({"status":"INCOMPLETE_SIP_BLOCKED",
+                                "attempted":len(US_WATCHLIST_50),
+                                "valid_histories":len(collected),"failed":errors,
+                                "orders_enabled":False}))
+              raise SystemExit(2)
+          try:
+              # Strict opt-in above acknowledges the applicable PERSONAL usage
+              # rights; no commercial or redistribution permission is implied.
+              comparison = compare_abc_offline(
+                  collected,as_of=today,licensed_non_display_use=True
+              )
+          except (ValueError, PermissionError):
+              print('{"status":"SIP_HISTORICAL_VALIDATION_BLOCKED","orders_enabled":false}')
+              raise SystemExit(2)
+          variants=[]
+          for k, v in enumerate(comparison["variants"]):
+              phases={}
+              for phase in ("training", "holdout"):
+                  s=v[phase]
+                  phases[phase]={
+                      "return_pct":s["return_pct"],
+                      "max_drawdown_pct":s["max_drawdown_pct"],
+                      "completed_trades":s["completed_round_trips"],
+                      "win_rate_pct":s["closed_trade_win_rate_pct"],
+                      "profit_factor":s["closed_trade_profit_factor"],
+                      "stop_gap_exits":s["overnight_gap_stop_exits"],
+                      "open_positions":s["open_positions_not_liquidated"],
+                  }
+              variants.append({"variant":"ABC"[k], **phases})
+          selected=next("ABC"[k] for k,v in enumerate(comparison["variants"])
+                        if v["strategy"]==comparison["training_selected_strategy"])
+          print(json.dumps({
+              "status":"PRIVATE_HISTORICAL_SIP_ABC_COMPARISON",
+              "verified":len(collected),
+              "calendar_sessions":comparison["calendar_sessions"],
+              "training_end":comparison["training_end"],
+              "holdout_start":comparison["holdout_start"],
+              "selected_by_training_only":selected,
+              "strategies":variants,
+              "benchmark_holdout_return_pct":comparison["benchmark_holdout"]["return_pct"],
+              "benchmark_not_investable":True,
+              "minimum_train_trades_met":comparison["qualified_comparison_available"],
+              "starting_usd":5000,
+              "fee_bps_each_side":comparison["fee_bps_each_side"],
+              "slippage_bps_each_side":comparison["slippage_bps_each_side"],
+              "curated_survivor_watchlist_bias":True,
+              "no_dividends_fx_taxes_real_spreads":True,
+              "historical_outperformance_not_proven":True,
+              "personal_noncommercial_acknowledged":True,
+              "ticker_quotes_or_rankings_published":False,
+              "eur_paper_portfolio_modified":False,
+              "broker_orders_enabled":False,
+          },ensure_ascii=False))
+          PY
