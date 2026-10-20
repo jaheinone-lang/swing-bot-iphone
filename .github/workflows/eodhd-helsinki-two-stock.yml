@@ -1,0 +1,71 @@
+# Strictly read-only, manual, exactly two EODHD free-tier requests.
+name: EODHD Helsinki Nokia Elisa two-stock check
+on:
+  workflow_dispatch:
+    inputs:
+      approve_two_personal_eod_requests:
+        description: 'I approve exactly TWO personal-use historical EOD requests (NOKIA.HE and ELISA.HE)'
+        type: boolean
+        required: true
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: eodhd-helsinki-manual
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Offline safety suite
+        run: python -m unittest discover -s tests -q
+      - name: Read two Helsinki stock histories, aggregate-only results
+        if: ${{ inputs.approve_two_personal_eod_requests == true }}
+        env:
+          EODHD_API_TOKEN: ${{ secrets.EODHD_API_TOKEN }}
+        run: |
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from swingbot.eodhd_feed import fetch_eodhd_eod, EodhdUnavailable
+
+          if not os.getenv("EODHD_API_TOKEN", "").strip():
+              print(json.dumps({"status":"MISSING_SECRET","requests":0,"orders":False}))
+              raise SystemExit(2)
+          results=[]
+          for ticker in ("NOKIA.HE", "ELISA.HE"):
+              try:
+                  # One bounded EOD GET for each ticker; no retries.
+                  value=fetch_eodhd_eod(
+                      ticker,quote_currency="EUR",
+                      as_of=datetime.now(timezone.utc).date()
+                  )
+                  results.append({
+                      "symbol":ticker,
+                      "status":"HISTORY_VALIDATED_RAW_OHLC",
+                      "bars":len(value.completed),
+                      "last_day":value.completed[-1].day.isoformat()
+                  })
+              except EodhdUnavailable:
+                  results.append({"symbol":ticker,"status":"EOD_UNAVAILABLE_OR_INVALID"})
+          print(json.dumps({
+              "status":"HELSINKI_EODHD_TWO_STOCK_READ_ONLY",
+              "requests":len(results),"results":results,
+              "provider_currency_verified":False,
+              "adjusted_splits_verified":False,
+              "broker_membership_verified":False,
+              "historical_strategy_results":False,
+              "raw_ohlcv_published":False,
+              "paper_account_changed":False,
+              "orders_enabled":False,
+          }))
+          if not all(r["status"]=="HISTORY_VALIDATED_RAW_OHLC" for r in results):
+              raise SystemExit(2)
+          PY
