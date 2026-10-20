@@ -71,7 +71,7 @@ jobs:
           # Whitelist public keys only, blocking accidental private data
           assert set(data) == {
              "schema_version","generated_at_utc","as_of","status","data_mode",
-             "instruments","screening","ipo_status",
+             "instruments","eu_stock_research","screening","ipo_status",
              "recent_platform_additions_are_ipos",
              "price_history_available_from_trading212",
              "fundamental_data_available_from_trading212",
@@ -82,6 +82,27 @@ jobs:
              "stocks","etfs","total","unique_isins",
              "by_currency","platform_additions_last_30d"
           }
+          eu=data["eu_stock_research"]
+          assert set(eu) == {
+             "status","stocks_with_eu_isin_prefix",
+             "eur_quoted_eu_isin_prefix_stocks","by_quote_currency",
+             "by_isin_prefix","curated_watchlist_size","curated_countries",
+             "curated_quote_currencies","requires_historical_fx",
+             "eu_issuer_domicile_verified","listing_venue_verified",
+             "broker_matches_verified","price_history_verified",
+             "eu_abc_backtest_ready","orders_enabled"
+          }
+          assert eu["status"] == "EU_ISIN_PREFIX_METADATA_COUNTS_ONLY"
+          assert 0 <= eu["eur_quoted_eu_isin_prefix_stocks"] <= eu["stocks_with_eu_isin_prefix"] <= data["instruments"]["stocks"]
+          assert sum(eu["by_quote_currency"].values()) == eu["stocks_with_eu_isin_prefix"]
+          assert sum(eu["by_isin_prefix"].values()) == eu["stocks_with_eu_isin_prefix"]
+          assert eu["curated_watchlist_size"] == 50
+          assert eu["broker_matches_verified"] == 0
+          assert eu["eu_issuer_domicile_verified"] is False
+          assert eu["listing_venue_verified"] is False
+          assert eu["price_history_verified"] is False
+          assert eu["eu_abc_backtest_ready"] is False
+          assert eu["orders_enabled"] is False
           assert set(data["screening"]) == {
              "feed_matched","feed_rejected_or_unmatched","candidates_checked",
              "top_candidates","price_data_connected","ranking_status",
