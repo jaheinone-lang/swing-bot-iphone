@@ -14,6 +14,7 @@ from pathlib import Path
 
 from .trading212_universe import load_demo_universe, summarize_universe
 from .equity_screen import screen_equity, DailyBar
+from .eu_watchlist import eu_isin_prefix_counts, eu_research_readiness
 
 
 def rank_verified_eur_candidates(
@@ -95,6 +96,10 @@ def build_catalog_report(
         raise ValueError("Report timestamp needs timezone")
     as_of = as_of or generated.date()
     counts = summarize_universe(instruments, as_of=as_of)
+    # Public AGGREGATE ONLY: ISIN prefix is not proof of EU issuer
+    # domicile or exchange, and no actual broker ticker is published.
+    eu_counts = eu_isin_prefix_counts(instruments)
+    eu_watch = eu_research_readiness()
     # Source is private account metadata; publish only aggregated counts.
     screening = rank_verified_eur_candidates(
         instruments, validated_feeds or {}, as_of=as_of
@@ -113,6 +118,24 @@ def build_catalog_report(
             "by_currency": counts["currencies"],
             "platform_additions_last_30d": counts["platform_additions_30d"],
         },
+        "eu_stock_research": {
+            "status": eu_counts["status"],
+            "stocks_with_eu_isin_prefix": eu_counts["stocks_with_eu_isin_prefix"],
+            "eur_quoted_eu_isin_prefix_stocks":
+                eu_counts["eur_quoted_eu_isin_prefix_stocks"],
+            "by_quote_currency": eu_counts["by_quote_currency"],
+            "by_isin_prefix": eu_counts["by_isin_prefix"],
+            "curated_watchlist_size": eu_watch["curated_listings"],
+            "curated_countries": eu_watch["eu_countries_represented"],
+            "curated_quote_currencies": eu_watch["sample_symbols_by_currency"],
+            "requires_historical_fx": eu_watch["fx_history_required_for"],
+            "eu_issuer_domicile_verified": False,
+            "listing_venue_verified": False,
+            "broker_matches_verified": 0,
+            "price_history_verified": False,
+            "eu_abc_backtest_ready": False,
+            "orders_enabled": False,
+        },
         "screening": screening,
         "ipo_status": "NO_VERIFIED_EXCHANGE_IPO_FEED",
         "recent_platform_additions_are_ipos": False,
@@ -124,6 +147,7 @@ def build_catalog_report(
         "note": (
             "Trading 212 Practice catalog matched once per day. "
             "addedOn means added to Trading 212, NOT exchange IPO. "
+            "EU ISIN country prefix is not proof of issuer domicile or venue. "
             "Top-20 price/momentum ranking requires separate verified "
             "split-adjusted EUR OHLCV and liquidity data. "
             "No broker orders and no financial performance claims."
