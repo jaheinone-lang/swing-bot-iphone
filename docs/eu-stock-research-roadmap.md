@@ -49,7 +49,11 @@ The read-only adapter `swingbot/eu_eodhd_split.py` now has an
   after explicit personal non-display rights, source/exchange mapping, and
   Trading 212 instrument verification. Such permissions are not inferred
   from HTTP success.
-- Split history access can require an EODHD paid entitlement.
+- The EODHD personal Free plan advertises 20 calls/day and a one-year
+  history limit. On its 20 October 2026 pricing page, splits/dividends on
+  Free are available for one year **only when activated through support**;
+  access must be checked before attempting split reconstruction. A paid
+  longer-history entitlement may be necessary for the training/holdout test.
   No EODHD token has been provided or used, and **no actual EU stock
   historical strategy return has been computed**.
 - The converter and end-to-end strategy integration were unit-tested with
