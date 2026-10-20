@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-10-20T07:37:35+00:00",
+  "generated_at_utc": "2026-10-20T07:38:21+00:00",
   "mode": "READ_ONLY_RESEARCH",
   "initial_eur": 5000.0,
   "max_new_entry_drawdown_pct": 25,
@@ -383,9 +383,9 @@
     {
       "name": "Alpaca Markets Basic · IEX (maksuton)",
       "role": "50 US-osakkeen historiallinen USD-päivädata ja alustava hintatrenditutkimus",
-      "status": "ALPACA_ADAPTER_OFFLINE_TESTED_PAPER_KEYS_NEEDED",
-      "needs_user_action": true,
-      "limitation": "Maksuton PAPER-tili ja API-avainpari tarvitaan; valittavissa IEX tai yli 15 min vanha SIP-historia, jos tilin oikeudet sallivat. Ei todellista spread- tai Trading 212 -saatavuustodennusta. Ei ostoja/myyntejä eikä julkista TOP 20 -rankingia"
+      "status": "ALPACA_US_HISTORICAL_SIP_50_AND_ABC_VERIFIED",
+      "needs_user_action": false,
+      "limitation": "PAPER-tilin historiallinen IEX/SIP 50/50 -haku ja A/B/C tutkimusajo onnistuivat 19.–20.10.2026. Ei reaaliaikaista spread- eikä Trading 212 -saatavuustodennusta. Ei ostoja/myyntejä eikä julkista raakaa hintadataa tai TOP20-rankingia"
     },
     {
       "name": "Massive US Stocks Basic (maksuton)",
@@ -393,6 +393,13 @@
       "status": "MASSIVE_API_VERIFIED_STRATEGY_LICENSE_UNCONFIRMED",
       "needs_user_action": true,
       "limitation": "API-testi onnistui, mutta Massiven käyttöehdot rajoittavat non-display sijoitusstrategia-analyysiä; automaattinen käyttö estetty kunnes erillinen lupa varmistetaan. 50 osakkeen ranking on offline-valmis vain synteettiselle tai lisensoidulle datalle"
+    },
+    {
+      "name": "EU-27 osakkeet · 50 tutkimusyhtiötä",
+      "role": "9 EU-maan 50 suuren osakkeen seurantalista, EU-ISIN-metadata ja EUR/DKK/SEK-erottelu",
+      "status": "EU_WATCHLIST_AND_BROKER_METADATA_READY_NO_EOD",
+      "needs_user_action": true,
+      "limitation": "50 valittua nimeä eivät vielä ole vahvistettuja Trading 212 -instrumentteja. EU-kurssien lisensoitu, yhtiötapahtumakorjattu historia ja SEK/DKK->EUR-valuuttakurssit puuttuvat; ei EU-backtestiä eikä kauppoja"
     },
     {
       "name": "Trading 212 Invest DEMO",
