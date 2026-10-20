@@ -45,6 +45,7 @@ jobs:
         run: |
           python - <<'PY'
           import json
+          from collections import Counter
           from datetime import datetime, timezone
           from swingbot.alpaca_iex import AlpacaUnavailable, fetch_iex_bars
           from swingbot.us_synthetic_lab import compare_abc_offline
@@ -53,7 +54,20 @@ jobs:
           today = datetime.now(timezone.utc).date()
           collected = {}
           errors = 0
+          attempted = 0
+          reasons = Counter()
+          def safe_reason(exc):
+              message = str(exc)
+              if message.startswith("Alpaca IEX request HTTP "):
+                  code = message.rsplit(" ", 1)[-1]
+                  return "HTTP_" + code if code in ("401", "403", "429", "400", "422", "500", "503") else "HTTP_OTHER"
+              if "stale" in message.lower():
+                  return "STALE"
+              if "260" in message:
+                  return "INSUFFICIENT"
+              return "VALIDATION"
           for ticker in US_WATCHLIST_50:
+              attempted += 1
               try:
                   row = fetch_iex_bars(ticker, as_of=today, feed="sip")
                   if (row.ticker != ticker or
@@ -62,12 +76,20 @@ jobs:
                       row.adjustment != "SPLIT_ADJUSTED_NOT_DIVIDEND_ADJUSTED"):
                       raise AlpacaUnavailable("Wrong market-data feed")
                   collected[ticker] = row
-              except (AlpacaUnavailable, ValueError, TypeError, AttributeError):
+              except AlpacaUnavailable as exc:
                   errors += 1
+                  category = safe_reason(exc)
+                  reasons[category] += 1
+                  if category in ("HTTP_401", "HTTP_403", "HTTP_429"):
+                      break
+              except (ValueError, TypeError, AttributeError):
+                  errors += 1
+                  reasons["LOCAL_VALIDATION"] += 1
           if errors:
               print(json.dumps({"status":"INCOMPLETE_SIP_BLOCKED",
-                                "attempted":len(US_WATCHLIST_50),
+                                "attempted":attempted,
                                 "valid_histories":len(collected),"failed":errors,
+                                "error_categories":dict(sorted(reasons.items())),
                                 "orders_enabled":False}))
               raise SystemExit(2)
           try:
