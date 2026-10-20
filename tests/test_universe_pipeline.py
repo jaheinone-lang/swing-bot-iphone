@@ -50,10 +50,38 @@ class UniversePipelineTests(unittest.TestCase):
         self.assertFalse(report["catalog_is_full_market_data_scan"])
         self.assertFalse(report["recent_platform_additions_are_ipos"])
         self.assertFalse(report["auto_trading_enabled"])
+        eu = report["eu_stock_research"]
+        self.assertEqual(eu["curated_watchlist_size"], 50)
+        self.assertEqual(eu["broker_matches_verified"], 0)
+        self.assertFalse(eu["price_history_verified"])
+        self.assertFalse(eu["eu_abc_backtest_ready"])
+        self.assertFalse(eu["orders_enabled"])
         raw = json.dumps(report)
         # No full private instrument data is written to public report
         for ticker in ("GOOD_DE_EQ", "OTHER_DE_EQ", "ABC_US_EQ", "Example A"):
             self.assertNotIn(ticker, raw)
+
+    def test_eu_aggregate_metadata_only_and_no_private_tickers(self):
+        sample = [
+            {"ticker":"NAME1_DE_EQ","type":"STOCK","currencyCode":"EUR",
+             "isin":"DE0000000001","addedOn":"2026-02-01T00:00:00Z"},
+            {"ticker":"NAME2_SE_EQ","type":"STOCK","currencyCode":"SEK",
+             "isin":"SE0000000001","addedOn":"2026-02-01T00:00:00Z"},
+            {"ticker":"NAME3_US_EQ","type":"STOCK","currencyCode":"EUR",
+             "isin":"US0000000001","addedOn":"2026-02-01T00:00:00Z"},
+            {"ticker":"FUND_FR_EQ","type":"ETF","currencyCode":"EUR",
+             "isin":"FR0000000001","addedOn":"2026-02-01T00:00:00Z"},
+        ]
+        report = build_catalog_report(sample, as_of=date(2026,10,18))
+        eu = report["eu_stock_research"]
+        self.assertEqual(eu["stocks_with_eu_isin_prefix"], 2)
+        self.assertEqual(eu["eur_quoted_eu_isin_prefix_stocks"], 1)
+        self.assertEqual(eu["by_quote_currency"], {"EUR":1, "SEK":1})
+        self.assertFalse(eu["eu_issuer_domicile_verified"])
+        self.assertFalse(eu["listing_venue_verified"])
+        serialized = json.dumps(report)
+        for private_symbol in ("NAME1_DE_EQ","NAME2_SE_EQ","NAME3_US_EQ"):
+            self.assertNotIn(private_symbol, serialized)
 
     def test_empty_broker_response_never_overwrites_old_report(self):
         with tempfile.TemporaryDirectory() as folder:
