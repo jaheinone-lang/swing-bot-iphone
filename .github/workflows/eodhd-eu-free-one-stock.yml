@@ -1,0 +1,94 @@
+# Opt-in read-only EODHD free-tier connectivity check for ONE EU listing.
+# Exactly one EOD price API request. No splits, bulk, orders, saved prices,
+# or public price publication. Uses a GitHub Actions secret, not a hardcoded key.
+name: EODHD free EU one-stock connection test
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_personal_read_only:
+        description: 'I approve ONE EODHD personal-use EOD request (SAP.XETRA); no orders'
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eodhd-eu-single-stock-free-manual
+  cancel-in-progress: true
+
+jobs:
+  offline-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate safety checks before paid-quota-consuming requests
+        run: python -m unittest discover -s tests -q
+
+  single-eu-eod-read-only:
+    needs: offline-guard
+    if: ${{ inputs.confirm_personal_read_only == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: One read-only EU historical EOD request, aggregate report only
+        env:
+          EODHD_API_TOKEN: ${{ secrets.EODHD_API_TOKEN }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from swingbot.eodhd_feed import EodhdUnavailable, fetch_eodhd_eod
+
+          if not os.environ.get("EODHD_API_TOKEN","").strip():
+              print(json.dumps({
+                  "status":"MISSING_EODHD_GITHUB_SECRET",
+                  "requested":0, "orders_enabled":False,
+              }))
+              raise SystemExit(2)
+          try:
+              # EXACTLY ONE API CALL, only after the manual opt-in.
+              # EODHD raw OHLC is NOT split- or dividend-adjusted.
+              data = fetch_eodhd_eod(
+                  "SAP.XETRA", quote_currency="EUR",
+                  as_of=datetime.now(timezone.utc).date(),
+              )
+          except EodhdUnavailable:
+              # Do not log exception text, response body, or request URL:
+              # EODHD places the token in its API query string.
+              print(json.dumps({
+                  "status":"EODHD_EU_EOD_UNAVAILABLE_OR_HISTORY_INVALID",
+                  "requested":1, "valid_histories":0,
+                  "no_auto_retry":True, "orders_enabled":False,
+              }))
+              raise SystemExit(2)
+          print(json.dumps({
+              "status":"EODHD_EU_EOD_READ_OK_UNADJUSTED",
+              "requested":1, "valid_histories":1,
+              "completed_sessions":len(data.completed),
+              "latest_completed_session":data.completed[-1].day.isoformat(),
+              "eodhd_symbol":"SAP.XETRA",
+              "currency_from_provider_verified":False,
+              "exchange_isin_broker_match_verified":False,
+              "split_adjustment_verified":False,
+              "free_plan_charges_or_subscription_created":False,
+              "eu_abc_strategy_results_produced":False,
+              "source_ohlcv_or_prices_published":False,
+              "paper_portfolio_modified":False,
+              "orders_enabled":False,
+          }))
+          PY
