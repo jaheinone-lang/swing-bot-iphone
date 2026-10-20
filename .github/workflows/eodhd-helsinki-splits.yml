@@ -1,0 +1,71 @@
+name: EODHD Helsinki Nokia Elisa split availability
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_two_read_only_split_requests:
+        description: 'I approve 2 read-only EODHD split-event calls on my personal plan (NOKIA.HE, ELISA.HE)'
+        type: boolean
+        required: true
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: eodhd-helsinki-split-manual
+  cancel-in-progress: true
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -q
+  fetch-split-events:
+    if: ${{ inputs.confirm_two_read_only_split_requests == true }}
+    needs: offline-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Exactly two split endpoint GETs, no prices or secrets printed
+        env:
+          EODHD_API_TOKEN: ${{ secrets.EODHD_API_TOKEN }}
+        run: |
+          python - <<'PY'
+          import json,os
+          from datetime import datetime,timedelta,timezone
+          from swingbot.eu_eodhd_split import fetch_eodhd_splits,parse_split_events
+          from swingbot.eodhd_feed import EodhdUnavailable
+          if not os.getenv("EODHD_API_TOKEN","").strip():
+              print('{"status":"MISSING_SECRET","requests":0,"orders":false}')
+              raise SystemExit(2)
+          as_of=datetime.now(timezone.utc).date()
+          start=as_of-timedelta(days=365)
+          results=[]
+          for symbol in ("NOKIA.HE","ELISA.HE"):
+              try:
+                  rows=fetch_eodhd_splits(provider_symbol=symbol,first_day=start,as_of=as_of)
+                  valid=parse_split_events(rows,first_day=start,as_of=as_of)
+                  results.append({"symbol":symbol,"status":"EVENT_ENDPOINT_AVAILABLE",
+                                  "events":len(valid),"individual_events_published":False})
+              except EodhdUnavailable:
+                  results.append({"symbol":symbol,"status":"UNAVAILABLE_OR_NOT_ENTITLED",
+                                  "individual_events_published":False})
+          print(json.dumps({"status":"HELSINKI_SPLIT_ENDPOINT_ACCESS_RESEARCH",
+                            "requests":2,"results":results,
+                            "no_events_does_not_prove_complete_history":True,
+                            "full_split_history_verified":False,
+                            "prices_or_events_published":False,
+                            "eur_portfolio_unchanged":True,"orders_enabled":False}))
+          if any(x["status"]!="EVENT_ENDPOINT_AVAILABLE" for x in results):
+              raise SystemExit(2)
+          PY
