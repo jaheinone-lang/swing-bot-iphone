@@ -27,6 +27,38 @@ price history, and NO API trading.
 - Spread, execution, dividend taxation, delistings, index membership bias
   and FX are not confirmed for real execution.
 
+## EU historical split reconstruction (added 20 October 2026)
+
+The read-only adapter `swingbot/eu_eodhd_split.py` now has an
+**offline-tested price-adjustment path**:
+
+- EODHD raw OHLC is **unadjusted**, while `adjusted_close` contains both
+  dividend and split adjustment, so it cannot be reused as split-only OHLC.
+- EODHD documents EOD volume as *already split-adjusted*. Never scale it
+  again when reconstructing split-adjusted historical candles.
+- Historical split-event dates and new/old ratios rebuild **split-only**
+  open/high/low/close for earlier sessions, preserving original EOD volume.
+- The selected EODHD exchange suffix must match the selected EU listing's
+  country (for example, German XETRA versus French Paris). An independent
+  accurate company/ISIN/exchange/ticker crosswalk is STILL required: suffix
+  matching alone does not prove identity.
+- An ex-date needs a matching **completed EOD price bar** before adjustment.
+  Duplicated, malformed, future-dated and stale records fail closed.
+- The result is usable by the separate EU EUR A/B/C offline engine ONLY
+  after explicit personal non-display rights, source/exchange mapping, and
+  Trading 212 instrument verification. Such permissions are not inferred
+  from HTTP success.
+- Split history access can require an EODHD paid entitlement.
+  No EODHD token has been provided or used, and **no actual EU stock
+  historical strategy return has been computed**.
+- The converter and end-to-end strategy integration were unit-tested with
+  *synthetic fixtures only*. The 121+ tests passing reflect software
+  safety, not profits.
+
+Relevant provider documentation:
+<https://eodhd.com/financial-apis/api-for-historical-data-and-volumes>
+<https://eodhd.com/financial-apis/technical-indicators-api>
+
 ## Missing before EU actual-price strategy research
 
 1. An approved personal/internal non-display data-use right for the chosen
