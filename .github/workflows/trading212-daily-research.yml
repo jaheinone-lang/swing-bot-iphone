@@ -71,7 +71,7 @@ jobs:
           # Whitelist public keys only, blocking accidental private data
           assert set(data) == {
              "schema_version","generated_at_utc","as_of","status","data_mode",
-             "instruments","eu_stock_research","screening","ipo_status",
+             "instruments","eu_stock_research","helsinki_research","screening","ipo_status",
              "recent_platform_additions_are_ipos",
              "price_history_available_from_trading212",
              "fundamental_data_available_from_trading212",
@@ -103,6 +103,24 @@ jobs:
           assert eu["price_history_verified"] is False
           assert eu["eu_abc_backtest_ready"] is False
           assert eu["orders_enabled"] is False
+          hel=data["helsinki_research"]
+          assert set(hel) == {
+             "mode","fi_isin_stock_instruments",
+             "fi_isin_eur_quoted_instruments","by_quote_currency",
+             "nasdaq_helsinki_venue_verified",
+             "curated_symbol_identity_verified",
+             "price_feed_broker_mapping_verified",
+             "top10_ready","orders_enabled"
+          }
+          assert hel["mode"] == "FI_ISIN_STOCK_AGGREGATES_ONLY"
+          assert 0 <= hel["fi_isin_eur_quoted_instruments"] <= hel["fi_isin_stock_instruments"] <= data["instruments"]["stocks"]
+          assert sum(hel["by_quote_currency"].values()) == hel["fi_isin_stock_instruments"]
+          assert all(hel[k] is False for k in (
+             "nasdaq_helsinki_venue_verified",
+             "curated_symbol_identity_verified",
+             "price_feed_broker_mapping_verified",
+             "top10_ready","orders_enabled"
+          ))
           assert set(data["screening"]) == {
              "feed_matched","feed_rejected_or_unmatched","candidates_checked",
              "top_candidates","price_data_connected","ranking_status",
