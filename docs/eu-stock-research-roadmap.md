@@ -38,10 +38,11 @@ The read-only adapter `swingbot/eu_eodhd_split.py` now has an
   again when reconstructing split-adjusted historical candles.
 - Historical split-event dates and new/old ratios rebuild **split-only**
   open/high/low/close for earlier sessions, preserving original EOD volume.
-- The selected EODHD exchange suffix must match the selected EU listing's
-  country (for example, German XETRA versus French Paris). An independent
-  accurate company/ISIN/exchange/ticker crosswalk is STILL required: suffix
-  matching alone does not prove identity.
+- The selected EODHD symbol must match the entire curated listing ticker
+  plus the expected provider exchange suffix, not just the exchange (for
+  example, `SAP.DE` must map to `SAP.XETRA`, not `BMW.XETRA`). An independent
+  accurate company/ISIN/exchange/ticker crosswalk is STILL required: symbols
+  can be recycled or ambiguous and text matching alone does not prove identity.
 - An ex-date needs a matching **completed EOD price bar** before adjustment.
   Duplicated, malformed, future-dated and stale records fail closed.
 - The result is usable by the separate EU EUR A/B/C offline engine ONLY
