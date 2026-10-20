@@ -87,7 +87,7 @@ def _build() -> tuple[EUListing, ...]:
     for name, symbol, country in _RAW_LISTINGS:
         exchange, currency, suffix = MARKET_QUOTE[country]
         if (country not in EU27 or not symbol.endswith(suffix)
-                or not re.fullmatch(r"[A-Z0-9-]+\\.[A-Z]{2}", symbol)):
+                or not re.fullmatch(r"[A-Z0-9-]+\.[A-Z]{2}", symbol)):
             raise ValueError("Invalid curated EU listing")
         rows.append(EUListing(name, symbol, country, exchange, currency))
     if len(rows) != 50 or len({x.symbol for x in rows}) != 50:
