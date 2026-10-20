@@ -93,7 +93,7 @@ class SplitTests(unittest.TestCase):
 
     def test_invalid_exchange_currency_and_rights_blocked(self):
         for variant in (
-            "SAP.US", "NOVO-B.CO",
+            "SAP.US", "NOVO-B.CO", "SAP.PA", "SAP.HE",
         ):
             with self.subTest(ticker=variant), self.assertRaises(EodhdUnavailable):
                 prepare(raw_example(symbol=variant))
@@ -119,6 +119,19 @@ class SplitTests(unittest.TestCase):
                 broker_isin_and_listing_verified=True,
                 personal_non_display_rights_verified=True
             )
+
+    def test_split_ex_date_must_have_completed_session(self):
+        # The split event alone cannot adjust bars before the first
+        # completed post-split trading day; no future look-ahead.
+        with self.assertRaises(EodhdUnavailable):
+            prepare(events=[
+                {"date":TODAY.isoformat(),"split":"4/1"}
+            ])
+        missing_day = raw_example()
+        missing = tuple(b for b in missing_day.completed if b.day != SPLIT)
+        from dataclasses import replace
+        with self.assertRaises(EodhdUnavailable):
+            prepare(replace(missing_day, completed=missing))
 
     def test_no_secret_or_unsafe_url_and_read_only_mock(self):
         seen=[]
