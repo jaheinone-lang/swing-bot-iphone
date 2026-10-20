@@ -15,6 +15,7 @@ from pathlib import Path
 from .trading212_universe import load_demo_universe, summarize_universe
 from .equity_screen import screen_equity, DailyBar
 from .eu_watchlist import eu_isin_prefix_counts, eu_research_readiness
+from .helsinki_broker_metadata import helsinki_broker_candidates
 
 
 def rank_verified_eur_candidates(
@@ -100,6 +101,7 @@ def build_catalog_report(
     # domicile or exchange, and no actual broker ticker is published.
     eu_counts = eu_isin_prefix_counts(instruments)
     eu_watch = eu_research_readiness()
+    helsinki = helsinki_broker_candidates(instruments)
     # Source is private account metadata; publish only aggregated counts.
     screening = rank_verified_eur_candidates(
         instruments, validated_feeds or {}, as_of=as_of
@@ -136,6 +138,7 @@ def build_catalog_report(
             "eu_abc_backtest_ready": False,
             "orders_enabled": False,
         },
+        "helsinki_research": helsinki,
         "screening": screening,
         "ipo_status": "NO_VERIFIED_EXCHANGE_IPO_FEED",
         "recent_platform_additions_are_ipos": False,
