@@ -82,11 +82,19 @@ def split_adjusted_eur_history(
     if listing is None or listing.currency != "EUR":
         raise EodhdUnavailable("EU research symbol not EUR quoted")
     expected_suffix = EODHD_VENUE_SUFFIX.get(listing.country)
+    # All 43 curated EUR-listed research symbols use the same ticker base.
+    # German research .DE maps to EODHD .XETRA. If a provider uses a
+    # different security identifier, a separately reviewed exact mapping
+    # is required; do not silently match by company name or venue alone.
+    research_base = research_symbol.rsplit(".", 1)[0]
+    expected_provider_symbol = (
+        research_base + expected_suffix if expected_suffix else None
+    )
     if (not isinstance(raw, EodhdFeed) or raw.quote_currency != "EUR"
             or not isinstance(as_of, date) or
-            not expected_suffix or not raw.ticker
-            or not raw.ticker.endswith(expected_suffix)):
-        raise EodhdUnavailable("EU source exchange or quote currency mismatch")
+            not expected_provider_symbol
+            or raw.ticker != expected_provider_symbol):
+        raise EodhdUnavailable("EU exact provider listing or currency mismatch")
     if (not exact_eodhd_venue_verified or not broker_isin_and_listing_verified
             or not personal_non_display_rights_verified):
         raise PermissionError("EU listing/broker identity/data usage not approved")
