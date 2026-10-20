@@ -133,6 +133,45 @@ class SplitTests(unittest.TestCase):
         with self.assertRaises(EodhdUnavailable):
             prepare(replace(missing_day, completed=missing))
 
+    def test_eodhd_split_to_abc_research_integration_without_network(self):
+        # Deliberately synthetic prices with manually asserted permissions:
+        # software integration only, NOT a real verified venue/rights proof.
+        from swingbot.eu_swing_lab import compare_eu_abc_offline
+        candles=[]
+        for i in range(430):
+            day=ORIGIN+timedelta(days=i)
+            px=(95+i*.05) if i < 180 else (95+i*.05)/4
+            candles.append(DailyBar(
+                day,px,px*1.015,px*.985,px,200000))
+        dataset=EodhdFeed(
+            ticker="SAP.XETRA",quote_currency="EUR",
+            completed=tuple(candles),
+            adjustment_status="RAW_OHLC_NOT_VERIFIED_SPLIT_OR_DIVIDEND_ADJUSTED"
+        )
+        cutoff=ORIGIN+timedelta(days=430)
+        feed=split_adjusted_eur_history(
+            dataset,[{"date":SPLIT.isoformat(),"split":"4/1"}],
+            as_of=cutoff,research_symbol="SAP.DE",
+            exact_eodhd_venue_verified=True,
+            broker_isin_and_listing_verified=True,
+            personal_non_display_rights_verified=True
+        )
+        self.assertLess(abs(feed.bars[179].close/feed.bars[180].close-1),.01)
+        # Permission to compare must be separately confirmed, even with
+        # an injected EODHD history whose adjustment was checked.
+        with self.assertRaises(PermissionError):
+            compare_eu_abc_offline({"SAP.DE":feed},as_of=cutoff)
+        result=compare_eu_abc_offline(
+            {"SAP.DE":feed},as_of=cutoff,
+            personal_non_display_use_confirmed=True
+        )
+        self.assertEqual(len(result["variants"]),3)
+        self.assertEqual(result["symbol_count"],1)
+        self.assertEqual(result["source_type"],
+                         "USER_VERIFIED_PRIVATE_NON_DISPLAY_EU_EOD")
+        self.assertFalse(result["broker_orders_enabled"])
+        self.assertFalse(result["eur_paper_portfolio_modified"])
+
     def test_no_secret_or_unsafe_url_and_read_only_mock(self):
         seen=[]
         class Response:
