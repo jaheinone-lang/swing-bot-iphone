@@ -26,6 +26,14 @@ from .equity_screen import DailyBar
 from .eu_swing_lab import EUHistory, VERIFIED
 from .eu_watchlist import EU_BY_SYMBOL
 
+# Venue suffix must agree with the curated exchange country. This does not
+# replace exact provider symbol/ISIN validation by the data-rights owner.
+EODHD_VENUE_SUFFIX = {
+    "DE": ".XETRA", "FR": ".PA", "NL": ".AS",
+    "ES": ".MC", "IT": ".MI", "BE": ".BR",
+    "FI": ".HE",
+}
+
 
 def parse_split_events(rows: object, *, first_day: date, as_of: date
                        ) -> tuple[tuple[date, float], ...]:
@@ -73,11 +81,12 @@ def split_adjusted_eur_history(
     listing = EU_BY_SYMBOL.get(research_symbol)
     if listing is None or listing.currency != "EUR":
         raise EodhdUnavailable("EU research symbol not EUR quoted")
+    expected_suffix = EODHD_VENUE_SUFFIX.get(listing.country)
     if (not isinstance(raw, EodhdFeed) or raw.quote_currency != "EUR"
             or not isinstance(as_of, date) or
-            not raw.ticker or not raw.ticker.endswith(".XETRA")
-            and not raw.ticker.endswith((".PA", ".AS", ".MC", ".MI", ".BR"))):
-        raise EodhdUnavailable("Unverified native EUR source")
+            not expected_suffix or not raw.ticker
+            or not raw.ticker.endswith(expected_suffix)):
+        raise EodhdUnavailable("EU source exchange or quote currency mismatch")
     if (not exact_eodhd_venue_verified or not broker_isin_and_listing_verified
             or not personal_non_display_rights_verified):
         raise PermissionError("EU listing/broker identity/data usage not approved")
@@ -90,6 +99,11 @@ def split_adjusted_eur_history(
             not 1 <= (as_of - bars[-1].day).days <= 7):
         raise EodhdUnavailable("Insufficient, stale or duplicate EU history")
     events = parse_split_events(split_rows, first_day=bars[0].day, as_of=as_of)
+    complete_days = {b.day for b in bars}
+    if any(day not in complete_days for day, _ in events):
+        # An ex-date outside completed bars would retroactively shift the
+        # history before an actual post-split session exists. Reject it.
+        raise EodhdUnavailable("Split ex-date has no completed market session")
     # Every earlier date must reflect all split ex-dates strictly AFTER it.
     by_day_desc = list(reversed(events))
     pos = 0
