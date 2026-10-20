@@ -116,6 +116,13 @@
     <div id="broker-universe" aria-live="polite"><p class="muted">Ladataan Trading 212 -katalogin tietoja…</p></div>
   </section>
 
+  <section class="card" aria-labelledby="eu-rank">
+    <h2 id="eu-rank">EU-osakkeet · 50 yhtiön tutkimusseuranta</h2>
+    <p class="note">Ensimmäinen 50 tunnetun EU-yhtiön seurantalista kattaa Saksan, Ranskan, Alankomaat, Suomen, Espanjan, Italian, Belgian, Tanskan ja Ruotsin. Mukana esimerkiksi SAP, ASML, Nokia, KONE, LVMH ja Novo Nordisk. Nimet eivät ole sijoitussuosituksia tai Trading 212:n vahvistettuja instrumenttiosumia.</p>
+    <div id="eu-stock-research" aria-live="polite"><p class="muted">Ladataan EU-markkinoiden tutkimusvalmiutta…</p></div>
+    <p class="warn">EU:n pörssihintoja ei saa Alpaca US SIP -syötteestä. EU-osakkeiden A/B/C-vertailu odottaa erillistä, käyttöehdoiltaan sopivaa ja yhtiötapahtumakorjattua hintadataa. Ruotsin SEK- ja Tanskan DKK-osakkeille tarvitaan lisäksi historialliset valuuttakurssit euroon. Ei automaattista kaupankäyntiä.</p>
+  </section>
+
   <section class="card" aria-labelledby="us-rank">
     <h2 id="us-rank">US-osakkeiden TOP 20 · kehitysvaihe</h2>
     <div class="grid">
@@ -125,8 +132,8 @@
       <div class="metric"><small>US-seulonnan tekemät kaupat</small><div class="value">0</div></div>
     </div>
     <p class="note">Pisteytys perustuu 20 päivän hintaläpimurtoon, 50/200 päivän trendiin, 60 päivän momentumiin, 14 päivän ATR-volatiliteettiin ja likviditeettiin. Maksuttoman Massive-rajapinnan kahdeksan teknistä datatestiä onnistuivat 18.10.2026.</p>
-    <p class="warn">Massiven henkilökohtainen datalisenssi ei sellaisenaan oikeuta automatisoituun non-display-sijoitusstrategian analyysiin. Siksi TOP 20 -tuloksia EI luoda Massiven datasta ilman erillistä vahvistettua käyttölupaa. A/B/C-testit suoritetaan toistaiseksi keinotekoisella testidatalla; niistä ei voi päätellä odotettavaa tuottoa.</p>
-    <p class="note">Uusi maksuton vaihtoehto: Alpaca Markets Basic. Sen 50 osakkeen haku- ja tutkimussovitin on valmisteltu GitHubiin. Avaimet tulee luoda vain Alpaca PAPER -tililtä. Valittavana on IEX-rajatut päivätiedot sekä erikseen kokeiltava yli 15 min vanha SIP-historia, jos tilin oikeudet sallivat. <a href="https://github.com/jaheinone-lang/swing-bot-iphone/actions/workflows/alpaca-free-iex.yml">Avaa Alpaca-yhteystesti GitHubissa ↗</a></p>
+    <p class="warn">Massiven henkilökohtainen datalisenssi ei sellaisenaan oikeuta automatisoituun non-display-sijoitusstrategian analyysiin. Siksi TOP 20 -tuloksia EI luoda Massiven datasta ilman erillistä vahvistettua käyttölupaa. Massiven datalla A/B/C-testit eivät ole käytössä. Alpaca PAPER -tilin historiallinen SIP A/B/C -tutkimus onnistui 20.10.2026 erillisessä GitHub Actions -ajossa, mutta historiatulos ei todista tulevaa tuottoa.</p>
+    <p class="note">Uusi maksuton vaihtoehto: Alpaca Markets Basic. Sen 50 osakkeen historiallinen SIP-lukutesti ja erillinen A/B/C-vertailu onnistuivat 20.10.2026. Avaimia käytetään vain Alpaca PAPER -tililtä. Valittavana on IEX-rajatut päivätiedot sekä erikseen kokeiltava yli 15 min vanha SIP-historia, jos tilin oikeudet sallivat. <a href="https://github.com/jaheinone-lang/swing-bot-iphone/actions/workflows/alpaca-free-iex.yml">Avaa Alpaca-yhteystesti GitHubissa ↗</a></p>
     <details>
       <summary>A/B/C-strategiat ja riskienhallinta</summary>
       <p class="note"><strong>A – perus:</strong> 20 päivän hintaläpimurto, 50 päivän trendi, ATR-stop x 2,0.</p>
@@ -362,6 +369,30 @@ function renderStrategyLab(report) {
     "Verovaraus ei ole verottajan lasku. Voitot voivat palautua markkinoille, mutta varattu vero ei."));
   wrap.append(node("p","note",lab.caveat));
 }
+function renderEUStockResearch(report) {
+  const wrap=$("eu-stock-research");
+  if(!wrap) return;
+  wrap.replaceChildren();
+  const info=report?.eu_stock_research;
+  if(!info || info.status!=="EU_ISIN_PREFIX_METADATA_COUNTS_ONLY") {
+    wrap.append(node("p","muted","EU-seurantalista (50 osaketta) on valmisteltu. Trading 212:n uusi EU-lukumääräraportti odottaa seuraavaa päivittäistä päivitystä."));
+    return;
+  }
+  const fmt=new Intl.NumberFormat("fi-FI");
+  const grid=node("div","grid");
+  grid.append(
+    metric("EU-alkuisen ISINin osakkeet",fmt.format(info.stocks_with_eu_isin_prefix)),
+    metric("Näistä EUR-noteerattuja",fmt.format(info.eur_quoted_eu_isin_prefix_stocks)),
+    metric("Oma EU-tutkimuslista",fmt.format(info.curated_watchlist_size)),
+    metric("EU-hintadataa vahvistettu",info.price_history_verified?"Kyllä":"Ei vielä")
+  );
+  wrap.append(grid);
+  const ccy=Object.entries(info.by_quote_currency||{})
+    .map(([code,n])=>code+": "+fmt.format(n)).join(" · ");
+  wrap.append(node("p","note","Trading 212 -harjoittelutilin osakkeet, joilla on EU-maan ISIN-alku. Valuutat: "+ccy+". ISIN-alku ei vahvista yhtiön kotipaikkaa, pörssiä eikä sitä, että osake olisi mukana omassa 50 yhtiön tutkimuslistassa."));
+  wrap.append(node("p","note","EU:n TOP20- ja A/B/C-strategiatestit: odottavat lisensoitua historiallista hintadataa ja välittäjätunnusten tarkistusta. Mitään EU-kauppoja ei tehdä."));
+}
+
 async function loadBrokerUniverse() {
   const wrap=$("broker-universe");
   if(!wrap) return;
@@ -385,6 +416,7 @@ async function loadBrokerUniverse() {
   wrap.replaceChildren();
   if(!data) {
     wrap.append(node("p","warn","Yhteystesti onnistui 18.10.2026, mutta päivittäistä katalogiraporttia ei ole vielä julkaistu. Ensimmäinen ajokerta odottaa."));
+    renderEUStockResearch(null);
     return;
   }
   const last=new Date(data.generated_at_utc);
@@ -414,6 +446,7 @@ async function loadBrokerUniverse() {
     wrap.append(node("p","warn","Hintarankingin tila on muuttunut. Tarkista datan lähde, lisenssi ja koko seulontajakson laatu ennen johtopäätöksiä."));
   }
   wrap.append(node("p","note","Alustalle lisääminen ≠ uusi pörssilistautuminen. Tämä on vain välittäjän instrumenttivalikoiman yhteenveto; ei sijoitussuositus eikä automaattinen kaupankäynti."));
+  renderEUStockResearch(data);
 }
 
 async function loadIpoResearch() {
