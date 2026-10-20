@@ -25,7 +25,7 @@ def public_source_readiness() -> list[dict]:
          "role":"Globaali osake- ja ETF-historia, OHLCV ja yhtiötapahtumat",
          "status":"ADAPTER_TESTED_NEEDS_PRIVATE_TOKEN_AND_LICENSE",
          "needs_user_action":True,
-         "limitation":"Ei tilattua hintadataa; oikaisut pitää varmentaa"},
+         "limitation":"EU:n split-only OHLCV-korjain testattu keinotekoisilla hinnoilla 20.10.2026; EODHD:n raakakurssit, split-tapahtumat ja volyymit käsitellään erikseen. Ei tilausta, varmennettua EU-hintasyötettä, Trading 212 -instrumenttiyhdistystä tai EU:n toteutunutta historiatestiä"},
         {"name":"Alpaca Markets Basic · IEX (maksuton)",
          "role":"50 US-osakkeen historiallinen USD-päivädata ja alustava hintatrenditutkimus",
          "status":"ALPACA_US_HISTORICAL_SIP_50_AND_ABC_VERIFIED",
