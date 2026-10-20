@@ -120,7 +120,8 @@
     <h2 id="eu-rank">EU-osakkeet · 50 yhtiön tutkimusseuranta</h2>
     <p class="note">Ensimmäinen 50 tunnetun EU-yhtiön seurantalista kattaa Saksan, Ranskan, Alankomaat, Suomen, Espanjan, Italian, Belgian, Tanskan ja Ruotsin. Mukana esimerkiksi SAP, ASML, Nokia, KONE, LVMH ja Novo Nordisk. Nimet eivät ole sijoitussuosituksia tai Trading 212:n vahvistettuja instrumenttiosumia.</p>
     <div id="eu-stock-research" aria-live="polite"><p class="muted">Ladataan EU-markkinoiden tutkimusvalmiutta…</p></div>
-    <p class="warn">EU:n pörssihintoja ei saa Alpaca US SIP -syötteestä. EU-osakkeiden A/B/C-vertailu odottaa erillistä, käyttöehdoiltaan sopivaa ja yhtiötapahtumakorjattua hintadataa. Ruotsin SEK- ja Tanskan DKK-osakkeille tarvitaan lisäksi historialliset valuuttakurssit euroon. Ei automaattista kaupankäyntiä.</p>
+    <p class="note">EU:n A/B/C-strategiamoottori on toteutettu ja testattu 20.10.2026. Kaikki neljä synteettistä markkinatilannetta ja 113 ohjelmistotestiä läpäistiin. Tämä on vain ohjelmiston laadunvarmistus, EI EU-osakkeiden todellinen historiallinen tuottotesti. <a href="https://github.com/jaheinone-lang/swing-bot-iphone/actions/workflows/tests.yml">Avaa EU-strategioiden ohjelmistotestit GitHubissa ↗</a></p>
+    <p class="warn">EU:n pörssihintoja ei saa Alpaca US SIP -syötteestä. EU-osakkeiden A/B/C-tuottotesti odottaa erillistä, käyttöehdoiltaan sopivaa ja yhtiötapahtumakorjattua hintadataa sekä vahvistettuja instrumenttitunnuksia. Ruotsin SEK- ja Tanskan DKK-osakkeille tarvitaan lisäksi historialliset valuuttakurssit euroon. Ei automaattista kaupankäyntiä.</p>
   </section>
 
   <section class="card" aria-labelledby="us-rank">
@@ -390,7 +391,7 @@ function renderEUStockResearch(report) {
   const ccy=Object.entries(info.by_quote_currency||{})
     .map(([code,n])=>code+": "+fmt.format(n)).join(" · ");
   wrap.append(node("p","note","Trading 212 -harjoittelutilin osakkeet, joilla on EU-maan ISIN-alku. Valuutat: "+ccy+". ISIN-alku ei vahvista yhtiön kotipaikkaa, pörssiä eikä sitä, että osake olisi mukana omassa 50 yhtiön tutkimuslistassa."));
-  wrap.append(node("p","note","EU:n TOP20- ja A/B/C-strategiatestit: odottavat lisensoitua historiallista hintadataa ja välittäjätunnusten tarkistusta. Mitään EU-kauppoja ei tehdä."));
+  wrap.append(node("p","note","EU A/B/C -simulaatiomoottori on testattu synteettisellä datalla. EU:n TOP20- ja todellisen kurssihistorian strategiatestit odottavat hyväksyttyä hintadataa sekä välittäjätunnusten tarkistusta. Mitään EU-kauppoja ei tehdä."));
 }
 
 async function loadBrokerUniverse() {
