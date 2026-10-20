@@ -93,7 +93,7 @@ class SplitTests(unittest.TestCase):
 
     def test_invalid_exchange_currency_and_rights_blocked(self):
         for variant in (
-            "SAP.US", "NOVO-B.CO", "SAP.PA", "SAP.HE",
+            "SAP.US", "NOVO-B.CO", "SAP.PA", "SAP.HE", "BMW.XETRA",
         ):
             with self.subTest(ticker=variant), self.assertRaises(EodhdUnavailable):
                 prepare(raw_example(symbol=variant))
