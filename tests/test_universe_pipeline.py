@@ -50,6 +50,10 @@ class UniversePipelineTests(unittest.TestCase):
         self.assertFalse(report["catalog_is_full_market_data_scan"])
         self.assertFalse(report["recent_platform_additions_are_ipos"])
         self.assertFalse(report["auto_trading_enabled"])
+        hel=report["helsinki_research"]
+        self.assertEqual(hel["mode"],"FI_ISIN_STOCK_AGGREGATES_ONLY")
+        self.assertFalse(hel["nasdaq_helsinki_venue_verified"])
+        self.assertFalse(hel["top10_ready"])
         eu = report["eu_stock_research"]
         self.assertEqual(eu["curated_watchlist_size"], 50)
         self.assertEqual(eu["broker_matches_verified"], 0)
