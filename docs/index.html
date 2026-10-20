@@ -441,6 +441,17 @@ async function loadBrokerUniverse() {
   const currencies=Object.entries(i.by_currency||{})
     .map(([c,n])=>c+": "+count.format(n)).join(" · ");
   wrap.append(node("p","note","Valuutat: "+currencies+". Sama ISIN voi esiintyä useissa valuutoissa tai noteerauksissa."));
+  if(data.helsinki_research?.mode==="FI_ISIN_STOCK_AGGREGATES_ONLY") {
+    const hel=data.helsinki_research;
+    const h=node("div","grid");
+    h.append(
+      metric("Suomi-ISIN osakeinstrumentit",count.format(hel.fi_isin_stock_instruments)),
+      metric("Niistä EUR-noteerattuja",count.format(hel.fi_isin_eur_quoted_instruments))
+    );
+    wrap.append(node("h3","","Helsingin pörssi · alustava instrumenttiseulonta"));
+    wrap.append(h);
+    wrap.append(node("p","note","FI-alkuinen ISIN ei yksin vahvista Nasdaq Helsinki -listausta tai osakkeen Trading 212 -vastaavuutta. Helsingin TOP 10 odottaa näiden ja osakejakokorjatun datan vahvistusta."));
+  }
   if(data.screening.ranking_status==="AWAITING_LICENSED_PRICE_DATA") {
     wrap.append(node("p","warn","TOP 20 osaketta ja ETF:ää: odottaa varmennettua, yhtiötapahtumaoikaistua hintahistoriaa. Metadata ei yksin riitä rankingin laskentaan eikä ostosignaaleihin."));
   } else {
