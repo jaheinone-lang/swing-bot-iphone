@@ -1,23 +1,23 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-10-20T10:23:22+00:00",
-  "as_of": "2026-10-20",
+  "generated_at_utc": "2026-10-21T10:32:22+00:00",
+  "as_of": "2026-10-21",
   "status": "TRADING212_DEMO_METADATA_CONNECTED",
   "data_mode": "BROKER_INSTRUMENT_METADATA_ONLY",
   "instruments": {
-    "stocks": 10372,
+    "stocks": 10373,
     "etfs": 6749,
-    "total": 17121,
+    "total": 17122,
     "unique_isins": 13121,
     "by_currency": {
-      "CAD": 541,
+      "CAD": 542,
       "CHF": 387,
       "EUR": 6343,
       "GBP": 577,
       "GBX": 1895,
       "USD": 7378
     },
-    "platform_additions_last_30d": 688
+    "platform_additions_last_30d": 690
   },
   "eu_stock_research": {
     "status": "EU_ISIN_PREFIX_METADATA_COUNTS_ONLY",
@@ -68,6 +68,19 @@
     "broker_matches_verified": 0,
     "price_history_verified": false,
     "eu_abc_backtest_ready": false,
+    "orders_enabled": false
+  },
+  "helsinki_research": {
+    "mode": "FI_ISIN_STOCK_AGGREGATES_ONLY",
+    "fi_isin_stock_instruments": 34,
+    "fi_isin_eur_quoted_instruments": 34,
+    "by_quote_currency": {
+      "EUR": 34
+    },
+    "nasdaq_helsinki_venue_verified": false,
+    "curated_symbol_identity_verified": false,
+    "price_feed_broker_mapping_verified": false,
+    "top10_ready": false,
     "orders_enabled": false
   },
   "screening": {
