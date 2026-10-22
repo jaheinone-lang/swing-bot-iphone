@@ -7,6 +7,8 @@ on:
       - 'swingbot/crypto_alpha_research.py'
       - 'swingbot/crypto_validation.py'
       - 'swingbot/crypto_allocation_research.py'
+      - 'swingbot/intraday_net_target.py'
+      - 'tests/test_intraday_net_target.py'
       - 'swingbot/strategy_lab.py'
       - 'tests/test_crypto_alpha_research.py'
       - 'tests/test_crypto_allocation_research.py'
@@ -110,4 +112,44 @@ jobs:
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
               f.write('\n'.join(lines) + '\n')
           print('\n'.join(lines))
+          PY
+
+      - name: Verify 1% net-profit target with conservative fee assumptions
+        run: |
+          python - <<'PY'
+          from swingbot.intraday_net_target import (
+              ExecutionCosts, minimum_target_price,
+              net_profit_pct, partial_profit_cashflow
+          )
+          import os
+          lines=[
+              '',
+              '# Intraday 1% after-cost target (illustrative, no market fill)',
+              '| Cost profile | Required exit for entry €100 | Gross rise % | Net gain after costs % | Realized gain on €5k when 50% sold |',
+              '|---|---:|---:|---:|---:|',
+          ]
+          for name, cost in (
+              ('Estimated 25bps fee + 15bps slippage each side', ExecutionCosts()),
+              ('Stress 50bps fee + 30bps slippage each side',
+               ExecutionCosts(50,50,30,30)),
+          ):
+              target=minimum_target_price(100,costs=cost)
+              cash=partial_profit_cashflow(100,target,
+                                           sold_fraction=.5,costs=cost)
+              lines.append(
+                  f'| {name} | €{target:.2f} | {target-100:.2f}% | '
+                  f'{net_profit_pct(100,target,cost):.3f}% | '
+                  f"€{cash['net_realized_gain_eur_before_tax']:.2f} |"
+              )
+          lines.append(
+              '\n**This is order-price arithmetic, NOT a realized monthly or daily '
+              'return, and excludes personal taxes and changing venue fees.** '
+              'Price must touch the target and the order actually fill. '
+              'If 50% of a fully invested position is sold at +1% net, '
+              'that realizes ~0.5% of the whole initial portfolio, '
+              'not 1% of the entire account. Never submits orders.'
+          )
+          print('\n'.join(lines))
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
+              f.write('\n'.join(lines)+'\n')
           PY
