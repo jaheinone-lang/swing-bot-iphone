@@ -6,8 +6,10 @@ on:
     paths:
       - 'swingbot/crypto_alpha_research.py'
       - 'swingbot/crypto_validation.py'
+      - 'swingbot/crypto_allocation_research.py'
       - 'swingbot/strategy_lab.py'
       - 'tests/test_crypto_alpha_research.py'
+      - 'tests/test_crypto_allocation_research.py'
       - '.github/workflows/crypto-alpha-research.yml'
   workflow_dispatch:
 permissions:
@@ -69,4 +71,43 @@ jobs:
           with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as handle:
               handle.write('\n'.join(summary)+'\n')
           print('\n'.join(summary))
+          PY
+
+      - name: Compare €5000 E60 against E100 risk-capped and all-in over fresh last 30 days
+        run: |
+          python -m swingbot.crypto_allocation_research > /tmp/crypto-allocation-30d.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          research = json.loads(Path('/tmp/crypto-allocation-30d.json').read_text())
+          lines = [
+              '',
+              '# Capital allocation: EUR 5,000 reinvested; new account in last 30 completed days',
+              f"Window {research['recent_month_start']} to {research['history_end']}; "
+              "no external deposits, returns compound on the whole changing balance.",
+              '| Model | 30d end € | 30d profit € | Return % | 30d max DD % | Average invested % | Days ≥95% invested | Buy events | Entire history end € | Entire history max DD % |',
+              '|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|',
+          ]
+          for r in research['scenarios']:
+              m = r['most_recent_30d_from_fresh_5000']
+              h = r['full_history_compounding']
+              lines.append(
+                  f"| {r['name']} | {m['ending_eur']:.2f} | {m['profit_eur']:.2f} | "
+                  f"{m['return_pct']:.2f} | {m['max_drawdown_pct']:.2f} | "
+                  f"{m['mean_invested_share_pct']:.2f} | "
+                  f"{m['days_95pct_or_more_invested']} | {m['buy_events']} | "
+                  f"{h['final_equity_eur']:.2f} | {h['max_drawdown_pct']:.2f} |"
+              )
+          lines.extend([
+              '',
+              'CAUTION: **all-in removes per-trade stop-risk sizing**. '
+              'Funds can be heavily concentrated, 25% max-DD rule freezes NEW entries '
+              'but does not guarantee protection. '
+              'When BUY signals do not occur, even 100% allocation-enabled models hold cash. '
+              'Tax reserves cover only realized gains; the fee assumptions are estimates. '
+              'Historical tuning is not future validation. NO live trading, no position changes.'
+          ])
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
+              f.write('\n'.join(lines) + '\n')
+          print('\n'.join(lines))
           PY
