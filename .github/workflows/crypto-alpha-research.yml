@@ -5,6 +5,8 @@ on:
       - 'research/crypto-alpha-*'
     paths:
       - 'swingbot/crypto_alpha_research.py'
+      - 'swingbot/crypto_validation.py'
+      - 'swingbot/strategy_lab.py'
       - 'tests/test_crypto_alpha_research.py'
       - '.github/workflows/crypto-alpha-research.yml'
   workflow_dispatch:
@@ -33,18 +35,36 @@ jobs:
                    f"Training/later split: {result['split_day']}",
                    f"Training-selected candidate: **{result['winner_on_training']}**",
                    '',
-                   '| Strategy | Development % | Later % | Later max DD % | Full after-tax € | Fees € | Double-cost after-tax € |',
-                   '|---|---:|---:|---:|---:|---:|---:|']
+                   '| Strategy | Development % | Later % | Later DD % | Net 5k -> € | 2x costs € | 3% risk cap € | Worst 90d % |',
+                   '|---|---:|---:|---:|---:|---:|---:|---:|']
           for r in result['candidates']:
               summary.append(
                   f"| {r['name']} | {r['development']['total_return_pct']} | "
                   f"{r['later_period']['total_return_pct']} | "
                   f"{r['later_period']['max_drawdown_pct']} | "
                   f"{r['full_period_after_tax_eur']:.2f} | "
-                  f"{r['estimated_fees_eur']:.2f} | "
-                  f"{r['fee_stress_after_tax_eur']:.2f} |"
+                  f"{r['fee_stress_after_tax_eur']:.2f} | "
+                  f"{r['risk_cap_3pct_after_tax_eur']:.2f} | "
+                  f"{r['nonoverlapping_90d_windows']['worst_90d_return_pct']} |"
               )
-          summary.extend(['', 'Caution: retroactively designed strategies, ~2 years, three crypto pairs, estimated fees and taxes. No live orders or real-paper performance.'])
+          summary.extend(['', '### Buy-and-hold controls (201-candle warmup)',
+                          '| Control | Whole-period % | Later-period % | Max DD % | Final € |',
+                          '|---|---:|---:|---:|---:|'])
+          for label, row in result['hold_benchmarks'].items():
+              summary.append(
+                  f"| {label} | {row['whole_period']['total_return_pct']} | "
+                  f"{row['later_period']['total_return_pct']} | "
+                  f"{row['whole_period']['max_drawdown_pct']} | "
+                  f"{row['final_equity_eur']:.2f} |"
+              )
+          summary.extend([
+              '',
+              '**Caveats:** buy-and-hold warms up 201 candles and does not pay liquidation taxes, '
+              'whereas strategy starts signal eligibility earlier and reserves estimated realized-gain tax. '
+              'Raw performance is NOT apples-to-apples after-tax alpha. These are 719 historical days only, '
+              'not independent prospective verification. The 3% stop-risk guard is nominal and cannot bound gap losses. '
+              'No live orders or account connection.'
+          ])
           with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as handle:
               handle.write('\n'.join(summary)+'\n')
           print('\n'.join(summary))
