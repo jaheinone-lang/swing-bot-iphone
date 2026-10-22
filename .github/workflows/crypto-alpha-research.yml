@@ -183,8 +183,11 @@ jobs:
         run: |
           python - <<'PY'
           from swingbot.bitvavo_intraday_history import historical_five_minute
-          candles=historical_five_minute('BTC-EUR',days=7)
-          print('Validated completed BTC 5m historical bars:',len(candles))
+          candles=historical_five_minute('BTC-EUR',days=7,require_complete=False)
+          from swingbot.bitvavo_intraday_history import contiguous_observed_segments
+          segments=contiguous_observed_segments(candles,min_bars=100)
+          print('Observed BTC bars:',len(candles),'Missing:',2016-len(candles),
+                'Longest continuous:',max((len(x) for x in segments),default=0))
           PY
 
       - name: Compare pullback versus breakout with 7 days of real 5m crypto candles
