@@ -2,30 +2,43 @@
   "schema_version": 1,
   "mode": "DELAYED_FORWARD_PAPER",
   "started_on": "2026-10-16",
-  "last_processed_day": "2026-10-20",
+  "last_processed_day": "2026-10-21",
   "initial_eur": 5000.0,
-  "cash_eur": 5000.0,
-  "peak_equity_eur": 5000.0,
+  "cash_eur": 4192.396388,
+  "peak_equity_eur": 5026.996363585938,
   "last_closes_eur": {
-    "BTC-EUR": 73878.0,
-    "ETH-EUR": 2179.64,
-    "SOL-EUR": 94.804,
-    "SAP.DE": 201.5500030517578
+    "BTC-EUR": 74790.0,
+    "ETH-EUR": 2199.91,
+    "SOL-EUR": 95.129,
+    "SAP.DE": 208.64999389648438
   },
   "last_price_days": {
-    "BTC-EUR": "2026-10-20",
-    "ETH-EUR": "2026-10-20",
-    "SOL-EUR": "2026-10-20",
-    "SAP.DE": "2026-10-20"
+    "BTC-EUR": "2026-10-21",
+    "ETH-EUR": "2026-10-21",
+    "SOL-EUR": "2026-10-21",
+    "SAP.DE": "2026-10-21"
   },
-  "positions": {},
-  "pending": {
+  "positions": {
     "SAP.DE": {
-      "signal_day": "2026-10-20",
-      "atr": 5.400716509137835
+      "quantity": 4.0,
+      "entry_price_eur": 201.900903,
+      "entry_day": "2026-10-21",
+      "stop_eur": 197.887133,
+      "basis_eur": 807.603612
     }
   },
-  "events": [],
+  "pending": {},
+  "events": [
+    {
+      "day": "2026-10-21",
+      "symbol": "SAP.DE",
+      "side": "BUY",
+      "reason": "NEXT_BAR_OPEN",
+      "quantity": 4.0,
+      "price_eur": 201.900903,
+      "fee_eur": 0.0
+    }
+  ],
   "daily_equity": [
     {
       "day": "2026-10-16",
@@ -50,6 +63,11 @@
     {
       "day": "2026-10-20",
       "equity_eur": 5000.0,
+      "drawdown_pct": 0.0
+    },
+    {
+      "day": "2026-10-21",
+      "equity_eur": 5027.0,
       "drawdown_pct": 0.0
     }
   ],
