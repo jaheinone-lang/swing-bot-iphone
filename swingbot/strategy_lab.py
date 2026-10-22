@@ -82,7 +82,8 @@ def research_backtest(data: Mapping[str, Sequence[Bar]],
                       markets: Mapping[str, str], cfg: Spec,
                       *, starting_eur: float = 5000.0,
                       other_capital_income_eur: float = 0.0,
-                      portfolio_risk_limit_fraction: float | None = None) -> dict:
+                      portfolio_risk_limit_fraction: float | None = None,
+                      entries_not_before: date | None = None) -> dict:
     _validated(data, markets)
     if portfolio_risk_limit_fraction is not None and not (
         isfinite(portfolio_risk_limit_fraction)
@@ -157,7 +158,8 @@ def research_backtest(data: Mapping[str, Sequence[Bar]],
         if cfg.momentum_top:
             ready=ready[:cfg.momentum_top]
         for symbol, entry in ready:
-            if not halted and symbol not in positions and symbol not in stopped:
+            if (not halted and symbol not in positions and symbol not in stopped
+                    and (entries_not_before is None or day >= entries_not_before)):
                 bar=active[symbol]
                 fee_bps,slip_bps=COST_BPS[markets[symbol]]
                 price=bar.open*(1+slip_bps/10000)
@@ -254,6 +256,7 @@ def research_backtest(data: Mapping[str, Sequence[Bar]],
         "status":"RESEARCH_ONLY_NO_ORDERS",
         "starting_eur":starting_eur,
         "portfolio_risk_limit_fraction":portfolio_risk_limit_fraction,
+        "entries_not_before": entries_not_before.isoformat() if entries_not_before else None,
         "gross_final_equity_eur":round(gross,2),
         "estimated_tax_reserve_eur":round(tax_reserved,2),
         "after_tax_equity_eur":round(net,2),
