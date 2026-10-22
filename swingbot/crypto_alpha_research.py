@@ -59,9 +59,13 @@ def analyse(data: dict, *, initial_eur: float = 5000.0) -> dict:
     aligned = aligned_crypto_data(data)
     calendar = [bar.day for bar in aligned[SYMBOLS[0]]]
     split = calendar[int(len(calendar) * .65)].isoformat()
+    first_entry_day = calendar[WARMUP_BARS]
     rows = []
     for spec in CANDIDATES:
-        normal = research_backtest(aligned, MARKETS, spec, starting_eur=initial_eur)
+        normal = research_backtest(
+            aligned, MARKETS, spec, starting_eur=initial_eur,
+            entries_not_before=first_entry_day
+        )
         curve = normal["daily_curve"]
         dev = [row for row in curve if row["day"] <= split]
         later = [row for row in curve if row["day"] >= split]
@@ -70,13 +74,16 @@ def analyse(data: dict, *, initial_eur: float = 5000.0) -> dict:
         # Stress both exchange taker fee and slippage: normal 25+15bps
         # per direction, 2x stress 50+30bps. Never assume maker fill.
         with patch.dict(COST_BPS, {"crypto": (50.0, 30.0)}):
-            stressed = research_backtest(aligned, MARKETS, spec,
-                                         starting_eur=initial_eur)
+            stressed = research_backtest(
+                aligned, MARKETS, spec, starting_eur=initial_eur,
+                entries_not_before=first_entry_day
+            )
         # This is a separate fixed-risk sensitivity, never a replacement of
         # the historical control or a retroactively selected top performer.
         capped = research_backtest(
             aligned, MARKETS, spec, starting_eur=initial_eur,
-            portfolio_risk_limit_fraction=.03
+            portfolio_risk_limit_fraction=.03,
+            entries_not_before=first_entry_day
         )
         windows = contiguous_windows(
             curve, begin_day=calendar[WARMUP_BARS].isoformat()
@@ -90,6 +97,7 @@ def analyse(data: dict, *, initial_eur: float = 5000.0) -> dict:
                 train["total_return_pct"] - 1.5 * train["max_drawdown_pct"], 4
             ),
             "full_period_after_tax_eur": normal["after_tax_equity_eur"],
+            "full_period_gross_eur": normal["gross_final_equity_eur"],
             "full_period_after_tax": normal["stats_after_tax"],
             "fee_stress_after_tax_eur": stressed["after_tax_equity_eur"],
             "max_open_stop_risk_pct": 3.0,
@@ -109,6 +117,7 @@ def analyse(data: dict, *, initial_eur: float = 5000.0) -> dict:
         "end": calendar[-1].isoformat(),
         "calendar_days": len(calendar),
         "split_day": split,
+        "first_entry_day": first_entry_day.isoformat(),
         "selection_uses": "training only: total return - 1.5 x max drawdown",
         "winner_on_training": selected["name"],
         "later_result_of_selected": selected["later_period"],
@@ -126,8 +135,9 @@ def analyse(data: dict, *, initial_eur: float = 5000.0) -> dict:
             "Historical research is not independently verified future performance; "
             "the strategy concepts were informed by known market history. "
             "Only 3 crypto pairs and about 2 years of candles. "
-            "Hold benchmarks buy after 201 completed daily candles, so "
-            "their pre-entry exposure differs from strategies. "
+            "Strategies and benchmark can first enter after 201 "
+            "completed daily candles; benchmark unrealized exit taxes "
+            "remain unmodeled. "
             "Daily OHLC bars cannot prove real-world fills, stops or 25% cap. "
             "No margin, no shorting, no API orders, no real funds."
         ),
