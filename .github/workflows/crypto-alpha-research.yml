@@ -13,6 +13,8 @@ on:
       - 'swingbot/intraday_entry_filters.py'
       - 'swingbot/intraday_robustness.py'
       - 'swingbot/intraday_train_test.py'
+      - 'swingbot/bitvavo_intraday_history.py'
+      - 'tests/test_bitvavo_intraday_history.py'
       - 'tests/test_intraday_train_test.py'
       - 'tests/test_intraday_entry_filters.py'
       - 'tests/test_intraday_research.py'
@@ -174,3 +176,11 @@ jobs:
 
       - name: Select only on older candles and assess frozen later history
         run: python -m swingbot.intraday_train_test
+
+      - name: Check historical 7-day BTC 5m coverage
+        run: |
+          python - <<'PY'
+          from swingbot.bitvavo_intraday_history import historical_five_minute
+          candles=historical_five_minute('BTC-EUR',days=7)
+          print('Validated completed BTC 5m historical bars:',len(candles))
+          PY
