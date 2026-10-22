@@ -56,3 +56,22 @@ Uudet tutkimusmoduulit:
 - Kauppamalli käyttää historiatietoa; se ei ole todellinen viiveetön toteutustesti eikä tilastollisesti merkittävä. Tästä ei voi päätellä odotettua päivävoittoa. Pörssikulut ja liukuma ovat oletuksia.
 
 **Tärkeä:** strategia testattiin, ei otettu käyttöön oikeilla rahoilla eikä korvattu edellistä pidemmän aikavälin E-paperisalkkua. Uutta 1 % tavoitetta ei pidä kuvata 1 %:n päivätuottolupauksena.
+
+
+## Lisätesti: 3 kryptoa × 3 peräkkäistä 5 minuutin testi-ikkunaa
+
+[GitHub Actions 22.10.2026, onnistunut tutkimusajo](https://github.com/jaheinone-lang/swing-bot-iphone/actions/runs/39811729765)
+
+Lisättiin \`swingbot/intraday_robustness.py\`: BTC-EUR, ETH-EUR ja SOL-EUR, jokaiselle kolme erillistä peräkkäistä ikkunaa, yhteensä yhdeksän lyhyttä koeikkunaa. Viiden minuutin historiaa on kunkin krypton osalta vain noin 1 000 kynttilää (noin 3,5 päivää). Kunkin ikkunan ostoille 80 vanhemman kynttilän valmistunut indikaattorihistoria, mutta **ei kauppoja lämmittelyjaksolla**. Simulointi aloitetaan kussakin ikkunassa erillisestä 5 000 eurosta; ikkunoiden tuottoja ei saa laskea yhdeksi sijoitetun pääoman kertymäksi. Kaksinkertaiset kulut testataan erikseen.
+
+Vertailtavat kaksi mallia ovat nykyinen 20 kynttilän close-breakout ja tiukempi trendi + vahva vihreä kynttilä + 1,2 × 20 kynttilän volyymi + 14 kynttilän ATR (0,12–1,8 % hinnasta) + aiempien 20 kynttilän high-läpimurto. Molempien osto aikaisintaan signaalin **jälkeisen** viiden minuutin kynttilän avauksessa. Puolen position 1 % kulujen jälkeinen voittotavoite, stop etusijalla.
+
+### Ensimmäiset BTC-EUR-koeikkunat, normaalit arvioidut kulut
+
+| BTC-ikkuna | Vanha signaali | Tiukempi signaali |
+|---|---:|---:|
+| 1 | −35,39 € | −15,17 € |
+| 2 | +14,45 € | +5,92 € |
+| 3 | −34,48 € | −22,85 € |
+
+Suodatettu malli pienensi kahta tappiollista jaksoa, mutta myös heikensi yhtä voitollista jaksoa. Testi on jälkikäteen suunniteltu ja **liian lyhyt** kannattavuuden vahvistamiseen. Kustannusarviot eivät korvaa toteutuneita spread-/täyttökustannuksia eikä henkilöveroja ole huomioitu. Älä yhdistä uusiin tilikirjanpitoihin tai ota live-kaupoiksi ennen aidosti riippumatonta pitempää testiä.
