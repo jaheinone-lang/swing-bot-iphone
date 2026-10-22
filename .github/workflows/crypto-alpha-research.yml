@@ -19,6 +19,7 @@ on:
       - 'swingbot/intraday_regime_research.py'
       - 'swingbot/btc_eth_only_research.py'
       - 'swingbot/shared_btc_eth_portfolio.py'
+      - 'swingbot/five_month_btc_eth.py'
       - 'tests/test_shared_btc_eth_portfolio.py'
       - 'tests/test_btc_eth_only_research.py'
       - 'tests/test_intraday_risk_regime.py'
@@ -38,7 +39,7 @@ permissions:
 jobs:
   crypto-research:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -208,3 +209,6 @@ jobs:
 
       - name: Backtest one shared 5000 EUR BTC ETH spot account
         run: python -m swingbot.shared_btc_eth_portfolio
+
+      - name: Run 150-day gap-aware BTC ETH shared portfolio experiment
+        run: python -m swingbot.five_month_btc_eth
