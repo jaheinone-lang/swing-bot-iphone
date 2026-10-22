@@ -14,6 +14,8 @@ on:
       - 'swingbot/intraday_robustness.py'
       - 'swingbot/intraday_train_test.py'
       - 'swingbot/bitvavo_intraday_history.py'
+      - 'swingbot/intraday_pullback_research.py'
+      - 'tests/test_intraday_pullback_research.py'
       - 'tests/test_bitvavo_intraday_history.py'
       - 'tests/test_intraday_train_test.py'
       - 'tests/test_intraday_entry_filters.py'
@@ -184,3 +186,6 @@ jobs:
           candles=historical_five_minute('BTC-EUR',days=7)
           print('Validated completed BTC 5m historical bars:',len(candles))
           PY
+
+      - name: Compare pullback versus breakout with 7 days of real 5m crypto candles
+        run: python -m swingbot.intraday_pullback_research
