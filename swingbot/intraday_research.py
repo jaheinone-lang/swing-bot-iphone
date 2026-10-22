@@ -17,8 +17,9 @@ from .intraday_net_target import (
 
 def replay(bars: list[dict], *, initial_eur: float = 5000.0,
            costs: ExecutionCosts = ExecutionCosts(),
-           signal: Callable[[list[dict], int], bool] | None = None) -> dict:
-    if len(bars)<40 or initial_eur<=0:
+           signal: Callable[[list[dict], int], bool] | None = None,
+           first_entry_index: int = 0) -> dict:
+    if len(bars)<40 or initial_eur<=0 or first_entry_index<0:
         raise ValueError("Need 40 bars and positive capital")
     if any(b["timestamp_ms"]-a["timestamp_ms"]!=300000
            for a,b in zip(bars,bars[1:])):
@@ -54,7 +55,7 @@ def replay(bars: list[dict], *, initial_eur: float = 5000.0,
                 h["stop"]=max(h["stop"],minimum_target_price(
                     h["entry"],net_target_pct=.000001,costs=costs,tick_size=.01))
         # Only fill a prior-candle signal; no re-entry on stop/TP candle.
-        elif pending:
+        elif pending and i>=first_entry_index:
             price=bar["open"]
             # 20% position, no all-in: avoid unbounded capital-at-risk.
             available=cash*.20
@@ -79,7 +80,7 @@ def replay(bars: list[dict], *, initial_eur: float = 5000.0,
             pending=False
         mark=holding["qty"]*bar["close"] if holding else 0.
         curve.append(cash+mark)
-        if i>=20 and holding is None and not pending:
+        if i>=20 and i+1>=first_entry_index and holding is None and not pending:
             previous=bars[i-20:i]
             # Current completed candle confirmed breaking prior max; next
             # open is the earliest entry. Momentum must also be positive.
