@@ -1,0 +1,51 @@
+name: Crypto alpha research (READ-ONLY)
+on:
+  push:
+    branches:
+      - 'research/crypto-alpha-*'
+    paths:
+      - 'swingbot/crypto_alpha_research.py'
+      - 'tests/test_crypto_alpha_research.py'
+      - '.github/workflows/crypto-alpha-research.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  crypto-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run safety and research tests
+        run: python -m unittest discover -s tests -v
+      - name: Fetch completed public candles and compare candidate strategies
+        run: |
+          python -m swingbot.crypto_alpha_research > /tmp/crypto-research.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          result=json.loads(Path('/tmp/crypto-research.json').read_text())
+          summary=['# Crypto-only research (no orders)',
+                   f"Historical window: {result['start']} to {result['end']} ({result['calendar_days']} days)",
+                   f"Training/later split: {result['split_day']}",
+                   f"Training-selected candidate: **{result['winner_on_training']}**",
+                   '',
+                   '| Strategy | Development % | Later % | Later max DD % | Full after-tax € | Fees € | Double-cost after-tax € |',
+                   '|---|---:|---:|---:|---:|---:|---:|']
+          for r in result['candidates']:
+              summary.append(
+                  f"| {r['name']} | {r['development']['total_return_pct']} | "
+                  f"{r['later_period']['total_return_pct']} | "
+                  f"{r['later_period']['max_drawdown_pct']} | "
+                  f"{r['full_period_after_tax_eur']:.2f} | "
+                  f"{r['estimated_fees_eur']:.2f} | "
+                  f"{r['fee_stress_after_tax_eur']:.2f} |"
+              )
+          summary.extend(['', 'Caution: retroactively designed strategies, ~2 years, three crypto pairs, estimated fees and taxes. No live orders or real-paper performance.'])
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as handle:
+              handle.write('\n'.join(summary)+'\n')
+          print('\n'.join(summary))
+          PY
