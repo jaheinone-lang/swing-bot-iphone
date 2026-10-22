@@ -36,6 +36,9 @@ def intraday_candles(pair: str, *, interval: str = "5m",
             timestamp_ms=int(row[0])
             ts=timestamp_ms//1000
             op, hi, lo, cl=map(float,row[1:5])
+            volume=float(row[5])
+            if not (volume >= 0 and volume < float("inf")):
+                raise ValueError("Invalid volume")
             if not (0 < lo <= min(op,cl) <= max(op,cl) <= hi):
                 raise ValueError("Invalid OHLC")
             if ts >= cutoff:
@@ -43,7 +46,7 @@ def intraday_candles(pair: str, *, interval: str = "5m",
             if ts % length:
                 raise ValueError("Misaligned exchange candle start")
             bars.append({"timestamp_ms":timestamp_ms, "open":op,"high":hi,
-                         "low":lo,"close":cl})
+                         "low":lo,"close":cl,"volume":volume})
         bars.sort(key=lambda b:b["timestamp_ms"])
         if len(bars)<30 or any(a["timestamp_ms"]>=b["timestamp_ms"]
                               for a,b in zip(bars,bars[1:])):
