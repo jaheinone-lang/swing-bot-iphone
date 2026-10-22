@@ -59,6 +59,9 @@ class CryptoResearchTests(unittest.TestCase):
         self.assertEqual(r["mode"], "RESEARCH_ONLY_NO_ORDERS")
         self.assertEqual(r["calendar_days"], 410)
         self.assertEqual(len(r["candidates"]), 3)
+        self.assertEqual(
+            r["first_entry_day"], synthetic_crypto()["BTC-EUR"][WARMUP_BARS].day.isoformat()
+        )
         self.assertEqual(set(r["hold_benchmarks"]),
                          {"BTC only", "Equal BTC-ETH-SOL"})
         self.assertEqual(
@@ -89,6 +92,20 @@ class CryptoResearchTests(unittest.TestCase):
         later = research_backtest(data, MARKETS, CANDIDATES[1])
         self.assertEqual(earlier["daily_curve"], later["daily_curve"][:350])
 
+
+    def test_uniform_first_entry_gate_blocks_earlier_trades(self):
+        d = synthetic_crypto()
+        first_day = d["BTC-EUR"][WARMUP_BARS].day
+        for strategy in CANDIDATES:
+            with self.subTest(strategy=strategy.name):
+                r = research_backtest(
+                    d, MARKETS, strategy, entries_not_before=first_day
+                )
+                self.assertEqual(r["entries_not_before"], first_day.isoformat())
+                self.assertTrue(
+                    all(t["day"] >= first_day.isoformat()
+                        for t in r["trade_events"])
+                )
 
     def test_invalid_portfolio_risk_limits_fail_closed(self):
         d = synthetic_crypto()
