@@ -49,3 +49,36 @@ Parhaan kehitysjakson tuloksella suhteessa maksimilaskuun valikoitui E, mutta va
 Tutkimusraportin ajaminen paikallisesti: `python -m swingbot.crypto_alpha_research`.
 
 **Huomautus:** tulosluvut eivät ole sijoitusennuste, tuottotakuu tai oikeaa rahaa käsittelevän botin dokumentoitua tulosta. Oikeaa kaupankäyntiä ei käynnistetä automaattisesti. Kaikki raportoitu kauppahistoria on simuloitu, vaikka historialliset markkinahinnat ovat todellisia.
+
+
+## 30 päivän 5 000 € korkoa korolle / 100 % sijoitusasteen koe (22.10.2026)
+
+**Todellisen historiallisen kurssidatan vertailu** suoritettiin [läpäistyssä GitHub Actions -ajossa](https://github.com/jaheinone-lang/swing-bot-iphone/actions/runs/39778339910). Tässä osatestissä perustettiin jokaista strategiaa varten erillinen 5 000 € kuvitteellinen tili 22.9.2026 ja sijoitettiin vain seuraavien **30 valmistuneen päivän** (22.9.–21.10.2026) signaaleilla. Aikaisempaa hintadataa hyödynnettiin vain signaali-indikaattorien laskentaan. Uutta 200 €/kk lisäsijoitusta **ei** lisätty; ei vipua, ei shorttia. Edellisten kauppojen voitot tai tappiot sekä realisoitujen voittojen verovaraus vaikuttavat automaattisesti seuraavaan panokseen.
+
+| Tutkittu E-malli | 30 päivän tulos, € | Loppupääoma, € | 30 pv lasku huipusta | Keskimäärin sijoitettu % | Päiviä vähintään 95 % sijoitettuna | Ostokauppoja |
+|---|---:|---:|---:|---:|---:|---:|
+| E60, 60 % positioraja, 2 %/kauppa ja 3 % yhteinen nimellinen stop-riski | −119,41 | 4 880,59 | 3,25 % | 18,96 % | 0 | 3 |
+| E100, 100 % positioraja, mutta samat 2 %/kauppa ja 3 % yhteisriskirajat | −119,41 | 4 880,59 | 3,25 % | 18,96 % | 0 | 3 |
+| E100 all-in, 100 % positioraja, 100 % nimellinen kauppariskikatto, ei yhteistä stop-riskikattoa, top-1 momentum-osto | **−428,20** | **4 571,80** | **8,56 %** | 53,33 % | 16 | 1 |
+
+**Tärkeä ero:** Pelkkä yksittäisen position 100 % salliminen ei lisää sijoitusastetta, jos volatiliteettiin suhteutettu 2 %:n kauppariski ja 3 %:n yhteinen stop-riskikatto sitovat sijoituskokoa. All-in-koe käytti mahdollisen oston yhteydessä käytännössä kaiken käteisen, mutta ostoja tehtiin vain, kun trendi-/läpimurtosäännöt täyttyivät. Siksi kyseessä ei ole joka päivä 100 % markkinoilla oleva salkku. All-in-kokeessa ykkösmomentum-signaali saa etusijan, sillä pääoma sitoutuu yhteen positioon.
+
+### Sama strategia koko historialla, korkoa korolle
+
+Historiallisen aineiston ajanjakso 2.11.2024–21.10.2026; ensimmäinen sallittu osto yhdenmukaisesti 201 valmistuneen kynttilän jälkeen. Alku 5 000 €, ei lisäsijoituksia:
+
+| Malli | Loppupääoma, € | Kokonaistuotto | Suurin historian arvonlasku |
+|---|---:|---:|---:|
+| E60, riskirajattu | 5 428,78 | +8,58 % | 8,70 % |
+| E100, samat riskirajat | 5 428,78 | +8,58 % | 8,70 % |
+| E100 all-in, riskiperusteinen sijoituskokoraja poistettu | 4 642,00 | −7,16 % | 20,27 % |
+
+All-in-strategia oli **myös koko historian testissä huonompi** ja vaihteli voimakkaammin. Tämä ei takaa, että lopputulos olisi sama muilla kuukausilla tai tulevaisuudessa. Historiallisten sääntöjen optimointia tulee välttää.
+
+### Laskentaa koskevat rajaukset
+
+- Mallin ostot tapahtuvat seuraavan historiallisen päivän avauksesta, kun signaali on syntynyt valmistuneesta päiväkynttilästä. Stopin ylittävät kurssihypyt voivat aiheuttaa huomattavia lisätappioita.
+- Pääoma- ja salkkukohtaisia kaupparajoja ei voi sekoittaa. 100 % *sijoitettavissa* ei tarkoita 100 % *aina sijoitettuna*.
+- Kaikki strategiat käyttävät korkoa korolle -laskentaa: uuden position koko perustuu **senhetkiseen** verovarauksen jälkeiseen salkkuarvoon ja käteiseen, ei alkuperäiseen kiinteään 5 000 €:oon.
+- Kulut perustuvat simulaation taker + liukuma -arvioihin, eivät toteutuneisiin toimeksiantoihin. Verovaraus koskee vain realisoituja voittoja, ei kaikkia mahdollisia loppupäivän luovutusvoittoveroja.
+- Jatkuvaa E-paperisalkkua **ei muutettu**, eikä tätä all-in-versiota pidä ottaa automaattisesti käyttöön.
