@@ -17,6 +17,8 @@ on:
       - 'swingbot/intraday_pullback_research.py'
       - 'swingbot/intraday_risk_regime.py'
       - 'swingbot/intraday_regime_research.py'
+      - 'swingbot/btc_eth_only_research.py'
+      - 'tests/test_btc_eth_only_research.py'
       - 'tests/test_intraday_risk_regime.py'
       - 'tests/test_intraday_pullback_research.py'
       - 'tests/test_bitvavo_intraday_history.py'
@@ -198,3 +200,6 @@ jobs:
 
       - name: Compare BTC ETH SOL trend regime overlay and net-fee risk cap
         run: python -m swingbot.intraday_regime_research
+
+      - name: Validate BTC ETH only read-only market scope
+        run: python -m swingbot.btc_eth_only_research
