@@ -36,7 +36,7 @@ def _rows(pair, start_ms, end_ms):
                        "close":cl,"volume":vol})
     return result
 
-def historical_five_minute(pair, *, days=30, now=None):
+def historical_five_minute(pair, *, days=30, now=None, require_complete=True):
     if pair not in SYMBOLS:
         raise ValueError("Unsupported market")
     if not isinstance(days,int) or not 7<=days<=90:
@@ -55,10 +55,37 @@ def historical_five_minute(pair, *, days=30, now=None):
     bars.sort(key=lambda b:b["timestamp_ms"])
     observed=[b["timestamp_ms"] for b in bars]
     expected=list(range(start_ms,end_ms,BAR_MS))
-    if observed!=expected:
-        missing=len(set(expected)-set(observed))
-        duplicate=len(observed)-len(set(observed))
+    duplicate=len(observed)-len(set(observed))
+    unexpected=len(set(observed)-set(expected))
+    if duplicate or unexpected:
+        raise MarketDataError("Duplicate or off-grid exchange candles")
+    missing=len(set(expected)-set(observed))
+    if missing and require_complete:
         raise MarketDataError(
             f"Historical coverage incomplete: expected {count}, got "
-            f"{len(bars)}; missing={missing}, duplicate={duplicate}; no fill")
+            f"{len(bars)}; missing={missing}, duplicate=0; no fill")
     return bars
+
+
+def contiguous_observed_segments(bars, *, min_bars=100):
+    """Never join bars across missing intervals; trade only continuous observed runs."""
+    if not isinstance(min_bars,int) or min_bars<40:
+        raise ValueError("Need at least 40 bars per observed segment")
+    if not bars:
+        raise MarketDataError("Empty history")
+    pieces=[]
+    run=[bars[0]]
+    for b in bars[1:]:
+        delta=b["timestamp_ms"]-run[-1]["timestamp_ms"]
+        if delta<=0 or delta%BAR_MS:
+            raise MarketDataError("Unsorted or invalid historical timestamps")
+        if delta==BAR_MS:
+            run.append(b)
+        else:
+            if len(run)>=min_bars:
+                pieces.append(run)
+            run=[b]
+    if len(run)>=min_bars:
+        pieces.append(run)
+    return pieces
+
