@@ -31,8 +31,10 @@ def compare_windows(bars: list[dict], *, blocks: int = 3,
         history=bars[left-history_bars:right]
         result={}
         for cost_name,cost in COSTS:
-            old=replay(history,signal=None,costs=cost)
-            filtered=replay(history,signal=filtered_buy_signal,costs=cost)
+            old=replay(history,signal=None,costs=cost,
+                       first_entry_index=history_bars)
+            filtered=replay(history,signal=filtered_buy_signal,costs=cost,
+                            first_entry_index=history_bars)
             result[cost_name]={
                 "old": {k: old[k] for k in (
                     "estimated_pnl_eur","buys","half_take_profits",
@@ -54,10 +56,8 @@ def main():
     report={"mode":"READ_ONLY_MULTIMARKET_ROBUSTNESS",
             "assets":{},"warnings":[
                 "Only ~1000 completed 5-minute bars per symbol, not months.",
-                "A replay segment includes indicator warmup before its "
-                "designated trade period. Baseline may trade in warmup; "
-                "results therefore remain exploratory and not a clean "
-                "independent trade-window comparison.",
+                "All orders occur only in each designated trade window; "
+                "past 80 bars used solely for indicators. Historical selection bias remains.",
                 "No taxes. Simulated fill/liquidity, no true live execution.",
                 "No model tuning or automatic strategy deployment.",
             ]}
