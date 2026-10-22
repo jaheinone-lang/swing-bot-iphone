@@ -6,7 +6,7 @@ historical dataset remains small and not evidence of future profitability.
 from __future__ import annotations
 import json
 from statistics import mean
-from .bitvavo_intraday_history import historical_five_minute
+from .bitvavo_intraday_history import historical_five_minute, contiguous_observed_segments
 from .intraday_entry_filters import filtered_buy_signal
 from .intraday_research import replay
 from .intraday_net_target import ExecutionCosts
@@ -38,9 +38,20 @@ def pullback_signal(bars, i):
 def seven_day_comparison():
     report={"mode":"NO_ORDERS_7D_FIXED_PULLBACK_COMPARISON","markets":{}}
     for pair in ("BTC-EUR","ETH-EUR","SOL-EUR"):
-        prices=historical_five_minute(pair,days=7)
-        # Allow 80 completed bars for indicators and freeze comparison on
-        # first 60% chronological train period vs later 40% untouched.
+        prices=historical_five_minute(pair,days=7,require_complete=False)
+        segments=contiguous_observed_segments(prices,min_bars=250)
+        if not segments:
+            report["markets"][pair]={"status":"INSUFFICIENT_CONTIGUOUS_DATA",
+                "observed_bars":len(prices),"segments":0}
+            continue
+        # A discontinuity must NEVER cross a training or trading interval.
+        # Use the longest continuous observed interval only.
+        continuous=max(segments,key=len)
+        if len(continuous)<400:
+            report["markets"][pair]={"status":"TOO_SHORT_FOR_EVALUATION",
+                "observed_bars":len(prices),"longest_contiguous":len(continuous)}
+            continue
+        prices=continuous
         cut=int(len(prices)*.60)
         evaluation={}
         for label,segment,eligible in (
@@ -64,7 +75,8 @@ def seven_day_comparison():
                     "max_drawdown_pct":normal["max_mark_to_market_drawdown_pct"],
                 }
             evaluation[label]=models
-        report["markets"][pair]=evaluation
+        report["markets"][pair]={"status":"EXPLORATORY",
+            "longest_contiguous_bars":len(prices), "evaluations":evaluation}
     report["important"]="Short 7-day study designed after earlier history; not true independent validation. Holdout is descriptive and must not be used to retroactively tune and claim future profit. No income taxes or actual fill checks. No broker orders."
     return report
 
