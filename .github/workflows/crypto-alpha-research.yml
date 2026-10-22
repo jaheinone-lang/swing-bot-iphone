@@ -33,6 +33,7 @@ jobs:
           summary=['# Crypto-only research (no orders)',
                    f"Historical window: {result['start']} to {result['end']} ({result['calendar_days']} days)",
                    f"Training/later split: {result['split_day']}",
+                   f"Uniform earliest entry: {result['first_entry_day']}",
                    f"Training-selected candidate: **{result['winner_on_training']}**",
                    '',
                    '| Strategy | Development % | Later % | Later DD % | Net 5k -> € | 2x costs € | 3% risk cap € | Worst 90d % |',
@@ -59,9 +60,9 @@ jobs:
               )
           summary.extend([
               '',
-              '**Caveats:** buy-and-hold warms up 201 candles and does not pay liquidation taxes, '
-              'whereas strategy starts signal eligibility earlier and reserves estimated realized-gain tax. '
-              'Raw performance is NOT apples-to-apples after-tax alpha. These are 719 historical days only, '
+              '**Caveats:** strategies and buy-and-hold may enter only after 201 completed daily candles. '
+              'Buy-and-hold does not pay liquidation taxes; strategy reserves estimated realized-gain tax. '
+              'Raw performance is NOT apples-to-apples after-tax alpha. These are about 719 historical days only, '
               'not independent prospective verification. The 3% stop-risk guard is nominal and cannot bound gap losses. '
               'No live orders or account connection.'
           ])
