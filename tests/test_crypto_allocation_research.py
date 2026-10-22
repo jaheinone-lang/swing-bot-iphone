@@ -84,7 +84,9 @@ class CapitalAllocationTests(unittest.TestCase):
             allin["most_recent_30d_from_fresh_5000"]["mean_invested_share_pct"],
             capped["most_recent_30d_from_fresh_5000"]["mean_invested_share_pct"]
         )
-        self.assertGreater(
+        # Larger allowed notional does NOT guarantee more exposure when
+        # 2% per-trade and 3% combined nominal stop risk are still binding.
+        self.assertGreaterEqual(
             capped["most_recent_30d_from_fresh_5000"]["mean_invested_share_pct"],
             base["most_recent_30d_from_fresh_5000"]["mean_invested_share_pct"]
         )
