@@ -8,6 +8,9 @@ on:
       - 'swingbot/crypto_validation.py'
       - 'swingbot/crypto_allocation_research.py'
       - 'swingbot/intraday_net_target.py'
+      - 'swingbot/bitvavo_intraday.py'
+      - 'swingbot/intraday_research.py'
+      - 'tests/test_intraday_research.py'
       - 'tests/test_intraday_net_target.py'
       - 'swingbot/strategy_lab.py'
       - 'tests/test_crypto_alpha_research.py'
@@ -153,3 +156,7 @@ jobs:
           with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
               f.write('\n'.join(lines)+'\n')
           PY
+
+      - name: Verify completed real 5m BTC candles and conservative intraday result
+        run: |
+          python -m swingbot.intraday_research
