@@ -8,6 +8,7 @@ This is an unvalidated short-window research probe, not alpha evidence.
 from __future__ import annotations
 import json
 from statistics import mean
+from typing import Callable
 from .bitvavo_intraday import intraday_candles
 from .intraday_net_target import (
     ExecutionCosts, minimum_target_price, buy_total_cost, sell_net_proceeds,
@@ -15,7 +16,8 @@ from .intraday_net_target import (
 )
 
 def replay(bars: list[dict], *, initial_eur: float = 5000.0,
-           costs: ExecutionCosts = ExecutionCosts()) -> dict:
+           costs: ExecutionCosts = ExecutionCosts(),
+           signal: Callable[[list[dict], int], bool] | None = None) -> dict:
     if len(bars)<40 or initial_eur<=0:
         raise ValueError("Need 40 bars and positive capital")
     if any(b["timestamp_ms"]-a["timestamp_ms"]!=300000
@@ -81,8 +83,9 @@ def replay(bars: list[dict], *, initial_eur: float = 5000.0,
             previous=bars[i-20:i]
             # Current completed candle confirmed breaking prior max; next
             # open is the earliest entry. Momentum must also be positive.
-            if bar["close"]>max(x["close"] for x in previous) and (
-                bar["close"]>mean(x["close"] for x in previous)):
+            if ((signal(bars, i) if signal is not None else
+                 (bar["close"]>max(x["close"] for x in previous) and
+                  bar["close"]>mean(x["close"] for x in previous)))):
                 pending=True
     # Mark unsettled inventory separately from realized cash.
     last=bars[-1]["close"]
