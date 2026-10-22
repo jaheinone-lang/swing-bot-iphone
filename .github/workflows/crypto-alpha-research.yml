@@ -18,6 +18,8 @@ on:
       - 'swingbot/intraday_risk_regime.py'
       - 'swingbot/intraday_regime_research.py'
       - 'swingbot/btc_eth_only_research.py'
+      - 'swingbot/shared_btc_eth_portfolio.py'
+      - 'tests/test_shared_btc_eth_portfolio.py'
       - 'tests/test_btc_eth_only_research.py'
       - 'tests/test_intraday_risk_regime.py'
       - 'tests/test_intraday_pullback_research.py'
@@ -203,3 +205,6 @@ jobs:
 
       - name: Validate BTC ETH only read-only market scope
         run: python -m swingbot.btc_eth_only_research
+
+      - name: Backtest one shared 5000 EUR BTC ETH spot account
+        run: python -m swingbot.shared_btc_eth_portfolio
