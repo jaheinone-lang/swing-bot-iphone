@@ -1,0 +1,22 @@
+{
+  "mode": "DELAYED_CRYPTO_E_SHADOW_V1",
+  "strategy": "E - filtered momentum",
+  "started_on": "2026-10-21",
+  "last_processed_day": "2026-10-21",
+  "starting_eur": 5000.0,
+  "equity_eur": 5000.0,
+  "return_pct": 0.0,
+  "tax_reserved_eur": 0.0,
+  "fees_eur": 0.0,
+  "halted": false,
+  "positions": [],
+  "trades_count": 0,
+  "recent_equity": [
+    {
+      "day": "2026-10-21",
+      "equity_eur": 5000.0,
+      "drawdown_pct": 0.0
+    }
+  ],
+  "message": "DELAYED simulated forward-only ledger; never real orders."
+}
