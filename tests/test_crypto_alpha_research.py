@@ -6,6 +6,10 @@ from swingbot.crypto_alpha_research import (
     CANDIDATES, MARKETS, SYMBOLS, aligned_crypto_data, analyse,
 )
 from swingbot.portfolio import Bar
+from swingbot.crypto_validation import (
+    WARMUP_BARS, contiguous_windows, hold_benchmarks, window_summary
+)
+from swingbot.strategy_lab import research_backtest
 
 
 def synthetic_crypto(days=410):
@@ -55,6 +59,13 @@ class CryptoResearchTests(unittest.TestCase):
         self.assertEqual(r["mode"], "RESEARCH_ONLY_NO_ORDERS")
         self.assertEqual(r["calendar_days"], 410)
         self.assertEqual(len(r["candidates"]), 3)
+        self.assertEqual(set(r["hold_benchmarks"]),
+                         {"BTC only", "Equal BTC-ETH-SOL"})
+        self.assertEqual(
+            r["hold_benchmarks"]["BTC only"]["warmup_bars"], WARMUP_BARS)
+        self.assertTrue(
+            all(b["invest_after"] == r["hold_benchmarks"]["BTC only"]["invest_after"]
+                for b in r["hold_benchmarks"].values()))
         winner = max(r["candidates"], key=lambda x: (
             x["training_score"], x["name"]))
         self.assertEqual(r["winner_on_training"], winner["name"])
@@ -65,14 +76,64 @@ class CryptoResearchTests(unittest.TestCase):
             self.assertGreater(row["fee_stress_after_tax_eur"], 0)
             self.assertIn("max_drawdown_pct", row["later_period"])
             self.assertIn("max_drawdown_pct", row["development"])
+            self.assertGreater(row["risk_cap_3pct_after_tax_eur"], 0)
+            self.assertGreaterEqual(
+                row["risk_cap_3pct_max_drawdown_pct"], 0)
+            self.assertGreaterEqual(
+                row["nonoverlapping_90d_windows"]["windows_count"], 1)
 
     def test_no_future_data_leak_into_earlier_equity_on_extension(self):
-        from swingbot.strategy_lab import research_backtest
         data = synthetic_crypto()
         prefix = {k: v[:350] for k, v in data.items()}
         earlier = research_backtest(prefix, MARKETS, CANDIDATES[1])
         later = research_backtest(data, MARKETS, CANDIDATES[1])
         self.assertEqual(earlier["daily_curve"], later["daily_curve"][:350])
+
+
+    def test_invalid_portfolio_risk_limits_fail_closed(self):
+        d = synthetic_crypto()
+        for bad in (-0.01, 0.0, 1.01, float("nan")):
+            with self.subTest(bad=bad):
+                with self.assertRaises(ValueError):
+                    research_backtest(
+                        d, MARKETS, CANDIDATES[1],
+                        portfolio_risk_limit_fraction=bad
+                    )
+
+    def test_nonoverlapping_windows_and_no_partial_window(self):
+        d = synthetic_crypto()
+        r = research_backtest(d, MARKETS, CANDIDATES[1])
+        windows = contiguous_windows(
+            r["daily_curve"], begin_day=d["BTC-EUR"][WARMUP_BARS].day.isoformat()
+        )
+        self.assertGreaterEqual(len(windows), 2)
+        self.assertEqual(
+            sum((__import__("datetime").date.fromisoformat(w["end"])
+                 - __import__("datetime").date.fromisoformat(w["start"])).days
+                for w in windows),
+            90 * len(windows),
+        )
+        self.assertTrue(
+            all(x["end"] == y["start"] for x, y in zip(windows, windows[1:]))
+        )
+        summary = window_summary(windows)
+        self.assertEqual(summary["windows_count"], len(windows))
+        self.assertLessEqual(summary["losing_windows"], len(windows))
+        with self.assertRaises(ValueError):
+            window_summary([])
+
+    def test_benchmarks_are_read_only_and_identical_start(self):
+        d = synthetic_crypto()
+        before = [x.close for x in d["BTC-EUR"]]
+        controls = hold_benchmarks(
+            d, MARKETS, 5000., d["BTC-EUR"][280].day.isoformat()
+        )
+        self.assertEqual([x.close for x in d["BTC-EUR"]], before)
+        self.assertEqual(
+            controls["BTC only"]["invest_after"],
+            controls["Equal BTC-ETH-SOL"]["invest_after"],
+        )
+        self.assertGreater(controls["BTC only"]["final_equity_eur"], 0)
 
 
 if __name__ == "__main__":
