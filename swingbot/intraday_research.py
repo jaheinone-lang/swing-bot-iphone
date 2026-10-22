@@ -18,7 +18,8 @@ from .intraday_net_target import (
 def replay(bars: list[dict], *, initial_eur: float = 5000.0,
            costs: ExecutionCosts = ExecutionCosts(),
            signal: Callable[[list[dict], int], bool] | None = None,
-           first_entry_index: int = 0) -> dict:
+           first_entry_index: int = 0,
+           sizing: Callable[[float, float, float], float] | None = None) -> dict:
     if len(bars)<40 or initial_eur<=0 or first_entry_index<0:
         raise ValueError("Need 40 bars and positive capital")
     if any(b["timestamp_ms"]-a["timestamp_ms"]!=300000
@@ -59,7 +60,9 @@ def replay(bars: list[dict], *, initial_eur: float = 5000.0,
             price=bar["open"]
             # 20% position, no all-in: avoid unbounded capital-at-risk.
             available=cash*.20
-            qty=available/buy_total_cost(price,1,costs)
+            qty=(sizing(cash,cash,price) if sizing is not None else
+                 available/buy_total_cost(price,1,costs))
+            qty=min(qty,cash/buy_total_cost(price,1,costs))
             if qty>0:
                 paid=buy_total_cost(price,qty,costs)
                 cash-=paid
