@@ -39,8 +39,8 @@ def _rows(pair, start_ms, end_ms):
 def historical_five_minute(pair, *, days=30, now=None, require_complete=True):
     if pair not in SYMBOLS:
         raise ValueError("Unsupported market")
-    if not isinstance(days,int) or not 7<=days<=90:
-        raise ValueError("Historical span must be 7..90 days")
+    if not isinstance(days,int) or not 7<=days<=180:
+        raise ValueError("Historical span must be 7..180 days")
     clock=now or datetime.now(timezone.utc)
     if clock.tzinfo is None:
         raise ValueError("Timezone aware clock required")
