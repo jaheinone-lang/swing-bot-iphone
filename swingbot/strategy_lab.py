@@ -211,9 +211,15 @@ def research_backtest(data: Mapping[str, Sequence[Bar]],
         if drawdown>=.25:
             halted=True
             pending_entries.clear()
+        invested_eur=sum(
+            pos["qty"]*last_close[sym] for sym,pos in positions.items()
+        )
         curve.append({"day":day.isoformat(),"equity_eur":round(net_equity,6),
                       "gross_equity_eur":round(gross,6),
                       "tax_reserved_eur":round(tax_reserved,6),
+                      "invested_eur":round(invested_eur,6),
+                      "invested_share_pct":round(
+                          invested_eur/max(gross, 1e-12)*100, 4),
                       "drawdown_pct":round(drawdown*100,4)})
 
         candidates=[]
