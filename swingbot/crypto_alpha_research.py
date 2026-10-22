@@ -7,12 +7,14 @@ No account API keys, no order submission, no modification of paper state.
 from __future__ import annotations
 
 import json
-from contextlib import contextmanager
 from dataclasses import asdict
 from datetime import timedelta
 from unittest.mock import patch
 
 from .bitvavo_data import bitvavo_eur_daily
+from .crypto_validation import (
+    WARMUP_BARS, contiguous_windows, hold_benchmarks, window_summary,
+)
 from .portfolio import COST_BPS
 from .research_metrics import _metrics
 from .strategy_lab import Spec, research_backtest
@@ -70,6 +72,15 @@ def analyse(data: dict, *, initial_eur: float = 5000.0) -> dict:
         with patch.dict(COST_BPS, {"crypto": (50.0, 30.0)}):
             stressed = research_backtest(aligned, MARKETS, spec,
                                          starting_eur=initial_eur)
+        # This is a separate fixed-risk sensitivity, never a replacement of
+        # the historical control or a retroactively selected top performer.
+        capped = research_backtest(
+            aligned, MARKETS, spec, starting_eur=initial_eur,
+            portfolio_risk_limit_fraction=.03
+        )
+        windows = contiguous_windows(
+            curve, begin_day=calendar[WARMUP_BARS].isoformat()
+        )
         rows.append({
             "name": spec.name,
             "spec": asdict(spec),
@@ -81,6 +92,11 @@ def analyse(data: dict, *, initial_eur: float = 5000.0) -> dict:
             "full_period_after_tax_eur": normal["after_tax_equity_eur"],
             "full_period_after_tax": normal["stats_after_tax"],
             "fee_stress_after_tax_eur": stressed["after_tax_equity_eur"],
+            "max_open_stop_risk_pct": 3.0,
+            "risk_cap_3pct_after_tax_eur": capped["after_tax_equity_eur"],
+            "risk_cap_3pct_total_return_pct": capped["stats_after_tax"]["total_return_pct"],
+            "risk_cap_3pct_max_drawdown_pct": capped["stats_after_tax"]["max_drawdown_pct"],
+            "nonoverlapping_90d_windows": window_summary(windows),
             "estimated_fees_eur": normal["estimated_fees_eur"],
             "trade_events": len(normal["trade_events"]),
             "halted": normal["halted"],
@@ -97,12 +113,21 @@ def analyse(data: dict, *, initial_eur: float = 5000.0) -> dict:
         "winner_on_training": selected["name"],
         "later_result_of_selected": selected["later_period"],
         "candidates": rows,
+        "hold_benchmarks": hold_benchmarks(
+            aligned, MARKETS, initial_eur, split
+        ),
+        "risk_sensitivity": (
+            "All candidates also replayed with max 3% aggregate nominal "
+            "entry-to-stop risk. Not a guaranteed loss cap; gap risk remains."
+        ),
         "costs": "normal 25bps taker + 15bps slippage EACH side; stress 2x",
         "tax": "simplified Finnish personal realized-gains reserve",
         "disclaimer": (
             "Historical research is not independently verified future performance; "
             "the strategy concepts were informed by known market history. "
             "Only 3 crypto pairs and about 2 years of candles. "
+            "Hold benchmarks buy after 201 completed daily candles, so "
+            "their pre-entry exposure differs from strategies. "
             "Daily OHLC bars cannot prove real-world fills, stops or 25% cap. "
             "No margin, no shorting, no API orders, no real funds."
         ),
