@@ -15,6 +15,9 @@ on:
       - 'swingbot/intraday_train_test.py'
       - 'swingbot/bitvavo_intraday_history.py'
       - 'swingbot/intraday_pullback_research.py'
+      - 'swingbot/intraday_risk_regime.py'
+      - 'swingbot/intraday_regime_research.py'
+      - 'tests/test_intraday_risk_regime.py'
       - 'tests/test_intraday_pullback_research.py'
       - 'tests/test_bitvavo_intraday_history.py'
       - 'tests/test_intraday_train_test.py'
@@ -192,3 +195,6 @@ jobs:
 
       - name: Compare pullback versus breakout with 7 days of real 5m crypto candles
         run: python -m swingbot.intraday_pullback_research
+
+      - name: Compare BTC ETH SOL trend regime overlay and net-fee risk cap
+        run: python -m swingbot.intraday_regime_research
