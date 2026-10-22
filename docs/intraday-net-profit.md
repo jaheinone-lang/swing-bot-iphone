@@ -38,3 +38,21 @@ Esimerkiksi 5 000 €:n **täyden position** nettovoitto onnistuneessa myynniss�
 3. Päivä- tai minuuttikynttilässä sekä stop- että tavoitehinta voi ylittyä, jolloin toteutumisjärjestys ei selviä pelkästä OHLC:stä; konservatiivisesti oletetaan stop ensin.
 4. 1 %:n laskennallinen nettovoitto tarkoittaa nimenomaan kulujen jälkeistä, **ennen veroja**. Krypto-omaisuuden luovutusvoittoverotuksessa verokohtelu on yksilöllinen ja mahdolliset tuloverot vähentävät lopullista käyttäjälle jäävää voittoa.
 5. Arvioidut pörssipalkkiot/liukuma eivät ole todellisia välittäjän sitovia tarjouksia. Riskiä voidaan rajoittaa, mutta sitä ei voi poistaa.
+
+
+## 5 minuutin BTC-EUR -strategian ensimmäinen toteutunut historiatesti
+
+Uudet tutkimusmoduulit:
+- \`swingbot/bitvavo_intraday.py\`: julkisen Bitvavon BTC/ETH/SOL 1 minuutin ja 5 minuutin kynttilädatan lukeminen. Kesken oleva kynttilä poistetaan; puuttuvat 5 minuutin jaksot, virheelliset hinnat ja aikaleimat estävät testin.
+- \`swingbot/intraday_research.py\`: yhden position BTC-EUR 5 minuutin läpimurtotutkimus, 20 valmiin kynttilän hintavertailu, osto vasta seuraavan kynttilän avauksessa, 20 % käytettävissä olevasta käteisestä yhteen ostoon, stop noin 1,5 % raakahintaa alempana. Ensimmäinen myynti on 50 % positiosta täsmälleen vähintään 1 %:n arvioidun kulujen jälkeisen tuoton kohdalla. Jäljelle jäävälle puolikkaalle kiristetään stop kulukorjattuun breakeven-hintaan.
+- \`tests/test_intraday_research.py\`: valmis kynttilä, yhtenäiset 5 minuutin aikaleimat ja historiatestin turvallisuus.
+
+[Ensimmäinen onnistunut GitHub Actions -ajo](https://github.com/jaheinone-lang/swing-bot-iphone/actions/runs/39808242191):
+- 999 valmistunutta 5 minuutin kynttilää eli noin 3,5 päivää, data haettu Bitvavon julkisesta BTC-EUR-rajapinnasta testiajon yhteydessä.
+- 5 000 € alkupääoma, arvioitu loppuarvo **4 968,39 €** (−31,61 €, −0,63 %).
+- 3 ostoa, 1 puolen position 1 %:n nettovoittotavoitteen osuma, 2 stop-tapahtumaa.
+- Testijakson suurin laskennallinen arvonlasku 0,67 %.
+- Loppuarvo sisältää mahdollisen auki olevan position arvioidun likvidointiarvon, mutta **ei Suomen luovutusvoittoveron varausta**.
+- Kauppamalli käyttää historiatietoa; se ei ole todellinen viiveetön toteutustesti eikä tilastollisesti merkittävä. Tästä ei voi päätellä odotettua päivävoittoa. Pörssikulut ja liukuma ovat oletuksia.
+
+**Tärkeä:** strategia testattiin, ei otettu käyttöön oikeilla rahoilla eikä korvattu edellistä pidemmän aikavälin E-paperisalkkua. Uutta 1 % tavoitetta ei pidä kuvata 1 %:n päivätuottolupauksena.
