@@ -12,6 +12,8 @@ on:
       - 'swingbot/intraday_research.py'
       - 'swingbot/intraday_entry_filters.py'
       - 'swingbot/intraday_robustness.py'
+      - 'swingbot/intraday_train_test.py'
+      - 'tests/test_intraday_train_test.py'
       - 'tests/test_intraday_entry_filters.py'
       - 'tests/test_intraday_research.py'
       - 'tests/test_intraday_net_target.py'
@@ -169,3 +171,6 @@ jobs:
 
       - name: Check frozen filters across BTC ETH SOL, separate windows and fee stress
         run: python -m swingbot.intraday_robustness
+
+      - name: Select only on older candles and assess frozen later history
+        run: python -m swingbot.intraday_train_test
