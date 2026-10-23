@@ -20,10 +20,14 @@ def _risk(basis, qty, stop, costs):
     return max(0.,basis-sell_net_proceeds(stop,qty,costs))
 
 def shared_replay(feeds, *, capital=START_EUR, costs=ExecutionCosts(),
-                  signal=regime_buy_signal, first_entry_index=110):
+                  signal=regime_buy_signal, first_entry_index=110,
+                  stop_pct=1.5, take_profit_pct=1., take_fraction=.5):
     if set(feeds)!=set(PAIRS):
         raise ValueError("Exactly BTC-EUR and ETH-EUR feeds required")
     if capital<=0: raise ValueError("Positive initial EUR required")
+    if not (.5<=stop_pct<=5 and 1<=take_profit_pct<=5 and
+            0<take_fraction<=1):
+        raise ValueError("Invalid scenario risk / target parameters")
     lengths={len(rows) for rows in feeds.values()}
     if len(lengths)!=1 or min(lengths)<max(120,first_entry_index+2):
         raise ValueError("Same length, enough candles")
@@ -49,13 +53,16 @@ def shared_replay(feeds, *, capital=START_EUR, costs=ExecutionCosts(),
                                "net_eur":round(received-p["basis"],2)})
                 del positions[symbol]
             elif not p["partial"] and b["high"]>=p["tp"]:
-                units=p["qty"]*.5
+                units=p["qty"]*take_fraction
                 proceeds=sell_net_proceeds(p["tp"],units,costs)
-                basis=p["basis"]*.5
+                basis=p["basis"]*take_fraction
                 cash+=proceeds
                 p["qty"]-=units
                 p["basis"]-=basis
                 p["partial"]=True
+                if p["qty"]<=1e-12:
+                    del positions[symbol]
+                    continue
                 p["stop"]=max(p["stop"],minimum_target_price(
                     p["entry"],net_target_pct=.000001,costs=costs))
                 events.append({"bar":i,"symbol":symbol,"type":"HALF_TP",
@@ -79,18 +86,18 @@ def shared_replay(feeds, *, capital=START_EUR, costs=ExecutionCosts(),
                 qty=max_affordable_units(
                     cash,equity,price,risk_budget_pct=risk_pct,
                     max_position_pct=POSITION_LIMIT_PCT,
-                    stop_raw_price=price*.985,costs=costs)
+                    stop_raw_price=price*(1-stop_pct/100),costs=costs)
                 if qty<=0:continue
                 basis=buy_total_cost(price,qty,costs)
                 cash-=basis
                 positions[symbol]={"entry":price,"qty":qty,
-                    "basis":basis,"stop":price*.985,"partial":False,
-                    "tp":minimum_target_price(price,costs=costs)}
+                    "basis":basis,"stop":price*(1-stop_pct/100),"partial":False,
+                    "tp":minimum_target_price(price,net_target_pct=take_profit_pct,costs=costs)}
                 events.append({"bar":i,"symbol":symbol,"type":"BUY",
                                "basis_eur":round(basis,2)})
                 # Protect entry-bar drawdown, never claim an entry-bar TP.
-                if feeds[symbol][i]["low"]<=price*.985:
-                    proceeds=sell_net_proceeds(min(price,price*.985),qty,costs)
+                if feeds[symbol][i]["low"]<=price*(1-stop_pct/100):
+                    proceeds=sell_net_proceeds(min(price,price*(1-stop_pct/100)),qty,costs)
                     cash+=proceeds
                     events.append({"bar":i,"symbol":symbol,"type":"ENTRY_STOP",
                                    "net_eur":round(proceeds-basis,2)})
