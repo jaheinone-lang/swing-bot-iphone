@@ -151,6 +151,7 @@ def five_year_study(*,dataset=None,coverage=None):
         "frozen_compared_rules":RULES,
         "results":result,
         "exit_management_research":__import__("swingbot.five_year_early_exit_research",fromlist=["study"]).study(prepared),
+        "entry_pullback_research":__import__("swingbot.five_year_pullback_research",fromlist=["study"]).study(prepared),
         "selection":{
             "qualified_profitable_both_cost_assumptions":[
                 k for k,v in result.items() if
