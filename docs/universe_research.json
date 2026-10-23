@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-10-22T10:35:41+00:00",
-  "as_of": "2026-10-22",
+  "generated_at_utc": "2026-10-23T10:28:29+00:00",
+  "as_of": "2026-10-23",
   "status": "TRADING212_DEMO_METADATA_CONNECTED",
   "data_mode": "BROKER_INSTRUMENT_METADATA_ONLY",
   "instruments": {
@@ -17,7 +17,7 @@
       "GBX": 1895,
       "USD": 7377
     },
-    "platform_additions_last_30d": 465
+    "platform_additions_last_30d": 337
   },
   "eu_stock_research": {
     "status": "EU_ISIN_PREFIX_METADATA_COUNTS_ONLY",
