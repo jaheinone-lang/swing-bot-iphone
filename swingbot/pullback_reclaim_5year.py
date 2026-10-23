@@ -91,13 +91,16 @@ def causal_pullback_signals(bars):
         impulse=(price/close[i-3]-1)*100
         if impulse>1.0:continue
 
-        if (close[i-3]>close[i-2]>close[i-1] or
-            close[i-2]>close[i-1] and price>close[i-2]):
+        # Require actual weakness in completed CLOSES, not just an
+        # incidental wick inside a still-rising breakout sequence.
+        declining=(close[i-3]>close[i-2]>close[i-1])
+        rebounded=(declining and price>close[i-2])
+        if rebounded:
             signals["trend_pullback_reclaim"].add(i)
 
-        # The breakout must precede the retest by >=3 completed 5m bars.
-        # Also require at least one past retest after the breakout itself.
-        if any((3<=i-break<=12 and any(
+        # Breakout 3-12 finished candles ago AND a subsequent descending
+        # two-candle pullback that retested the 20-bar mean before reclaim.
+        if rebounded and any((3<=i-break<=12 and any(
             bars[k]["low"]<=sma(k,20)*1.002
             for k in range(break+1,i)))
                for break in breakout_recent):
