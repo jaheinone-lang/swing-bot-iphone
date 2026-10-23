@@ -67,7 +67,7 @@ class CausalEarlyExitTests(unittest.TestCase):
         btc[165]["high"]=100.0
         res=replay_one_per_day(
             {"BTC-EUR":btc,"ETH-EUR":eth},first_entry_index=160,
-            exit_guard=lambda b,i,p: True,
+            exit_guard=lambda b,i,p: i>=165,
             signal=lambda b,i: b is btc and i==160)
         self.assertEqual(res["stop_exits"],1)
         self.assertEqual(res["early_exits"],0)
