@@ -118,6 +118,14 @@ def replay_one_per_day(
             candle = feeds[symbol][i]
             if today != position["day"] or clock >= FORCED_FLAT:
                 close_position(symbol, i, candle["open"], "DAY_FLAT")
+            elif candle["open"] <= position["stop"]:
+                # Overnight/5m gap protection is evaluated before any
+                # optional model guard. At/below stop, fill at worse open.
+                close_position(symbol, i, candle["open"], "STOP")
+            elif candle["open"] >= position["target"]:
+                # Already beyond target at open: conservative target fill
+                # before considering a weakness exit.
+                close_position(symbol, i, position["target"], "FULL_TP")
             elif exit_guard is not None and exit_guard(
                     feeds[symbol], i, position):
                 # Guard uses ONLY completed bars through i-1;
