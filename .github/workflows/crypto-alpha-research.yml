@@ -25,6 +25,8 @@ on:
       - 'swingbot/five_month_exit_research.py'
       - 'swingbot/daytrade_one_per_day.py'
       - 'swingbot/daytrade_150d_research.py'
+      - 'swingbot/entry_timing_150d_audit.py'
+      - 'tests/test_entry_timing_150d_audit.py'
       - 'tests/test_daytrade_one_per_day.py'
       - 'tests/test_five_month_exit_research.py'
       - 'tests/test_shared_btc_eth_portfolio.py'
@@ -228,3 +230,6 @@ jobs:
 
       - name: Compare one trade per Finland day and immediate full net target for 150 days
         run: python -m swingbot.daytrade_150d_research
+
+      - name: Analyze actual winning BTC ETH 5m buy timestamps and predeclared timing rules
+        run: python -m swingbot.entry_timing_150d_audit
