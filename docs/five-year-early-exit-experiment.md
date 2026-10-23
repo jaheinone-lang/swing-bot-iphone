@@ -24,8 +24,26 @@ Lisätty **valinnainen**, täysin pois päältä oleva alkuperäisessä vertailu
 - Yhtäkään uutta sääntöä **ei hyväksytä automaattisesti live-kauppaan** menneen historian perusteella. Vanhat vuodet eivät ole enää täysin riippumaton testidatasetti.
 - Koodi: `swingbot/intraday_early_exits.py`, `swingbot/five_year_early_exit_research.py`, lisätty valinnainen `exit_guard` moduuliin `swingbot/daytrade_one_per_day.py`; yksikkötestit `tests/test_intraday_early_exits.py`.
 
+
+## GitHubissa varmennetut viiden vuoden simulaatiotulokset
+
+[Onnistunut GitHub Actions -ajo 39916642825](https://github.com/jaheinone-lang/swing-bot-iphone/actions/runs/39916642825). Sama Bitvavon viiden vuoden BTC/ETH 5 minuutin aineisto kuin alkuperäisessä ajossa. 50 ostoa per skenaario, yksi yhteinen 5 000 €:n lähtösalkku ja neljä ennalta koodattua poistumismallia. Mitään niistä ei hyväksytty oikeaan kaupankäyntiin.
+
+| Malli | Loppusaldo normaalikuluilla | Tuotto euroina | Tuotto 2× kuluilla | Onnistuneet +1 % TP:t | Varhaiset myynnit |
+|---|---:|---:|---:|---:|---:|
+| Muuttamaton lähtömalli | 4 749,60 € | −250,40 € | −347,41 € | 17 | 0 |
+| 30 min heikkouspoisto | 4 751,24 € | −248,76 € | −330,23 € | 3 | 46 |
+| 120 min etenemättömyyspoisto | **4 766,13 €** | **−233,87 €** | **−327,88 €** | 3 | 43 |
+| Heikkous tai aikaraja | 4 749,23 € | −250,77 € | −334,81 € | 2 | 47 |
+
+**Havainto:** 120 minuutin aikapoisto paransi viiden vuoden tulosta vain 16,53 € verrattuna muuttamattomaan malliin ja 19,53 € kaksinkertaisten kulujen stressitestissä. Samalla se muutti suuren osan kaupoista aikaisiksi sulkemisiksi, joiden toteutuminen reaaliaikaisilla markkinoilla voi poiketa simulaatiosta. Stop-loss-osumien vähentyminen ei merkitse kannattavuutta.
+
+**Vuosikohtainen varoitus:** muuttamattoman mallin 2026 osa (1.1.–22.10.) oli +24,13 €, mutta 120 minuutin aikapoiston 2026 osa oli **−28,56 €**. Vaikka aikapoisto vähensi osaa vanhempien vuosien tappioista, se ei ollut johdonmukainen parannus markkinatilanteiden välillä. Tämä data on myös ollut mukana strategian aiemmassa kehityksessä, joten testin paremmalta näyttävää sääntöä ei pidä tulkita riippumattomaksi todistukseksi.
+
+**Päätös:** kehitysversio pidetään vain research-tilassa, nykyinen ilman varhaista poistumista oleva oletuslogiikka säilyy. Ei oikeita kauppoja, ei live-käyttöönottoa eikä muutoksia aiempaan E-forward-paperisalkkuun.
+
 ## Viiden vuoden tulosten todentaminen
 
-Tulosraportti julkaistaan vain, kun [GitHub Actions -viiden vuoden tutkimusajo](https://github.com/jaheinone-lang/swing-bot-iphone/actions/runs/39916642825) on todella suorittanut latauksen ja testit onnistuneesti. Jos ajo on kesken tai epäonnistuu, aiemmat lähtötilanteen tulokset säilyvät vain historiallisena vertailukohtana.
+Lataus, testit ja vertailu suoritettiin onnistuneesti GitHub Actions -ajossa 39916642825. Lukuarvot ja menetelmän rajoitukset yllä.
 
 **Lähde:** Bitvavon BTC-EUR ja ETH-EUR julkiset viiden minuutin kynttilät; tavoitehinnan koskettaminen ei takaa todellista toimeksiannon täyttöä. Ei avattuja oikeita toimeksiantoja eikä aiempaan E-paperisalkkuun tehtyjä muutoksia.
