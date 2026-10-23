@@ -100,9 +100,9 @@ def causal_pullback_signals(bars):
 
         # Breakout 3-12 finished candles ago AND a subsequent descending
         # two-candle pullback that retested the 20-bar mean before reclaim.
-        if rebounded and any((3<=i-break<=12 and any(
+        if rebounded and any((3<=i-breakout_i<=12 and any(
             bars[k]["low"]<=sma(k,20)*1.002
-            for k in range(break+1,i)))
-               for break in breakout_recent):
+            for k in range(breakout_i+1,i)))
+               for breakout_i in breakout_recent):
             signals["breakout_pullback_reclaim"].add(i)
     return signals
