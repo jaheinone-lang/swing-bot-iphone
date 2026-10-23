@@ -49,13 +49,13 @@ def cached_segments(segments):
     return prepared
 
 
-def simulate(prepared, rule, *, costs=ExecutionCosts(), start_eur=5000):
+def simulate(prepared, rule, *, costs=ExecutionCosts(), start_eur=5000, exit_guard=None):
     if rule not in RULES:
         raise ValueError("Unknown frozen research rule")
     cash=float(start_eur)
     days_used=set()
     outcomes={"FULL_TP":0,"STOP":0,"ENTRY_BAR_STOP":0,
-              "DAY_FLAT":0,"END_OF_OBSERVED_SEGMENT":0}
+              "DAY_FLAT":0,"EARLY_EXIT":0,"END_OF_OBSERVED_SEGMENT":0}
     pnl_by_year={y:0. for y in YEAR_KEYS}
     buys_by_year={y:0 for y in YEAR_KEYS}
     tp_by_year={y:0 for y in YEAR_KEYS}
@@ -73,7 +73,8 @@ def simulate(prepared, rule, *, costs=ExecutionCosts(), start_eur=5000):
         signal=lambda rows,i: i in caches["BTC-EUR" if rows is feed["BTC-EUR"] else "ETH-EUR"][rule]
         trial=replay_one_per_day(
             feed,capital=cash,costs=costs,signal=signal,
-            first_entry_index=first,previously_traded_days=days_used)
+            first_entry_index=first,previously_traded_days=days_used,
+            exit_guard=exit_guard)
         cash=trial["end_eur"]
         segments_traded+=1
         n_traded_bars+=len(feed[PAIRS[0]])
@@ -105,6 +106,7 @@ def simulate(prepared, rule, *, costs=ExecutionCosts(), start_eur=5000):
         "full_position_1pct_net_takeprofits":outcomes["FULL_TP"],
         "stop_exits":outcomes["STOP"]+outcomes["ENTRY_BAR_STOP"],
         "21_55_exits":outcomes["DAY_FLAT"],
+        "early_exits":outcomes["EARLY_EXIT"],
         "data_gap_forced_exits":outcomes["END_OF_OBSERVED_SEGMENT"],
         "win_rate_pct_of_all_buys":round(
             outcomes["FULL_TP"]/max(1,sum(buys_by_year.values()))*100,2),
