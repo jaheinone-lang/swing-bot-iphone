@@ -56,7 +56,7 @@ def replay_one_per_day(
     feeds, *, capital=START_CAPITAL, costs=ExecutionCosts(),
     signal=confirmed_upward_move, net_target_pct=1.,
     stop_pct=1.5, first_entry_index=160,
-    previously_traded_days=()
+    previously_traded_days=(), exit_guard=None
 ):
     """One shared account, max ONE trade per FI local calendar day.
 
@@ -118,6 +118,11 @@ def replay_one_per_day(
             candle = feeds[symbol][i]
             if today != position["day"] or clock >= FORCED_FLAT:
                 close_position(symbol, i, candle["open"], "DAY_FLAT")
+            elif exit_guard is not None and exit_guard(
+                    feeds[symbol], i, position):
+                # Guard uses ONLY completed bars through i-1;
+                # close at current OPEN, before observing candle extremes.
+                close_position(symbol, i, candle["open"], "EARLY_EXIT")
             elif candle["low"] <= position["stop"]:
                 close_position(
                     symbol, i, min(candle["open"], position["stop"]),
@@ -228,6 +233,7 @@ def replay_one_per_day(
             e["type"] in ("STOP","ENTRY_BAR_STOP") for e in executed),
         "session_end_exits":sum(
             e["type"]=="DAY_FLAT" for e in executed),
+        "early_exits":sum(e["type"]=="EARLY_EXIT" for e in executed),
         "end_segment_forced_exits":sum(
             e["type"]=="END_OF_OBSERVED_SEGMENT" for e in executed),
         "daily_trade_dates":sorted(trade_dates),
