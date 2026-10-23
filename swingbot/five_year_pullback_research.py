@@ -15,10 +15,10 @@ prospective validation. Report 2021-2023 and 2024-2026 separately.
 """
 from __future__ import annotations
 from .daytrade_one_per_day import PAIRS,replay_one_per_day
-from .five_year_daytrade import DOUBLE_COSTS
 from .intraday_net_target import ExecutionCosts
 from .pullback_reclaim_5year import ALL_POLICIES, causal_pullback_signals
 
+DOUBLE_COSTS=ExecutionCosts(50,50,30,30)
 YEAR_BUCKETS=("2021","2022","2023","2024","2025","2026")
 
 
