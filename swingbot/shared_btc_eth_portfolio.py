@@ -60,13 +60,15 @@ def shared_replay(feeds, *, capital=START_EUR, costs=ExecutionCosts(),
                 p["qty"]-=units
                 p["basis"]-=basis
                 p["partial"]=True
-                if p["qty"]<=1e-12:
+                full_exit=p["qty"]<=1e-12
+                events.append({"bar":i,"symbol":symbol,
+                               "type":"FULL_TP" if full_exit else "HALF_TP",
+                               "net_eur":round(proceeds-basis,2)})
+                if full_exit:
                     del positions[symbol]
                     continue
                 p["stop"]=max(p["stop"],minimum_target_price(
                     p["entry"],net_target_pct=.000001,costs=costs))
-                events.append({"bar":i,"symbol":symbol,"type":"HALF_TP",
-                               "net_eur":round(proceeds-basis,2)})
         if pending and i>=first_entry_index:
             # Deterministic priority: stronger 20 bar relative momentum;
             # this ranks existing already-completed signals only.
@@ -121,6 +123,7 @@ def shared_replay(feeds, *, capital=START_EUR, costs=ExecutionCosts(),
             "max_marked_drawdown_pct":round(dd,2),
             "buys":sum(e["type"]=="BUY" for e in events),
             "half_take_profits":sum(e["type"]=="HALF_TP" for e in events),
+            "full_take_profits":sum(e["type"]=="FULL_TP" for e in events),
             "stop_exits":sum(e["type"] in ("STOP","ENTRY_STOP") for e in events),
             "open_positions":list(positions),
             "events":events,
