@@ -7,6 +7,10 @@ on:
       - 'swingbot/bitvavo_five_year.py'
       - 'swingbot/five_year_fast_signals.py'
       - 'swingbot/five_year_daytrade.py'
+      - 'swingbot/five_year_early_exit_research.py'
+      - 'swingbot/intraday_early_exits.py'
+      - 'swingbot/daytrade_one_per_day.py'
+      - 'tests/test_intraday_early_exits.py'
       - 'tests/test_five_year_daytrade.py'
       - '.github/workflows/crypto-five-year.yml'
   workflow_dispatch:
@@ -25,7 +29,9 @@ jobs:
         with:
           python-version: '3.12'
       - name: Check five-year source and causal signal tests
-        run: python -m unittest discover -s tests -p 'test_five_year_daytrade.py' -v
+        run: |
+          python -m unittest discover -s tests -p 'test_five_year_daytrade.py' -v
+          python -m unittest discover -s tests -p 'test_intraday_early_exits.py' -v
       - name: Download Bitvavo 5m BTC ETH and backtest frozen daily buy models 2021-2026
         run: python -m swingbot.five_year_daytrade > /tmp/crypto-5years.json
       - name: Present actual 5-year history coverage and profit by year
@@ -40,6 +46,7 @@ jobs:
               'eligible_bars':data['eligible_common_bars'],
               'segments':data['eligible_segments'],
               'results':data['results'],
+              'early_exit':data['exit_management_research'],
               'selection':data['selection'],
               'limitations':data['critical_caveats']
           },ensure_ascii=False))
@@ -65,6 +72,15 @@ jobs:
                   lines.append(f"| {year} | {yr['trades']} | "
                                f"{yr['successful_full_tp']} | "
                                f"{yr['net_profit_eur']:.2f} |")
+          lines += ['', '## Early-exit risk-management experiments on fixed morning_strict entry signals',
+            '| Exit guard | End EUR | PnL EUR | Full +1% TP | Stop | Early exits | Stress PnL EUR |',
+            '|---|---:|---:|---:|---:|---:|---:|']
+          for key, row in data['exit_management_research']['results'].items():
+              a=row['normal_costs']; b=row['double_costs']
+              c=a['trade_outcomes']
+              lines.append(f"| {key} | {a['ending_eur']:.2f} | "
+                  f"{a['profit_eur']:.2f} | {c['full_tp']} | {c['stops']} | "
+                  f"{c['early_exits']} | {b['profit_eur']:.2f} |")
           lines += [
             '',
             '**Research-only; NOT approved for live money.** '
