@@ -22,6 +22,8 @@ on:
       - 'swingbot/five_month_btc_eth.py'
       - 'swingbot/btc_eth_quality_gate.py'
       - 'swingbot/five_month_quality_comparison.py'
+      - 'swingbot/five_month_exit_research.py'
+      - 'tests/test_five_month_exit_research.py'
       - 'tests/test_shared_btc_eth_portfolio.py'
       - 'tests/test_btc_eth_only_research.py'
       - 'tests/test_intraday_risk_regime.py'
@@ -217,3 +219,6 @@ jobs:
 
       - name: Compare closed-candle quality entry gate on 150-day pooled BTC ETH history
         run: python -m swingbot.five_month_quality_comparison
+
+      - name: Test predeclared stop and take-profit grid on 150-day train/later history
+        run: python -m swingbot.five_month_exit_research
