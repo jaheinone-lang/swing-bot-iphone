@@ -150,6 +150,7 @@ def five_year_study(*,dataset=None,coverage=None):
         "eligible_common_bars":sum(len(x[PAIRS[0]]) for x in pieces),
         "frozen_compared_rules":RULES,
         "results":result,
+        "exit_management_research":__import__("swingbot.five_year_early_exit_research",fromlist=["study"]).study(prepared),
         "selection":{
             "qualified_profitable_both_cost_assumptions":[
                 k for k,v in result.items() if
