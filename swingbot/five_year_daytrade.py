@@ -153,6 +153,7 @@ def five_year_study(*,dataset=None,coverage=None):
         "exit_management_research":__import__("swingbot.five_year_early_exit_research",fromlist=["study"]).study(prepared),
         "entry_pullback_research":__import__("swingbot.five_year_pullback_research",fromlist=["study"]).study(prepared),
         "fill_sensitivity_research":__import__("swingbot.five_year_fill_sensitivity",fromlist=["study"]).study(prepared),
+        "trade_level_audit":__import__("swingbot.five_year_trade_audit",fromlist=["audit"]).audit(prepared),
         "selection":{
             "qualified_profitable_both_cost_assumptions":[
                 k for k,v in result.items() if
