@@ -154,6 +154,7 @@ def five_year_study(*,dataset=None,coverage=None):
         "entry_pullback_research":__import__("swingbot.five_year_pullback_research",fromlist=["study"]).study(prepared),
         "fill_sensitivity_research":__import__("swingbot.five_year_fill_sensitivity",fromlist=["study"]).study(prepared),
         "trade_level_audit":__import__("swingbot.five_year_trade_audit",fromlist=["audit"]).audit(prepared),
+        "subgroup_uncertainty":__import__("swingbot.trade_subgroup_uncertainty",fromlist=["summarize"]).summarize(__import__("swingbot.five_year_trade_audit",fromlist=["audit"]).audit(prepared)["per_trade"]),
         "entry_path_diagnostics":__import__("swingbot.five_year_entry_paths",fromlist=["diagnose"]).diagnose(prepared),
         "selection":{
             "qualified_profitable_both_cost_assumptions":[
