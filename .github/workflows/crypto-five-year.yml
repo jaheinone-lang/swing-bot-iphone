@@ -7,6 +7,7 @@ on:
       - 'swingbot/bitvavo_five_year.py'
       - 'swingbot/five_year_fast_signals.py'
       - 'swingbot/five_year_daytrade.py'
+      - 'swingbot/five_year_trade_audit.py'
       - 'swingbot/five_year_fill_sensitivity.py'
       - 'tests/test_tp_fill_sensitivity.py'
       - 'swingbot/five_year_pullback_research.py'
@@ -56,6 +57,7 @@ jobs:
               'early_exit':data['exit_management_research'],
               'pullback_entries':data['entry_pullback_research'],
               'fill_sensitivity':data['fill_sensitivity_research'],
+              'trade_audit':data['trade_level_audit'],
               'selection':data['selection'],
               'limitations':data['critical_caveats']
           },ensure_ascii=False))
