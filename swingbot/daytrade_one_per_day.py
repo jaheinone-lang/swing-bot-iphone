@@ -56,7 +56,8 @@ def replay_one_per_day(
     feeds, *, capital=START_CAPITAL, costs=ExecutionCosts(),
     signal=confirmed_upward_move, net_target_pct=1.,
     stop_pct=1.5, first_entry_index=160,
-    previously_traded_days=(), exit_guard=None
+    previously_traded_days=(), exit_guard=None,
+    tp_fill_buffer_bps=0., take_profit_costs=None
 ):
     """One shared account, max ONE trade per FI local calendar day.
 
@@ -70,6 +71,16 @@ def replay_one_per_day(
             isfinite(stop_pct) and .5 <= stop_pct <= 5 and
             isfinite(net_target_pct) and 1 <= net_target_pct <= 5):
         raise ValueError("Invalid capital or exit constraints")
+    if not (isfinite(tp_fill_buffer_bps) and
+            0 <= tp_fill_buffer_bps <= 500):
+        raise ValueError("Fill buffer must be between 0 and 500 bps")
+    if take_profit_costs is not None and not isinstance(
+            take_profit_costs, ExecutionCosts):
+        raise TypeError("take_profit_costs must be ExecutionCosts")
+    profit_costs = take_profit_costs if take_profit_costs is not None else costs
+    def target_traded_through(price):
+        return price * (1 + tp_fill_buffer_bps / 10000)
+
     lengths = {len(b) for b in feeds.values()}
     if len(lengths) != 1 or min(lengths) < first_entry_index + 2:
         raise ValueError("Not enough aligned complete candles")
@@ -90,7 +101,8 @@ def replay_one_per_day(
     def close_position(symbol, i, price, reason):
         nonlocal position, cash
         p = position
-        received = sell_net_proceeds(price, p["qty"], costs)
+        exit_costs = profit_costs if reason=="FULL_TP" else costs
+        received = sell_net_proceeds(price, p["qty"], exit_costs)
         cash += received
         pnl = received - p["basis"]
         executed.append({
@@ -122,7 +134,8 @@ def replay_one_per_day(
                 # Overnight/5m gap protection is evaluated before any
                 # optional model guard. At/below stop, fill at worse open.
                 close_position(symbol, i, candle["open"], "STOP")
-            elif candle["open"] >= position["target"]:
+            elif candle["open"] >= target_traded_through(
+                    position["target"]):
                 # Already beyond target at open: conservative target fill
                 # before considering a weakness exit.
                 close_position(symbol, i, position["target"], "FULL_TP")
@@ -136,7 +149,8 @@ def replay_one_per_day(
                     symbol, i, min(candle["open"], position["stop"]),
                     "STOP",
                 )
-            elif candle["high"] >= position["target"]:
+            elif candle["high"] >= target_traded_through(
+                    position["target"]):
                 # Conservative: if stop and target touch one candle, stop
                 # above gets priority. Target filled exactly, no best-price
                 # benefit for favorable gaps, estimated fees and slip used.
@@ -167,7 +181,7 @@ def replay_one_per_day(
                         "stop": stop,
                         "target": minimum_target_price(
                             price, net_target_pct=net_target_pct,
-                            costs=costs),
+                            costs=profit_costs),
                     }
                     trade_dates.add(today)
                     executed.append({
@@ -183,7 +197,8 @@ def replay_one_per_day(
                         close_position(
                             symbol, i, min(candle["open"],stop),
                             "ENTRY_BAR_STOP")
-                    elif candle["high"] >= position["target"]:
+                    elif candle["high"] >= target_traded_through(
+                            position["target"]):
                         close_position(symbol, i, position["target"],
                                        "FULL_TP")
                 else:
@@ -253,4 +268,6 @@ def replay_one_per_day(
                   "limit fill. Fees/slippage are estimates. Stop gap losses "
                   "may exceed risk target. No orders submitted.",
         "size_rejects":pending_rejected,
+        "tp_fill_buffer_bps":tp_fill_buffer_bps,
+        "hypothetical_maker_tp":take_profit_costs is not None,
     }
