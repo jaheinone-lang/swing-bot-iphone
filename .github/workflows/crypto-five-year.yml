@@ -1,0 +1,141 @@
+name: Five-year BTC ETH intraday research (READ-ONLY)
+on:
+  push:
+    branches:
+      - 'research/crypto-alpha-*'
+    paths:
+      - 'swingbot/bitvavo_five_year.py'
+      - 'swingbot/five_year_fast_signals.py'
+      - 'swingbot/five_year_daytrade.py'
+      - 'swingbot/five_year_trade_audit.py'
+      - 'swingbot/five_year_entry_paths.py'
+      - 'swingbot/trade_subgroup_uncertainty.py'
+      - 'tests/test_trade_subgroup_uncertainty.py'
+      - 'tests/test_five_year_entry_paths.py'
+      - 'swingbot/five_year_fill_sensitivity.py'
+      - 'tests/test_tp_fill_sensitivity.py'
+      - 'swingbot/five_year_pullback_research.py'
+      - 'swingbot/pullback_reclaim_5year.py'
+      - 'tests/test_five_year_pullback_research.py'
+      - 'swingbot/five_year_early_exit_research.py'
+      - 'swingbot/intraday_early_exits.py'
+      - 'swingbot/daytrade_one_per_day.py'
+      - 'tests/test_intraday_early_exits.py'
+      - 'tests/test_five_year_daytrade.py'
+      - '.github/workflows/crypto-five-year.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: crypto-five-year-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  five-year:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check five-year source and causal signal tests
+        run: |
+          python -m unittest discover -s tests -p 'test_five_year_daytrade.py' -v
+          python -m unittest discover -s tests -p 'test_intraday_early_exits.py' -v
+          python -m unittest discover -s tests -p 'test_five_year_pullback_research.py' -v
+          python -m unittest discover -s tests -p 'test_tp_fill_sensitivity.py' -v
+          python -m unittest discover -s tests -p 'test_five_year_entry_paths.py' -v
+          python -m unittest discover -s tests -p 'test_trade_subgroup_uncertainty.py' -v
+      - name: Download Bitvavo 5m BTC ETH and backtest frozen daily buy models 2021-2026
+        run: python -m swingbot.five_year_daytrade > /tmp/crypto-5years.json
+      - name: Present actual 5-year history coverage and profit by year
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          data=json.loads(Path('/tmp/crypto-5years.json').read_text())
+          print('FIVE_YEAR_VERIFIED_RESULT='+json.dumps({
+              'source':data['history_metadata'],
+              'common_bars':data['bars_common_both'],
+              'eligible_bars':data['eligible_common_bars'],
+              'segments':data['eligible_segments'],
+              'results':data['results'],
+              'early_exit':data['exit_management_research'],
+              'pullback_entries':data['entry_pullback_research'],
+              'fill_sensitivity':data['fill_sensitivity_research'],
+              'trade_audit':data['trade_level_audit'],
+              'entry_paths':data['entry_path_diagnostics'],
+              'subgroups':data['subgroup_uncertainty'],
+              'selection':data['selection'],
+              'limitations':data['critical_caveats']
+          },ensure_ascii=False))
+          lines=['# Five-year BTC-EUR + ETH-EUR, one pooled EUR 5,000 account',
+            f"Frozen UTC period {data['from_utc']} through {data['to_utc_exclusive']} (exclusive)",
+            f"Observed common 5m bars: {data['bars_common_both']}; "
+            f"eligible gap-free bars: {data['eligible_common_bars']}; "
+            f"gap-separated segments: {data['eligible_segments']}",
+            '',
+            '| Frozen buy rule | Final EUR | Return EUR | Return % | Buys | Complete +1% net TP | Stops | 21:55 closes | Double-cost EUR | Double-cost return EUR |',
+            '|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|']
+          for name, row in data['results'].items():
+              a=row['base']; b=row['double_trading_costs']
+              lines.append(f"| {name} | {a['final_eur']:.2f} | "
+                  f"{a['net_profit_eur']:.2f} | {a['return_pct']:.3f} | "
+                  f"{a['buys']} | {a['full_position_1pct_net_takeprofits']} | "
+                  f"{a['stop_exits']} | {a['21_55_exits']} | "
+                  f"{b['final_eur']:.2f} | {b['net_profit_eur']:.2f} |")
+              lines += [f"## {name} — Annual estimated realized PnL (EUR)",
+                        '| Year | Trades | 1% net TP | PnL EUR |',
+                        '|---|---:|---:|---:|']
+              for year, yr in a['annual'].items():
+                  lines.append(f"| {year} | {yr['trades']} | "
+                               f"{yr['successful_full_tp']} | "
+                               f"{yr['net_profit_eur']:.2f} |")
+          lines += ['', '## Early-exit risk-management experiments on fixed morning_strict entry signals',
+            '| Exit guard | End EUR | PnL EUR | Full +1% TP | Stop | Early exits | Stress PnL EUR |',
+            '|---|---:|---:|---:|---:|---:|---:|']
+          for key, row in data['exit_management_research']['results'].items():
+              a=row['normal_costs']; b=row['double_costs']
+              c=a['trade_outcomes']
+              lines.append(f"| {key} | {a['ending_eur']:.2f} | "
+                  f"{a['profit_eur']:.2f} | {c['full_tp']} | {c['stops']} | "
+                  f"{c['early_exits']} | {b['profit_eur']:.2f} |")
+          lines += ['', '## New 5-year pullback-reclaim entry hypotheses',
+            '| Entry rule | Final EUR | Return EUR | Buys | Full TP | Stops | 2021-23 PnL EUR | 2024-26 PnL EUR | Stress PnL EUR |',
+            '|---|---:|---:|---:|---:|---:|---:|---:|---:|']
+          for key, row in data['entry_pullback_research']['results'].items():
+              a=row['normal_costs']; b=row['double_costs']
+              events=a['events']
+              lines.append(f"| {key} | {a['final_eur']:.2f} | "
+                  f"{a['profit_eur']:.2f} | {events['buys']} | {events['full_tp']} | "
+                  f"{events['stops']} | "
+                  f"{a['2021_to_2023_realized_pnl']:.2f} | "
+                  f"{a['2024_to_2026_realized_pnl']:.2f} | "
+                  f"{b['profit_eur']:.2f} |")
+          lines += ['', '## Target-order maker/taker fills: trade-through sensitivity',
+            '| Exit model | Normal pnl EUR | Normal TP fills assumed | Stress pnl EUR |',
+            '|---|---:|---:|---:|']
+          for key, pair in data['fill_sensitivity_research']['results'].items():
+              a=pair['normal']; b=pair['double']
+              lines.append(f"| {key} | {a['profit_eur']:.2f} | "
+                  f"{a['trades_and_exits']['tp']} | {b['profit_eur']:.2f} |")
+          lines += [
+            '',
+            '**Research-only; NOT approved for live money.** '
+            'All signals calculated from completed earlier 5m candles. '
+            'OHLC high touches do not prove executable limit-order fills, '
+            'segmentation forces liquidation at observed gap edges, '
+            'fees/slippage estimated and personal capital gains taxes excluded. '
+            '2026 data already used for development; historical performance '
+            'is NOT independent real-world predictive validation.'
+          ]
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
+              f.write('\n'.join(lines)+'\n')
+          print('\n'.join(lines))
+          PY
+      - name: Store research summary JSON
+        uses: actions/upload-artifact@v4
+        with:
+          name: btc-eth-five-year-5m-results
+          path: /tmp/crypto-5years.json
+          retention-days: 30

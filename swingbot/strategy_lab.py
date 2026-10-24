@@ -81,8 +81,15 @@ def _safe_size(available: float, equity: float, price: float,
 def research_backtest(data: Mapping[str, Sequence[Bar]],
                       markets: Mapping[str, str], cfg: Spec,
                       *, starting_eur: float = 5000.0,
-                      other_capital_income_eur: float = 0.0) -> dict:
+                      other_capital_income_eur: float = 0.0,
+                      portfolio_risk_limit_fraction: float | None = None,
+                      entries_not_before: date | None = None) -> dict:
     _validated(data, markets)
+    if portfolio_risk_limit_fraction is not None and not (
+        isfinite(portfolio_risk_limit_fraction)
+        and 0 < portfolio_risk_limit_fraction <= 1
+    ):
+        raise ValueError("Portfolio stop-risk budget must be between 0 and 1")
     if starting_eur <= 0 or not isfinite(starting_eur):
         raise ValueError("Invalid capital")
     bars_by_day = {}
@@ -151,7 +158,8 @@ def research_backtest(data: Mapping[str, Sequence[Bar]],
         if cfg.momentum_top:
             ready=ready[:cfg.momentum_top]
         for symbol, entry in ready:
-            if not halted and symbol not in positions and symbol not in stopped:
+            if (not halted and symbol not in positions and symbol not in stopped
+                    and (entries_not_before is None or day >= entries_not_before)):
                 bar=active[symbol]
                 fee_bps,slip_bps=COST_BPS[markets[symbol]]
                 price=bar.open*(1+slip_bps/10000)
@@ -159,6 +167,20 @@ def research_backtest(data: Mapping[str, Sequence[Bar]],
                 gross,net_equity=account_equity()
                 size=_safe_size(max(0,cash-tax_reserved), net_equity, price,
                                 distance,fee_bps,markets[symbol],cfg)
+                if portfolio_risk_limit_fraction is not None:
+                    # Aggregate expected OPEN stop risk, not realized tail risk:
+                    # gaps and slippage can exceed these nominal limits.
+                    existing_risk=sum(
+                        p["qty"] * max(0.0, p["entry"] - p["stop"])
+                        for p in positions.values()
+                    )
+                    remaining_risk=max(
+                        0.0, net_equity*portfolio_risk_limit_fraction-existing_risk
+                    )
+                    precision=0 if markets[symbol]=="stock" else 8
+                    by_total=remaining_risk/distance
+                    factor=10**precision
+                    size=min(size, floor(max(0.0,by_total)*factor + 1e-10)/factor)
                 if size>0 and price>distance:
                     fee=size*price*fee_bps/10000
                     cash-=size*price+fee
@@ -189,9 +211,15 @@ def research_backtest(data: Mapping[str, Sequence[Bar]],
         if drawdown>=.25:
             halted=True
             pending_entries.clear()
+        invested_eur=sum(
+            pos["qty"]*last_close[sym] for sym,pos in positions.items()
+        )
         curve.append({"day":day.isoformat(),"equity_eur":round(net_equity,6),
                       "gross_equity_eur":round(gross,6),
                       "tax_reserved_eur":round(tax_reserved,6),
+                      "invested_eur":round(invested_eur,6),
+                      "invested_share_pct":round(
+                          invested_eur/max(gross, 1e-12)*100, 4),
                       "drawdown_pct":round(drawdown*100,4)})
 
         candidates=[]
@@ -233,6 +261,8 @@ def research_backtest(data: Mapping[str, Sequence[Bar]],
                       "risk_per_trade_pct":cfg.risk_per_trade*100},
         "status":"RESEARCH_ONLY_NO_ORDERS",
         "starting_eur":starting_eur,
+        "portfolio_risk_limit_fraction":portfolio_risk_limit_fraction,
+        "entries_not_before": entries_not_before.isoformat() if entries_not_before else None,
         "gross_final_equity_eur":round(gross,2),
         "estimated_tax_reserve_eur":round(tax_reserved,2),
         "after_tax_equity_eur":round(net,2),
