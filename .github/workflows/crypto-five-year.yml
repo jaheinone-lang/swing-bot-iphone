@@ -7,6 +7,8 @@ on:
       - 'swingbot/bitvavo_five_year.py'
       - 'swingbot/five_year_fast_signals.py'
       - 'swingbot/five_year_daytrade.py'
+      - 'swingbot/five_year_fill_sensitivity.py'
+      - 'tests/test_tp_fill_sensitivity.py'
       - 'swingbot/five_year_pullback_research.py'
       - 'swingbot/pullback_reclaim_5year.py'
       - 'tests/test_five_year_pullback_research.py'
@@ -36,6 +38,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_five_year_daytrade.py' -v
           python -m unittest discover -s tests -p 'test_intraday_early_exits.py' -v
           python -m unittest discover -s tests -p 'test_five_year_pullback_research.py' -v
+          python -m unittest discover -s tests -p 'test_tp_fill_sensitivity.py' -v
       - name: Download Bitvavo 5m BTC ETH and backtest frozen daily buy models 2021-2026
         run: python -m swingbot.five_year_daytrade > /tmp/crypto-5years.json
       - name: Present actual 5-year history coverage and profit by year
@@ -52,6 +55,7 @@ jobs:
               'results':data['results'],
               'early_exit':data['exit_management_research'],
               'pullback_entries':data['entry_pullback_research'],
+              'fill_sensitivity':data['fill_sensitivity_research'],
               'selection':data['selection'],
               'limitations':data['critical_caveats']
           },ensure_ascii=False))
@@ -98,6 +102,13 @@ jobs:
                   f"{a['2021_to_2023_realized_pnl']:.2f} | "
                   f"{a['2024_to_2026_realized_pnl']:.2f} | "
                   f"{b['profit_eur']:.2f} |")
+          lines += ['', '## Target-order maker/taker fills: trade-through sensitivity',
+            '| Exit model | Normal pnl EUR | Normal TP fills assumed | Stress pnl EUR |',
+            '|---|---:|---:|---:|']
+          for key, pair in data['fill_sensitivity_research']['results'].items():
+              a=pair['normal']; b=pair['double']
+              lines.append(f"| {key} | {a['profit_eur']:.2f} | "
+                  f"{a['trades_and_exits']['tp']} | {b['profit_eur']:.2f} |")
           lines += [
             '',
             '**Research-only; NOT approved for live money.** '
