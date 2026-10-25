@@ -7,6 +7,8 @@ on:
       - 'swingbot/bitvavo_five_year.py'
       - 'swingbot/five_year_fast_signals.py'
       - 'swingbot/five_year_daytrade.py'
+      - 'swingbot/positive_rules_5year.py'
+      - 'tests/test_positive_rules_5year.py'
       - 'swingbot/five_year_trade_audit.py'
       - 'swingbot/five_year_entry_paths.py'
       - 'swingbot/trade_subgroup_uncertainty.py'
@@ -46,6 +48,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_tp_fill_sensitivity.py' -v
           python -m unittest discover -s tests -p 'test_five_year_entry_paths.py' -v
           python -m unittest discover -s tests -p 'test_trade_subgroup_uncertainty.py' -v
+          python -m unittest discover -s tests -p 'test_positive_rules_5year.py' -v
       - name: Download Bitvavo 5m BTC ETH and backtest frozen daily buy models 2021-2026
         run: python -m swingbot.five_year_daytrade > /tmp/crypto-5years.json
       - name: Present actual 5-year history coverage and profit by year
@@ -66,6 +69,7 @@ jobs:
               'trade_audit':data['trade_level_audit'],
               'entry_paths':data['entry_path_diagnostics'],
               'subgroups':data['subgroup_uncertainty'],
+              'whole_account_rules':data['positive_rules'],
               'selection':data['selection'],
               'limitations':data['critical_caveats']
           },ensure_ascii=False))
@@ -119,6 +123,15 @@ jobs:
               a=pair['normal']; b=pair['double']
               lines.append(f"| {key} | {a['profit_eur']:.2f} | "
                   f"{a['trades_and_exits']['tp']} | {b['profit_eur']:.2f} |")
+          lines += ['', '## Six whole-account rule hypotheses: 2021-23 training / 2024-26 later',
+            '| Rule | Train PnL € | Train double € | Later PnL € | Later double € | Trained qualified | Both eras |',
+            '|---|---:|---:|---:|---:|---|---|']
+          for row in data['positive_rules']['rows']:
+              lines.append(f"| {row['policy']} | {row['train']['pnl_eur']:.2f} | "
+                f"{row['train_double']['pnl_eur']:.2f} | "
+                f"{row['later']['pnl_eur']:.2f} | "
+                f"{row['later_double']['pnl_eur']:.2f} | "
+                f"{row['train_qualifies']} | {row['passes_all_periods']} |")
           lines += [
             '',
             '**Research-only; NOT approved for live money.** '
