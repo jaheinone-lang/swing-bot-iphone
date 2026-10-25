@@ -156,6 +156,7 @@ def five_year_study(*,dataset=None,coverage=None):
         "trade_level_audit":__import__("swingbot.five_year_trade_audit",fromlist=["audit"]).audit(prepared),
         "subgroup_uncertainty":__import__("swingbot.trade_subgroup_uncertainty",fromlist=["summarize"]).summarize(__import__("swingbot.five_year_trade_audit",fromlist=["audit"]).audit(prepared)["per_trade"]),
         "entry_path_diagnostics":__import__("swingbot.five_year_entry_paths",fromlist=["diagnose"]).diagnose(prepared),
+        "positive_rules":__import__("swingbot.positive_rules_5year",fromlist=["search"]).search(prepared),
         "selection":{
             "qualified_profitable_both_cost_assumptions":[
                 k for k,v in result.items() if
