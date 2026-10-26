@@ -8,6 +8,9 @@ on:
       - 'swingbot/five_year_fast_signals.py'
       - 'swingbot/five_year_daytrade.py'
       - 'swingbot/positive_rules_5year.py'
+      - 'swingbot/distinct_strategy_families.py'
+      - 'swingbot/alternative_entry_families.py'
+      - 'tests/test_distinct_strategy_families.py'
       - 'swingbot/alternative_entry_families.py'
       - 'swingbot/alternative_entry_research.py'
       - 'tests/test_alternative_entry_research.py'
@@ -52,6 +55,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_five_year_entry_paths.py' -v
           python -m unittest discover -s tests -p 'test_trade_subgroup_uncertainty.py' -v
           python -m unittest discover -s tests -p 'test_positive_rules_5year.py' -v
+          python -m unittest discover -s tests -p 'test_distinct_strategy_families.py' -v
           python -m unittest discover -s tests -p 'test_alternative_entry_research.py' -v
       - name: Download Bitvavo 5m BTC ETH and backtest frozen daily buy models 2021-2026
         run: python -m swingbot.five_year_daytrade > /tmp/crypto-5years.json
@@ -74,6 +78,7 @@ jobs:
               'entry_paths':data['entry_path_diagnostics'],
               'subgroups':data['subgroup_uncertainty'],
               'whole_account_rules':data['positive_rules'],
+              'new_families':data['distinct_strategy_families'],
               'alternative_entries':data['alternative_entry_families'],
               'selection':data['selection'],
               'limitations':data['critical_caveats']
@@ -137,6 +142,15 @@ jobs:
                 f"{row['later']['pnl_eur']:.2f} | "
                 f"{row['later_double']['pnl_eur']:.2f} | "
                 f"{row['train_qualifies']} | {row['passes_all_periods']} |")
+          lines += ['', '## Distinct entry strategies against cash (two chronological eras)',
+             '| Rule | 2021-23 PnL | 2021-23 double | 2024-26 PnL | 2024-26 double | Qualified |',
+             '|---|---:|---:|---:|---:|---|']
+          for row in data['distinct_strategy_families']['rules']:
+              lines.append(f"| {row['rule']} | {row['train']['pnl_eur']:.2f} | "
+                f"{row['train_2x']['pnl_eur']:.2f} | "
+                f"{row['later']['pnl_eur']:.2f} | "
+                f"{row['later_2x']['pnl_eur']:.2f} | "
+                f"{row['meets_all_historical_thresholds']} |")
           lines += [
             '',
             '**Research-only; NOT approved for live money.** '
