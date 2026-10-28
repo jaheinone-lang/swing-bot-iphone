@@ -1,32 +1,32 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-10-27T10:54:40+00:00",
-  "as_of": "2026-10-27",
+  "generated_at_utc": "2026-10-28T11:35:16+00:00",
+  "as_of": "2026-10-28",
   "status": "TRADING212_DEMO_METADATA_CONNECTED",
   "data_mode": "BROKER_INSTRUMENT_METADATA_ONLY",
   "instruments": {
-    "stocks": 10373,
+    "stocks": 10374,
     "etfs": 6749,
-    "total": 17122,
-    "unique_isins": 13121,
+    "total": 17123,
+    "unique_isins": 13122,
     "by_currency": {
       "CAD": 543,
       "CHF": 387,
-      "EUR": 6342,
+      "EUR": 6343,
       "GBP": 577,
       "GBX": 1896,
       "USD": 7377
     },
-    "platform_additions_last_30d": 128
+    "platform_additions_last_30d": 131
   },
   "eu_stock_research": {
     "status": "EU_ISIN_PREFIX_METADATA_COUNTS_ONLY",
-    "stocks_with_eu_isin_prefix": 1468,
-    "eur_quoted_eu_isin_prefix_stocks": 1339,
+    "stocks_with_eu_isin_prefix": 1469,
+    "eur_quoted_eu_isin_prefix_stocks": 1340,
     "by_quote_currency": {
       "CAD": 1,
       "CHF": 4,
-      "EUR": 1339,
+      "EUR": 1340,
       "GBX": 25,
       "USD": 99
     },
@@ -36,7 +36,7 @@
       "BG": 1,
       "CY": 6,
       "CZ": 5,
-      "DE": 374,
+      "DE": 375,
       "DK": 31,
       "ES": 162,
       "FI": 34,
