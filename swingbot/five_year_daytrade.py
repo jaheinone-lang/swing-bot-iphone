@@ -158,6 +158,7 @@ def five_year_study(*,dataset=None,coverage=None):
         "entry_path_diagnostics":__import__("swingbot.five_year_entry_paths",fromlist=["diagnose"]).diagnose(prepared),
         "positive_rules":__import__("swingbot.positive_rules_5year",fromlist=["search"]).search(prepared),
         "distinct_strategy_families":__import__("swingbot.distinct_strategy_families",fromlist=["study"]).study(prepared),
+        "regime_filter_replay":__import__("swingbot.regime_filter_replay",fromlist=["study"]).study(prepared),
         "alternative_entry_families":__import__("swingbot.alternative_entry_research",fromlist=["study"]).study(prepared),
         "selection":{
             "qualified_profitable_both_cost_assumptions":[
