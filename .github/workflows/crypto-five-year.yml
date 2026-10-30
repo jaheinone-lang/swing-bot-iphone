@@ -9,6 +9,8 @@ on:
       - 'swingbot/five_year_daytrade.py'
       - 'swingbot/positive_rules_5year.py'
       - 'swingbot/distinct_strategy_families.py'
+      - 'swingbot/regime_filter_replay.py'
+      - 'tests/test_regime_filter_replay.py'
       - 'swingbot/alternative_entry_families.py'
       - 'tests/test_distinct_strategy_families.py'
       - 'swingbot/alternative_entry_families.py'
@@ -56,6 +58,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_trade_subgroup_uncertainty.py' -v
           python -m unittest discover -s tests -p 'test_positive_rules_5year.py' -v
           python -m unittest discover -s tests -p 'test_distinct_strategy_families.py' -v
+          python -m unittest discover -s tests -p 'test_regime_filter_replay.py' -v
           python -m unittest discover -s tests -p 'test_alternative_entry_research.py' -v
       - name: Download Bitvavo 5m BTC ETH and backtest frozen daily buy models 2021-2026
         run: python -m swingbot.five_year_daytrade > /tmp/crypto-5years.json
@@ -79,6 +82,7 @@ jobs:
               'subgroups':data['subgroup_uncertainty'],
               'whole_account_rules':data['positive_rules'],
               'new_families':data['distinct_strategy_families'],
+              'regime_filters':data['regime_filter_replay'],
               'alternative_entries':data['alternative_entry_families'],
               'selection':data['selection'],
               'limitations':data['critical_caveats']
