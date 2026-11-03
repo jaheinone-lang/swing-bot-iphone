@@ -2,21 +2,21 @@
   "schema_version": 1,
   "mode": "DELAYED_FORWARD_PAPER",
   "started_on": "2026-10-16",
-  "last_processed_day": "2026-11-01",
+  "last_processed_day": "2026-11-02",
   "initial_eur": 5000.0,
   "cash_eur": 5006.492013,
   "peak_equity_eur": 5053.796412414063,
   "last_closes_eur": {
-    "BTC-EUR": 70169.0,
-    "ETH-EUR": 2037.39,
-    "SOL-EUR": 84.63,
-    "SAP.DE": 211.25
+    "BTC-EUR": 68533.0,
+    "ETH-EUR": 2010.13,
+    "SOL-EUR": 82.069,
+    "SAP.DE": 210.5
   },
   "last_price_days": {
-    "BTC-EUR": "2026-11-01",
-    "ETH-EUR": "2026-11-01",
-    "SOL-EUR": "2026-11-01",
-    "SAP.DE": "2026-10-30"
+    "BTC-EUR": "2026-11-02",
+    "ETH-EUR": "2026-11-02",
+    "SOL-EUR": "2026-11-02",
+    "SAP.DE": "2026-11-02"
   },
   "positions": {},
   "pending": {},
@@ -124,6 +124,11 @@
     },
     {
       "day": "2026-11-01",
+      "equity_eur": 5004.54,
+      "drawdown_pct": 0.97
+    },
+    {
+      "day": "2026-11-02",
       "equity_eur": 5004.54,
       "drawdown_pct": 0.97
     }
