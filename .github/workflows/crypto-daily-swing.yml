@@ -1,0 +1,59 @@
+name: BTC ETH 1d longer-term swing research (READ-ONLY)
+on:
+  push:
+    branches:
+      - 'research/crypto-alpha-*'
+    paths:
+      - 'swingbot/daily_swing_research.py'
+      - 'tests/test_daily_swing_research.py'
+      - '.github/workflows/crypto-daily-swing.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: crypto-daily-swing-\${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  daily:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Unit tests and no-leverage safeguards
+        run: python -m unittest discover -s tests -p 'test_daily_swing_research.py' -v
+      - name: Download actual BTC ETH 1d Bitvavo candles and replay
+        run: python -m swingbot.daily_swing_research > /tmp/crypto-daily.json
+      - name: Publish actual daily backtest outcomes
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          d=json.loads(Path('/tmp/crypto-daily.json').read_text())
+          print('DAILY_SWING_VERIFIED_RESULT='+json.dumps(d,ensure_ascii=False))
+          lines=[
+           '# BTC + ETH genuine 1-day candles, spot only, research',
+           'Each era starts with a new EUR 5000 account; 2021-23 vs 2024-26.',
+           '',
+           '| Strategy | 2021-23 PnL € | 2021-23 trades | Later PnL € | Later trades | Later 2x costs € |',
+           '|---|---:|---:|---:|---:|---:|'
+          ]
+          for x in d['strategies']:
+              a=x['early'];b=x['later'];c=x['later_double']
+              lines.append(f"| {x['rule']} | {a['pnl_eur']:.2f} | "
+                 f"{a['trades']} | {b['pnl_eur']:.2f} | "
+                 f"{b['trades']} | {c['pnl_eur']:.2f} |")
+          lines += ['', 'Benchmark: EUR cash = 0 € nominal PnL.',
+            '20% BTC+ETH buy-hold: '+json.dumps(d['btc_eth_20pct_buy_hold'],ensure_ascii=False),
+            '', '**All IN-SAMPLE simulation only. No live approval, no tax.**']
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
+              f.write('\n'.join(lines)+'\n')
+          print('\n'.join(lines))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: btc-eth-daily-long-horizon-research
+          path: /tmp/crypto-daily.json
+          retention-days: 30
