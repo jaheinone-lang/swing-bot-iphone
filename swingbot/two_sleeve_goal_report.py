@@ -85,7 +85,8 @@ def report(*,as_of,trading_equity_eur,holding_liquidation_eur,
             "peak_drawdown_pct":drawdown_pct,
             "drawdown_halt_threshold_pct":MAX_DRAWDOWN_LIMIT_PCT,
             "drawdown_threshold_breached":(
-                drawdown_pct is not None and drawdown_pct>=MAX_DRAWDOWN_LIMIT_PCT),
+                None if drawdown_pct is None
+                else drawdown_pct>=MAX_DRAWDOWN_LIMIT_PCT),
             "one_year_100pct_goal_eur_if_no_external_flows":
                 round(initial*2,2),
             "annual_goal_pct":ANNUAL_GOAL_PCT,
