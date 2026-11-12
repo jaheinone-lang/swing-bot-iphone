@@ -134,6 +134,7 @@ def replay(eras,rule,costs=FEE):
                     receipt=sell_net_proceeds(price,position["qty"],costs)
                     cash+=receipt
                     events.append({"asset":asset,"reason":endreason,
+                        "exit_year":datetime.fromtimestamp(t/1000,timezone.utc).year,
                         "net_eur":round(receipt-position["basis"],4)})
                     position=None
                     cooldown_until=t+3*DAY
@@ -158,6 +159,7 @@ def replay(eras,rule,costs=FEE):
                 receipt=sell_net_proceeds(stop,qty,costs)
                 cash+=receipt
                 events.append({"asset":asset,"reason":"ENTRY_STOP",
+                    "exit_year":datetime.fromtimestamp(t/1000,timezone.utc).year,
                     "net_eur":round(receipt-basis,4)})
                 cooldown_until=t+3*DAY;position=None
         if position:
@@ -165,8 +167,14 @@ def replay(eras,rule,costs=FEE):
             receipt=sell_net_proceeds(feed[asset][-1]["close"],position["qty"],costs)
             cash+=receipt
             events.append({"asset":asset,"reason":"END_OF_SEGMENT",
+                "exit_year":datetime.fromtimestamp(
+                    feed[asset][-1]["timestamp_ms"]/1000,timezone.utc).year,
                 "net_eur":round(receipt-position["basis"],4)})
+    annual={str(y):{"trades":sum(e["exit_year"]==y for e in events),
+        "pnl_eur":round(sum(e["net_eur"] for e in events if e["exit_year"]==y),2)}
+        for y in range(2021,2027)}
     return {"trades":len(events),"wins":sum(e["net_eur"]>0 for e in events),
+        "realized_by_exit_year":annual,
         "stops":sum("STOP" in e["reason"] for e in events),
         "pnl_eur":round(cash-5000,2),"end_eur":round(cash,2),
         "final_fully_liquidated":True}
