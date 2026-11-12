@@ -12,9 +12,13 @@ PATTERNS=("bullish_harami","hammer_confirm","bullish_hikkake")
 
 def completed_hours(bars):
     hours=[]
-    for i in range(11,len(bars),12):
-        slice_=bars[i-11:i+1]
-        if slice_[0]["timestamp_ms"]%3600000!=0:continue
+    # Segments can begin at arbitrary 5m offsets; find FIRST true UTC hour.
+    aligned=next((i for i in range(min(12,len(bars)))
+                  if bars[i]["timestamp_ms"]%3600000==0),None)
+    if aligned is None:return hours
+    for start in range(aligned,len(bars)-11,12):
+        i=start+11
+        slice_=bars[start:i+1]
         if any(slice_[j]["timestamp_ms"]-slice_[j-1]["timestamp_ms"]!=300000
                for j in range(1,12)):continue
         hours.append({"idx":i,"open":slice_[0]["open"],"high":max(x["high"] for x in slice_),
