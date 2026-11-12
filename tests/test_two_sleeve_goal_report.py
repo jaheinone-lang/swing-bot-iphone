@@ -36,6 +36,10 @@ class DualSleeveTests(unittest.TestCase):
             report(as_of="2026-11-12",trading_equity_eur=6000,
                    holding_liquidation_eur=0,holding_contributions=[],
                    trade_peak_eur=5000)
+    def test_missing_peak_is_unknown_not_safe(self):
+        v=report(as_of="2026-11-12",trading_equity_eur=5000,
+            holding_liquidation_eur=0,holding_contributions=[])
+        self.assertIsNone(v["trading"]["drawdown_threshold_breached"])
     def test_nonfinite_rejected(self):
         with self.assertRaises(ValueError):
             report(as_of="2026-11-12",trading_equity_eur=float("nan"),
