@@ -6,6 +6,8 @@ on:
     paths:
       - 'swingbot/daily_swing_research.py'
       - 'swingbot/monthly_hold_research.py'
+      - 'swingbot/two_sleeve_goal_report.py'
+      - 'tests/test_two_sleeve_goal_report.py'
       - 'tests/test_monthly_hold_research.py'
       - 'tests/test_daily_swing_research.py'
       - '.github/workflows/crypto-daily-swing.yml'
@@ -28,6 +30,7 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_daily_swing_research.py' -v
           python -m unittest discover -s tests -p 'test_monthly_hold_research.py' -v
+          python -m unittest discover -s tests -p 'test_two_sleeve_goal_report.py' -v
       - name: Download actual BTC ETH 1d Bitvavo candles and replay
         run: |
           python -m swingbot.daily_swing_research > /tmp/crypto-daily.json
@@ -48,6 +51,19 @@ jobs:
           print('DAILY_SWING_VERIFIED_RESULT='+json.dumps(d,ensure_ascii=False))
           hold=json.loads(Path('/tmp/hold-dca.json').read_text())
           print('MONTHLY_HOLD_VERIFIED_RESULT='+json.dumps(hold,ensure_ascii=False))
+          from swingbot.two_sleeve_goal_report import report
+          # Historical demonstration only: 55d breakout in 2024-2026
+          # and EUR200/month hold over the SAME period, not live accounts.
+          trade=next(x for x in d['strategies'] if x['rule']=='breakout55')['later']
+          scenario=hold['scenarios']['later']['normal_costs']
+          deposits=[{'month':r['month'],'eur':r['amount_eur']}
+                    for r in scenario['deposit_schedule']]
+          snapshot=report(as_of=scenario['last_valued_day'],
+                  trading_equity_eur=trade['end_eur'],
+                  holding_liquidation_eur=scenario['estimated_liquidation_eur'],
+                  holding_contributions=deposits)
+          print('DUAL_SLEEVE_HISTORICAL_SNAPSHOT='+json.dumps(snapshot,ensure_ascii=False))
+          Path('/tmp/dual-sleeve-snapshot.json').write_text(json.dumps(snapshot,ensure_ascii=False))
           lines=[
            '# BTC + ETH genuine 1-day candles, spot only, research',
            'Each era starts with a new EUR 5000 account; 2021-23 vs 2024-26.',
@@ -81,4 +97,5 @@ jobs:
           path: |
             /tmp/crypto-daily.json
             /tmp/hold-dca.json
+            /tmp/dual-sleeve-snapshot.json
           retention-days: 30
