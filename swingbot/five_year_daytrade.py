@@ -161,6 +161,7 @@ def five_year_study(*,dataset=None,coverage=None):
         "regime_filter_replay":__import__("swingbot.regime_filter_replay",fromlist=["study"]).study(prepared),
         "hourly_candles":__import__("swingbot.hourly_candle_research",fromlist=["study"]).study(prepared),
         "hourly_predictive_diagnostics":__import__("swingbot.hourly_candle_predictive_diagnostics",fromlist=["research"]).research(prepared),
+        "four_hour_swing":__import__("swingbot.four_hour_swing_research",fromlist=["study"]).study(prepared),
         "alternative_entry_families":__import__("swingbot.alternative_entry_research",fromlist=["study"]).study(prepared),
         "selection":{
             "qualified_profitable_both_cost_assumptions":[
