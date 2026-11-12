@@ -137,8 +137,16 @@ def replay(segments,rule,fees=FEES):
             position={"entry_ms":ts,"stop":stop,"qty":qty,
                 "symbol":symbol,"basis":basis}
             trade_days.add(day)
-            # The entry 5m candle high/low is unknown inside that bar;
-            # stop-first is conservative, no exit until next bar.
+            # An entry-bar low at/below the stop is treated as immediate
+            # stop-first, rather than granting an unearned 5m grace period.
+            if feed[symbol][i]["low"]<=stop:
+                proceeds=sell_net_proceeds(stop,qty,fees)
+                cash+=proceeds
+                records.append({"symbol":symbol,"entry_ms":ts,
+                    "exit_ms":ts,"reason":"STOP_ENTRY_BAR",
+                    "net_eur":round(proceeds-basis,4),
+                    "position_cost":round(basis,4)})
+                position=None
         if position is not None:
             close=feed[position["symbol"]][-1]["close"]
             proceeds=sell_net_proceeds(close,position["qty"],fees)
