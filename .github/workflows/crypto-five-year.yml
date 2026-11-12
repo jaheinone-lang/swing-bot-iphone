@@ -13,6 +13,8 @@ on:
       - 'swingbot/hourly_candle_hypotheses.py'
       - 'swingbot/hourly_candle_research.py'
       - 'swingbot/hourly_candle_predictive_diagnostics.py'
+      - 'swingbot/four_hour_swing_research.py'
+      - 'tests/test_four_hour_swing_research.py'
       - 'tests/test_hourly_candle_predictive_diagnostics.py'
       - 'tests/test_hourly_candle_research.py'
       - 'tests/test_regime_filter_replay.py'
@@ -66,6 +68,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_regime_filter_replay.py' -v
           python -m unittest discover -s tests -p 'test_hourly_candle_research.py' -v
           python -m unittest discover -s tests -p 'test_hourly_candle_predictive_diagnostics.py' -v
+          python -m unittest discover -s tests -p 'test_four_hour_swing_research.py' -v
           python -m unittest discover -s tests -p 'test_alternative_entry_research.py' -v
       - name: Download Bitvavo 5m BTC ETH and backtest frozen daily buy models 2021-2026
         run: python -m swingbot.five_year_daytrade > /tmp/crypto-5years.json
@@ -92,6 +95,7 @@ jobs:
               'regime_filters':data['regime_filter_replay'],
               'candlestick_patterns':data['hourly_candles'],
               'candlestick_predictive':data['hourly_predictive_diagnostics'],
+              'four_hour_swing':data['four_hour_swing'],
               'alternative_entries':data['alternative_entry_families'],
               'selection':data['selection'],
               'limitations':data['critical_caveats']
@@ -164,6 +168,14 @@ jobs:
                 f"{row['later']['pnl_eur']:.2f} | "
                 f"{row['later_2x']['pnl_eur']:.2f} | "
                 f"{row['meets_all_historical_thresholds']} |")
+          lines += ['', '## Longer-horizon 4h trend swing vs previous short-lived signals',
+            '| 4h rule | Pre-2024 PnL € | Pre-2024 trades | Later PnL € | Later trades | Later double-cost PnL € | Historical candidate |',
+            '|---|---:|---:|---:|---:|---:|---|']
+          for row in data['four_hour_swing']['rows']:
+              lines.append(f"| {row['name']} | {row['early']['pnl_eur']:.2f} | "
+                 f"{row['early']['trades']} | {row['later']['pnl_eur']:.2f} | "
+                 f"{row['later']['trades']} | {row['later_double']['pnl_eur']:.2f} | "
+                 f"{row['historically_positive_both_eras_all_costs']} |")
           lines += [
             '',
             '**Research-only; NOT approved for live money.** '
