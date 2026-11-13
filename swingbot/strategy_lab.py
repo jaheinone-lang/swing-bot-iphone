@@ -16,6 +16,7 @@ from typing import Mapping, Sequence
 from .fi_tax_estimate import annual_tax_schedule
 from .portfolio import Bar, COST_BPS, _atr, _validated
 from .research_metrics import _metrics
+from .return_target import TARGET_ANNUAL_RETURN_PCT, goal_report
 
 
 @dataclass(frozen=True)
@@ -287,12 +288,12 @@ def walkforward_research(data: Mapping[str, Sequence[Bar]],
             "realized_disposals":result["realized_disposals"],
             "halted":result["halted"],
         })
-    # Apparent model "learning": choose ONLY using train returns and drawdown
-    # penalty, then evaluate that selection on previously unseen holdout.
+    # Equal-duration development windows: choose the largest observed
+    # after-tax return; no drawdown-weighted score in model selection.
+    # These samples still lack an untouched, verified data source.
     candidates=[v for v in variants if v["development"]]
     leader=max(candidates,key=lambda v:(
-        v["development"]["total_return_pct"]
-        - 1.5*v["development"]["max_drawdown_pct"],
+        v["development"]["total_return_pct"],
         v["name"]
     ))
     return {
@@ -300,7 +301,23 @@ def walkforward_research(data: Mapping[str, Sequence[Bar]],
         "split_date":split.isoformat(),
         "development_start":common_start.isoformat(),
         "validation_end":common_end.isoformat(),
-        "selection_rule":"development return percentage - 1.5 x maximum drawdown percentage",
+        "selection_rule":"highest after-tax development return, then assess later holdout",
+        "research_objective":"MAXIMIZE_TRAINING_COMPOUNDED_RETURN",
+        "target_annual_return_pct":TARGET_ANNUAL_RETURN_PCT,
+        "training_annual_goal":goal_report(
+            initial_equity=1.0,
+            final_equity=1.0+leader["development"]["total_return_pct"]/100,
+            start=date.fromisoformat(leader["development"]["period_start"]),
+            end=date.fromisoformat(leader["development"]["period_end"]),
+            synthetic_or_unverified=True,
+        ) if leader["development"]["total_return_pct"]>=-100 else None,
+        "holdout_annual_goal":goal_report(
+            initial_equity=1.0,
+            final_equity=1.0+leader["holdout"]["total_return_pct"]/100,
+            start=date.fromisoformat(leader["holdout"]["period_start"]),
+            end=date.fromisoformat(leader["holdout"]["period_end"]),
+            synthetic_or_unverified=True,
+        ) if leader["holdout"] and leader["holdout"]["total_return_pct"]>=-100 else None,
         "training_selected_variant":leader["name"],
         "holdout_of_selected":leader["holdout"],
         "auto_trading_changes":False,
