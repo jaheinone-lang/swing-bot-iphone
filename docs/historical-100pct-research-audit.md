@@ -5,6 +5,48 @@ Trading-only research capital: USD 5,000 in the US historical engine.
 **+100% CAGR is an ambitious research target, not a forecast**. EUR
 conversion, taxes, funding flows and actual execution are not included.
 
+## Exploratory full-exposure momentum versus A/B/C (13 November 2026)
+
+The read-only actual-data GitHub Actions job completed successfully:
+https://github.com/jaheinone-lang/swing-bot-iphone/actions/runs/43493593751
+
+After the initial A/B/C years had already been reviewed, two explicit
+return-seeking, no-fixed-%-stop hypotheses were introduced:
+D (6-month momentum, up to 3 stocks, 21-session rebalancing) and E
+(3-month breakout, 1 stock, 5-session rebalancing).
+They competed with A/B/C on each previous 252-session *training* interval.
+D was chosen in all five historical training windows.
+
+| Actual historical year | Training-selected D, base-cost holdout | A/B/C training-selected baseline | D, severe-cost holdout | D maximum drawdown |
+| --- | ---: | ---: | ---: | ---: |
+| Sep 2021–Sep 2022 | -6.73% | -10.92% | -16.58% | 29.35% |
+| Sep 2022–Sep 2023 | +41.46% | +7.55% | +29.99% | 22.65% |
+| Sep 2023–Sep 2024 | +50.60% | +14.44% | +37.90% | 22.36% |
+| Sep 2024–Sep 2025 | +9.34% | +0.22% | -5.87% | 30.12% |
+| Sep 2025–Sep 2026 | +13.40% | +13.71% | +4.14% | 26.84% |
+
+Five independently restarted full-year fold return multipliers chained
+**illustratively** produce:
+- BASE (10/10 bps fee/slippage per side) **+19.68% CAGR**, +146.37% total;
+- WORSE (25/25 bps) **+16.16% CAGR**, +112.07% total;
+- SEVERE (50/75 bps) **+7.92% CAGR**, +46.59% total.
+
+Five-year D/E model-selection record: **0 of 5 years** reached +100%.
+D beat the pre-existing A/B/C winner in 4/5 individual held-out years,
+but the S&P 500 was not used as a properly verified benchmark. The old
+50-name theoretical equal-weight reference was beaten by D in only 2/5
+of the corresponding test years (2022–23 and 2023–24).
+
+**Critical methodological limitation:** The 2021–2026 A/B/C results were
+seen BEFORE D/E were proposed, so D/E evaluation reuses historically
+explored data. This is *exploratory hypothesis development*, NOT a new
+independent holdout confirmation. Modern survivors and fixed strategy
+universe may bias all returns optimistically; the stitched results are
+not a continuous self-financing account statement. No realized spreads,
+dividends, taxes, FX, verified Trading 212 orderability or actual fills;
+all outputs are hypothetical. Concentrated no-stop strategies can lose
+most or all capital. A prospective, untouched period is needed.
+
 ## Verified five-year walk-forward outcome (13 November 2026)
 
 The full-year GitHub Actions data job **completed successfully**:
