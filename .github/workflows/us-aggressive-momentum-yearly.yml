@@ -1,0 +1,82 @@
+# Aggressive full-cash-rotation hypothesis, not real/paper orders.
+# User requested continued +100% annual-return research; existing Alpaca
+# PAPER SIP manual backtest opt-in was previously confirmed. One 2026-11-13
+# exact-title merge can run once; manual runs need new explicit consent.
+name: US experimental momentum D-E yearly SIP comparison
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'swingbot/us_aggressive_cli.py'
+  workflow_dispatch:
+    inputs:
+      confirm_personal_sip_research:
+        description: "I approve personal private read-only historical SIP research with my PAPER-only keys"
+        required: true
+        type: boolean
+        default: false
+      lookback_days:
+        required: true
+        default: '2555'
+        type: choice
+        options:
+          - '2200'
+          - '2555'
+          - '2920'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: full-exposure-momentum-personal-research
+  cancel-in-progress: false
+
+jobs:
+  offline-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Offline tests before any historical data requests
+        run: python -m unittest discover -s tests -q
+
+  actual-sip-experimental-history:
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.confirm_personal_sip_research == true) || (github.event_name == 'push' && contains(github.event.head_commit.message, 'Full-exposure momentum one-shot')) }}
+    needs: offline-validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify existing PAPER-only market-data secrets
+        env:
+          ALPACA_DATA_KEY_ID: ${{ secrets.ALPACA_PAPER_DATA_KEY_ID }}
+          ALPACA_DATA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_DATA_SECRET_KEY }}
+        run: |
+          python - <<'PY'
+          import os
+          if not (os.getenv("ALPACA_DATA_KEY_ID","").strip()
+                  and os.getenv("ALPACA_DATA_SECRET_KEY","").strip()):
+              raise SystemExit("PAPER market data secrets unavailable")
+          print("PAPER data credentials configured; no broker orders permitted.")
+          PY
+      - name: Compare returns-first A/B/C versus D/E historical rotation
+        env:
+          ALPACA_DATA_KEY_ID: ${{ secrets.ALPACA_PAPER_DATA_KEY_ID }}
+          ALPACA_DATA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_DATA_SECRET_KEY }}
+          ALPACA_PERSONAL_RESEARCH_OK: 'true'
+          LOOKBACK_DAYS: ${{ inputs.lookback_days || '2555' }}
+        run: |
+          python -m swingbot.us_aggressive_cli --lookback-days "$LOOKBACK_DAYS"
+          # The Actions log is public. Print only aggregate strategy returns,
+          # dates and numeric risk diagnostics: NEVER per-stock OHLCV,
+          # ticker-level provider data, broker credentials, or actual orders.
