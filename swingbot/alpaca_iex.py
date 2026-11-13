@@ -40,11 +40,13 @@ class AlpacaUnavailable(RuntimeError):
 
 
 def parse_iex_pages(pages: list[dict], *, symbol: str, as_of: date,
-                    feed: str="iex") -> FreeMarketHistory:
+                    feed: str="iex",
+                    allowed_symbols: frozenset[str] | None = None) -> FreeMarketHistory:
     """Reject incomplete/paginated, stale, duplicate or mismatched EOD bars."""
     if feed not in ("iex", "sip"):
         raise AlpacaUnavailable("Invalid historical feed")
-    if not ALLOWED_SYMBOL.fullmatch(symbol) or symbol not in US_WATCHLIST_50:
+    allowed = US_WATCHLIST_50 if allowed_symbols is None else allowed_symbols
+    if not ALLOWED_SYMBOL.fullmatch(symbol) or symbol not in allowed:
         raise AlpacaUnavailable("Ticker outside 50-symbol allowlist")
     if not pages or len(pages) > MAX_PAGES:
         raise AlpacaUnavailable("Missing or excessive response pages")
@@ -100,6 +102,7 @@ def fetch_iex_bars(
     as_of: date | None=None,
     feed: str="iex",
     urlopen: Callable=urllib.request.urlopen,
+    allowed_symbols: frozenset[str] | None = None,
 ) -> FreeMarketHistory:
     """Only historical split-adjusted GETs, explicit feed, bounded pagination.
 
@@ -114,7 +117,8 @@ def fetch_iex_bars(
               else os.getenv("ALPACA_DATA_SECRET_KEY","")).strip()
     if not key or not secret:
         raise AlpacaUnavailable("Alpaca market-data API credentials missing")
-    if symbol not in US_WATCHLIST_50 or not ALLOWED_SYMBOL.fullmatch(symbol):
+    allowed = US_WATCHLIST_50 if allowed_symbols is None else allowed_symbols
+    if symbol not in allowed or not ALLOWED_SYMBOL.fullmatch(symbol):
         raise AlpacaUnavailable("Stock outside predeclared watchlist")
     now=as_of or datetime.now(timezone.utc).date()
     start=now-timedelta(days=850)
@@ -159,7 +163,8 @@ def fetch_iex_bars(
         data.append(page)
         token=page.get("next_page_token")
         if not token:
-            return parse_iex_pages(data,symbol=symbol,as_of=now,feed=feed)
+            return parse_iex_pages(data,symbol=symbol,as_of=now,feed=feed,
+                                   allowed_symbols=allowed_symbols)
         if (not isinstance(token,str) or not (1<=len(token)<=512)
             or token in seen):
             raise AlpacaUnavailable("Invalid/repeated pagination token")
