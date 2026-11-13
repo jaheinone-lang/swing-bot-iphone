@@ -16,30 +16,30 @@ def history(last=None):
 
 class StockFocusTests(unittest.TestCase):
     def _scan(self,rows,**kw):
-        return scan("FIXTURE",rows,as_of=date(2025,9,1),
+        return scan("FIXTURE",rows,as_of=date(2025,8,9),
             market_cap_usd=800_000_000,consolidated_volume=True,
             split_adjusted=True,verified_spread_bps=12,**kw)
     def test_smallcap_momentum_setup_is_watch_only(self):
-        b=history((15.1,18.2,14.9,17.4,4_000_000))
+        b=history((13.7,15.2,13.6,14.7,4_000_000))
         s=self._scan(b)
         self.assertTrue(s["family_signals"]["small_cap_momentum"])
         self.assertFalse(s["paper_order_authorized"])
         self.assertFalse(s["live_order_authorized"])
     def test_failed_gap_up_is_never_short_order(self):
-        b=history((16.5,17.2,11.3,11.5,4_000_000))
+        b=history((13.6,14.2,11.3,11.5,4_000_000))
         s=self._scan(b,borrow_locate_verified=True)
         self.assertTrue(s["family_signals"]["failed_gap_up"])
         self.assertFalse(s["short_order_authorized"])
     def test_no_consolidated_data_no_fake_liquidity(self):
         b=history()
-        x=scan("FIXTURE",b,as_of=date(2025,9,1),
+        x=scan("FIXTURE",b,as_of=date(2025,8,9),
             market_cap_usd=800_000_000,consolidated_volume=False,
             split_adjusted=True,verified_spread_bps=12)
         self.assertEqual(x["status"],"REJECTED")
         self.assertFalse(any(x["family_signals"].values()))
     def test_missing_market_cap_no_setup(self):
         b=history()
-        x=scan("FIXTURE",b,as_of=date(2025,9,1),
+        x=scan("FIXTURE",b,as_of=date(2025,8,9),
             market_cap_usd=None,consolidated_volume=True,
             split_adjusted=True,verified_spread_bps=12)
         self.assertEqual(x["status"],"REJECTED")
@@ -51,7 +51,7 @@ class StockFocusTests(unittest.TestCase):
         self.assertEqual(x["status"],"REJECTED")
     def test_largecap_positive_gate(self):
         b=history((14.8,16.0,14.7,15.8,4_000_000))
-        s=scan("FIXTURE",b,as_of=date(2025,9,1),
+        s=scan("FIXTURE",b,as_of=date(2025,8,9),
             market_cap_usd=20_000_000_000,consolidated_volume=True,
             split_adjusted=True,verified_spread_bps=12)
         self.assertTrue(s["family_signals"]["large_cap_breakout"])
