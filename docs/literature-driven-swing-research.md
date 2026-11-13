@@ -139,6 +139,38 @@ Do not treat the largest gap-proxy sample mean as proof of a winner:
 12 correlated signals, especially from today's survivors, cannot
 validate an independent, feasible 100%-annual-return strategy.
 
+## Verified US active and delisted common-stock inventory (2026-11-13)
+
+Read-only EODHD metadata discovery completed successfully:
+https://github.com/jaheinone-lang/swing-bot-iphone/actions/runs/43495725158
+
+Two separately requested US EODHD common-stock directories, restricted
+to USD ordinary common stocks on major US exchanges, excluding ETF and
+OTC source rows, returned:
+
+- **5,886 active listing entries** (NASDAQ 3,457; NYSE 2,115;
+  AMEX 241; BATS 38; NYSE ARCA 18; NYSE MKT 17).
+- **16,691 delisted listing entries** (NASDAQ 10,668; NYSE 5,439;
+  AMEX 49; BATS 26; NYSE ARCA 27; NYSE MKT 482).
+- **22,577 combined listing entries** and zero overlapping ticker codes
+  between the two returned status sets in this run.
+
+These counts are a breakthrough for source *discovery*, but **NOT**
+22,577 unique companies or confirmed backtest-ready full stock histories.
+A delisted symbol is not necessarily a failed company; it may represent
+an acquisition, merger or a renamed ticker. EODHD explicitly states
+historical records may be corrected retroactively without vintage
+snapshots and delisted coverage can have gaps. We must validate
+data-use rights, ticker reuse/ISIN, first/last trading dates,
+split-adjusted complete OHLCV and historical eligibility before using
+these in a proper point-in-time backtest. Do not buy subscriptions
+automatically or imply that missing data are zeros.
+
+This directly addresses the prior **50 mega-cap only** blind spot:
+the provider metadata can enumerate far more common-share histories,
+including delisted entries, but only a carefully licensed private data
+pipeline can research their historical returns without false hindsight.
+
 ## Current architecture constraints
 
 - Original 50-stock US hand-picked survivor set is biased and very unlike
