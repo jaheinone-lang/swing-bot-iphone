@@ -4,6 +4,9 @@ Three distinct PREDECLARED, daily-data proxies:
   52W_HIGH: George & Hwang (2004), price near trailing 252-session high
   LEADER_BASE_BREAK: Kullamägi (2021) leading advance, contracting base, break
   GAP_VOLUME_PROXY: Kullamägi episodic pivot *proxy*; NOT earnings verified.
+  90D_SMOOTH_TREND: inspired by Clenow, slope and R² of log prices.
+    A frozen absolute threshold event proxy, NOT Clenow's cross-sectional
+    top-20% strategy or position sizing.
 
 Primary original: https://qullamaggie.com/my-3-timeless-setups-that-have-made-me-tens-of-millions/
 Academic source: https://doi.org/10.1111/j.1540-6261.2004.00695.x
@@ -28,7 +31,7 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from datetime import date
-from math import isfinite
+from math import isfinite, log
 from statistics import mean, median
 from typing import Mapping
 
@@ -37,7 +40,8 @@ from .massive_free import FreeMarketHistory
 
 SYNTHETIC = "SYNTHETIC_TEST_FIXTURE"
 SIP = "ALPACA_DELAYED_SIP_CONSOLIDATED_HISTORICAL"
-PATTERNS = ("52W_HIGH","LEADER_BASE_BREAK","GAP_VOLUME_PROXY")
+PATTERNS = ("52W_HIGH","LEADER_BASE_BREAK","GAP_VOLUME_PROXY",
+             "90D_SMOOTH_TREND")
 HORIZONS = (5,20)
 LOOKBACK = 252
 COOLDOWN = 20
@@ -108,7 +112,29 @@ def pattern_flags(bars: tuple[DailyBar,...], i: int) -> dict[str,bool]:
         and day.volume>=2.*mean(x.volume for x in p20)
         and day.close>=day.open and range_pos>=.70
     )
-    return dict(zip(PATTERNS,(near_high,breakout,gap_proxy)))
+    # Clenow-style *proxy*: positive, smooth 90-session log-price slope.
+    # Not equivalent to rebalancing a historical S&P 500 universe by rank.
+    y=[log(x.close) for x in bars[i-89:i+1]]
+    ybar=mean(y)
+    xm=44.5
+    xx=sum((k-xm)**2 for k in range(90))
+    slope=sum((k-xm)*(v-ybar) for k,v in enumerate(y))/xx
+    explained=sum((v-ybar)**2 for v in y)
+    residual=sum((v-ybar-slope*(k-xm))**2
+                 for k,v in enumerate(y))
+    r2=(1-residual/explained) if explained>0 else 0.
+    last90=bars[i-89:i+1]
+    one_day_jump=any(
+        abs(last90[k].close/last90[k-1].close-1)>.15
+        for k in range(1,len(last90))
+    )
+    smooth=(
+        liquid and slope>0 and r2>=.75
+        and day.close/bars[i-89].close>=1.15
+        and day.close>mean(x.close for x in bars[i-99:i+1])
+        and not one_day_jump
+    )
+    return dict(zip(PATTERNS,(near_high,breakout,gap_proxy,smooth)))
 
 
 def net_open_to_open_return(entry:float,exit:float, *,
