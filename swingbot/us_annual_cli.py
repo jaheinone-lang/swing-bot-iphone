@@ -97,6 +97,14 @@ def run_private_full_year_sip(*,
             "test_max_drawdown_pct":base["holdout_max_drawdown_pct"],
             "test_completed_trades":base["closed_trades"],
             "test_profit_factor":base["holdout_profit_factor"],
+            "test_theoretical_reference_return_pct":base["reference_return_pct"],
+            "test_excess_vs_reference_percentage_points":round(
+                base["holdout_return_pct"]-base["reference_return_pct"],2
+            ),
+            "gap_to_100pct_cagr_percentage_points":(
+                round(base["holdout_cagr_pct"]-100.0,2)
+                if base["holdout_cagr_pct"] is not None else None
+            ),
             "benchmark_not_investable":True,
             "target_met_in_this_fold":base["target_met_in_this_historical_fold"],
         })
