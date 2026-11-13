@@ -120,7 +120,9 @@ def _prepare(histories: Mapping[str, FreeMarketHistory], *,
     return common, aligned
 
 
-def _simulation(aligned, dates, cfg: Strategy, start: int, end: int) -> dict:
+def _simulation(aligned, dates, cfg: Strategy, start: int, end: int, *,
+                fee_bps: float = FEE_BPS,
+                slippage_bps: float = SLIPPAGE_BPS) -> dict:
     cash=START_USD
     peak=START_USD
     last_equity=START_USD
@@ -141,9 +143,9 @@ def _simulation(aligned, dates, cfg: Strategy, start: int, end: int) -> dict:
     def exit_at(symbol, raw_price: float, reason: str):
         nonlocal cash, trades, fees_paid, stop_exits, stop_gap_count
         pos=positions.pop(symbol)
-        fill=max(0, raw_price*(1-SLIPPAGE_BPS/10_000))
+        fill=max(0, raw_price*(1-slippage_bps/10_000))
         gross=pos["quantity"]*fill
-        fee=gross*FEE_BPS/10_000
+        fee=gross*fee_bps/10_000
         cash+=gross-fee
         closed_pnls.append(gross-fee-pos["entry_cost_including_fee"])
         fees_paid+=fee
@@ -196,18 +198,18 @@ def _simulation(aligned, dates, cfg: Strategy, start: int, end: int) -> dict:
                 if len(positions)>=MAX_POSITIONS:
                     break
                 today=aligned[symbol][idx]
-                price=today.open*(1+SLIPPAGE_BPS/10_000)
+                price=today.open*(1+slippage_bps/10_000)
                 distance=cfg.stop_atr*atr
                 if distance<=0 or price<=distance:
                     continue
                 quantity=min(
-                    floor(equity_before*MAX_POSITION/(price*(1+FEE_BPS/10_000))),
+                    floor(equity_before*MAX_POSITION/(price*(1+fee_bps/10_000))),
                     floor(equity_before*RISK_PER_POSITION/distance),
-                    floor(cash/(price*(1+FEE_BPS/10_000))),
+                    floor(cash/(price*(1+fee_bps/10_000))),
                 )
                 if quantity < 1:
                     continue
-                fee=quantity*price*FEE_BPS/10_000
+                fee=quantity*price*fee_bps/10_000
                 max_entry_planned_risk_pct=max(
                     max_entry_planned_risk_pct,
                     100*quantity*distance/max(equity_before,0.01)
@@ -296,7 +298,9 @@ def _simulation(aligned, dates, cfg: Strategy, start: int, end: int) -> dict:
     }
 
 
-def _equal_weight_reference(aligned, dates, start: int, end: int) -> dict:
+def _equal_weight_reference(aligned, dates, start: int, end: int, *,
+                            fee_bps: float = FEE_BPS,
+                            slippage_bps: float = SLIPPAGE_BPS) -> dict:
     """Theoretical equal-weight buy-and-hold USD reference, NOT tradable.
 
     Uses fractional positions for comparability even when the strategy
@@ -309,8 +313,8 @@ def _equal_weight_reference(aligned, dates, start: int, end: int) -> dict:
     allotment=START_USD/count
     qty={}
     for sym, series in aligned.items():
-        entry=series[start].open*(1+SLIPPAGE_BPS/10_000)
-        qty[sym]=allotment/(entry*(1+FEE_BPS/10_000))
+        entry=series[start].open*(1+slippage_bps/10_000)
+        qty[sym]=allotment/(entry*(1+fee_bps/10_000))
     peak=START_USD
     max_dd=0.0
     finish=START_USD
@@ -324,8 +328,8 @@ def _equal_weight_reference(aligned, dates, start: int, end: int) -> dict:
         "ending_mark_to_market_usd":round(finish,2),
         "return_pct":round(100*(finish/START_USD-1),2),
         "max_drawdown_pct":round(100*max_dd,2),
-        "fee_bps_open":FEE_BPS,
-        "slippage_bps_open":SLIPPAGE_BPS,
+        "fee_bps_open":fee_bps,
+        "slippage_bps_open":slippage_bps,
         "fractional_shares_assumed":True,
         "survivorship_bias":True,
     }
@@ -334,6 +338,7 @@ def _equal_weight_reference(aligned, dates, start: int, end: int) -> dict:
 def compare_abc_offline(
     histories: Mapping[str, FreeMarketHistory], *,
     as_of: date, licensed_non_display_use: bool=False,
+    fee_bps: float=FEE_BPS, slippage_bps: float=SLIPPAGE_BPS,
 ) -> dict:
     """Train=first 65% of tradeable calendar, holdout=last 35%.
 
@@ -341,6 +346,11 @@ def compare_abc_offline(
     hypothetical run. Prior candles may ONLY warm up historical indicators.
     No source is automatically allowed for strategy/non-display research.
     """
+    # Reject invalid or unrealistic cost stress inputs rather than
+    # silently producing misleading backtests.
+    if not all(isinstance(v,(int,float)) and isfinite(v) and 0<=v<=500
+               for v in (fee_bps,slippage_bps)):
+        raise ValueError("Cost inputs must be finite, between 0 and 500 bps")
     dates,aligned = _prepare(histories,as_of=as_of,
                              licensed_non_display_use=licensed_non_display_use)
     tradable=len(dates)-WARMUP
@@ -349,13 +359,17 @@ def compare_abc_offline(
         raise ValueError("Too little train/holdout time")
     variants=[]
     for cfg in SPECS:
-        training=_simulation(aligned,dates,cfg,WARMUP,split)
-        holdout=_simulation(aligned,dates,cfg,split,len(dates))
+        training=_simulation(aligned,dates,cfg,WARMUP,split,
+                             fee_bps=fee_bps,slippage_bps=slippage_bps)
+        holdout=_simulation(aligned,dates,cfg,split,len(dates),
+                            fee_bps=fee_bps,slippage_bps=slippage_bps)
         variants.append({"strategy":cfg.name,"breakout_days":cfg.breakout,
                          "trend_days":cfg.trend,"stop_atr":cfg.stop_atr,
                          "training":training,"holdout":holdout})
-    baseline_training=_equal_weight_reference(aligned,dates,WARMUP,split)
-    baseline_holdout=_equal_weight_reference(aligned,dates,split,len(dates))
+    baseline_training=_equal_weight_reference(
+        aligned,dates,WARMUP,split,fee_bps=fee_bps,slippage_bps=slippage_bps)
+    baseline_holdout=_equal_weight_reference(
+        aligned,dates,split,len(dates),fee_bps=fee_bps,slippage_bps=slippage_bps)
     # A single lucky winner is not evidence of persistent edge.
     # At least 15 completed trades and 80 training sessions must exist
     # BEFORE a strategy can receive a qualified recommendation.
@@ -400,8 +414,8 @@ def compare_abc_offline(
         "selected_holdout_excess_vs_reference_pct":round(
             leader["holdout"]["return_pct"]-baseline_holdout["return_pct"],2
         ),
-        "fee_bps_each_side":FEE_BPS,
-        "slippage_bps_each_side":SLIPPAGE_BPS,
+        "fee_bps_each_side":fee_bps,
+        "slippage_bps_each_side":slippage_bps,
         "risk_per_trade_pct":RISK_PER_POSITION*100,
         "max_position_pct":MAX_POSITION*100,
         "halt_new_entries_at_drawdown_pct":DRAWDOWN_CIRCUIT*100,
