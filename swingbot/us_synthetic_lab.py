@@ -20,6 +20,7 @@ from typing import Mapping
 
 from .massive_free import FreeMarketHistory
 from .us_watchlist import US_WATCHLIST_50
+from .return_target import TARGET_ANNUAL_RETURN_PCT, goal_report
 
 START_USD = 5000.0
 RISK_PER_POSITION = 0.01
@@ -380,10 +381,12 @@ def compare_abc_offline(
         and variant["training"]["completed_round_trips"]>=15
         and split-WARMUP>=80
     ]
+    # All strategies share the same training interval and starting capital.
+    # Maximising training net return therefore also maximises training CAGR.
+    # No hardcoded risk-% penalty determines the research leader.
     leader=max(variants,key=lambda v:(
-        v["training"]["return_pct"]-
-        1.5*v["training"]["max_drawdown_pct"],
-        -v["training"]["max_drawdown_pct"],
+        v["training"]["return_pct"],
+        v["training"]["completed_round_trips"],
         v["strategy"]
     ))
     return {
@@ -396,13 +399,32 @@ def compare_abc_offline(
         "holdout_start":dates[split].isoformat(),
         "variants":variants,
         "training_selected_strategy":leader["strategy"],
+        "research_objective":"MAXIMIZE_TRAINING_COMPOUNDED_RETURN",
+        "target_annual_return_pct":TARGET_ANNUAL_RETURN_PCT,
+        "selected_training_annual_goal":goal_report(
+            initial_equity=START_USD,
+            final_equity=leader["training"]["ending_mark_to_market_usd"],
+            start=dates[WARMUP],end=dates[split-1],
+            synthetic_or_unverified=(
+                not licensed_non_display_use or
+                any(h.source=="SYNTHETIC_TEST_FIXTURE" for h in histories.values())
+            ),
+        ),
+        "selected_holdout_annual_goal":goal_report(
+            initial_equity=START_USD,
+            final_equity=leader["holdout"]["ending_mark_to_market_usd"],
+            start=dates[split],end=dates[-1],
+            synthetic_or_unverified=(
+                not licensed_non_display_use or
+                any(h.source=="SYNTHETIC_TEST_FIXTURE" for h in histories.values())
+            ),
+        ),
         "selected_holdout":leader["holdout"],
         "research_candidate_only":True,
         "qualified_strategy":(
             max(candidates,key=lambda v:(
-                v["training"]["return_pct"]-
-                1.5*v["training"]["max_drawdown_pct"],
-                -v["training"]["max_drawdown_pct"],
+                v["training"]["return_pct"],
+                v["training"]["completed_round_trips"],
                 v["strategy"]
             ))["strategy"] if candidates else None
         ),

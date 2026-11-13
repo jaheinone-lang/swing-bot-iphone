@@ -16,7 +16,8 @@ from datetime import date, timedelta
 from typing import Mapping
 
 from .massive_free import FreeMarketHistory
-from .us_synthetic_lab import compare_abc_offline
+from .us_synthetic_lab import compare_abc_offline, START_USD
+from .return_target import TARGET_ANNUAL_RETURN_PCT, goal_report
 
 COST_CASES = (
     ("BASE", 10.0, 10.0),
@@ -25,7 +26,6 @@ COST_CASES = (
 )
 MIN_TRAINING_CLOSED_TRADES = 15
 MIN_HOLDOUT_CLOSED_TRADES = 10
-MAX_HOLDOUT_DRAWDOWN_PCT = 20.0
 
 
 def run_us_cost_stress(
@@ -64,13 +64,20 @@ def run_us_cost_stress(
         )
         train, holdout = selected["training"], selected["holdout"]
         reference = comparison["benchmark_holdout"]
+        annual_goal = goal_report(
+            initial_equity=START_USD,
+            final_equity=holdout["ending_mark_to_market_usd"],
+            start=date.fromisoformat(holdout["start"]),
+            end=date.fromisoformat(holdout["end"]),
+            synthetic_or_unverified=synthetic or not licensed_non_display_use,
+        )
+        # Optimize for the stated annual return goal instead of using
+        # a pre-chosen drawdown percentage as an eligibility cutoff.
         passed = (
             train["completed_round_trips"] >= MIN_TRAINING_CLOSED_TRADES
             and holdout["completed_round_trips"] >= MIN_HOLDOUT_CLOSED_TRADES
-            and holdout["max_drawdown_pct"] <= MAX_HOLDOUT_DRAWDOWN_PCT
-            and holdout["return_pct"] > 0
+            and annual_goal["target_met_on_this_sample"]
             and holdout["return_pct"] > reference["return_pct"]
-            and not holdout["halted_new_entries"]
         )
         results.append({
             "case": name,
@@ -84,6 +91,7 @@ def run_us_cost_stress(
             "holdout_reference_return_pct": reference["return_pct"],
             "holdout_reference_is_investable": False,
             "holdout_halted_new_entries": holdout["halted_new_entries"],
+            "holdout_annual_goal": annual_goal,
             "hypothetical_case_passed": passed,
         })
     preliminary_screen_passed = all(
@@ -98,7 +106,8 @@ def run_us_cost_stress(
         "cost_cases": results,
         "minimum_training_completed_trades": MIN_TRAINING_CLOSED_TRADES,
         "minimum_holdout_completed_trades": MIN_HOLDOUT_CLOSED_TRADES,
-        "maximum_holdout_drawdown_pct": MAX_HOLDOUT_DRAWDOWN_PCT,
+        "research_annual_return_target_pct": TARGET_ANNUAL_RETURN_PCT,
+        "selection_objective": "HIGHEST_TRAINING_RETURN_NO_DRAWDOWN_PENALTY",
         "hypothetical_screen_passed": preliminary_screen_passed,
         "real_data_research_evidence": (
             preliminary_screen_passed and licensed_non_display_use

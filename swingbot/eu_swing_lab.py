@@ -24,6 +24,7 @@ from math import isfinite
 from typing import Mapping
 
 from .equity_screen import DailyBar
+from .return_target import TARGET_ANNUAL_RETURN_PCT, goal_report
 from .eu_watchlist import EU_BY_SYMBOL
 from .us_synthetic_lab import (
     SPECS, WARMUP, START_USD, RISK_PER_POSITION, MAX_POSITION,
@@ -144,10 +145,11 @@ def compare_eu_abc_offline(
         variants.append({"strategy":cfg.name, "training":training,
                          "holdout":holdout})
 
+    # All variants use the same development window and starting EUR capital.
+    # Rank for compounding returns rather than a fixed risk-percentage score.
     leader = max(variants, key=lambda v:(
-        v["training"]["return_pct"]-
-        1.5*v["training"]["max_drawdown_pct"],
-        -v["training"]["max_drawdown_pct"], v["strategy"]
+        v["training"]["return_pct"],
+        v["training"]["completed_round_trips"], v["strategy"]
     ))
     baseline_train = _eur_statistics(
         _equal_weight_reference(aligned, days, WARMUP, split)
@@ -172,6 +174,20 @@ def compare_eu_abc_offline(
         "holdout_start":days[split].isoformat(),
         "variants":variants,
         "chosen_on_training_only":leader["strategy"],
+        "research_objective":"MAXIMIZE_TRAINING_COMPOUNDED_RETURN",
+        "target_annual_return_pct": TARGET_ANNUAL_RETURN_PCT,
+        "selected_training_annual_goal": goal_report(
+            initial_equity=START_USD,
+            final_equity=leader["training"]["ending_mark_to_market_eur"],
+            start=days[WARMUP],end=days[split-1],
+            synthetic_or_unverified=not real_data,
+        ),
+        "selected_holdout_annual_goal": goal_report(
+            initial_equity=START_USD,
+            final_equity=leader["holdout"]["ending_mark_to_market_eur"],
+            start=days[split],end=days[-1],
+            synthetic_or_unverified=not real_data,
+        ),
         "qualified_strategy": None,
         "training_trade_threshold_met":training_threshold_met,
         "benchmark_training":baseline_train,

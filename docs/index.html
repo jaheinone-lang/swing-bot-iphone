@@ -69,13 +69,14 @@
   <div class="alert" role="note">Trading 212 Practice -tilin instrumenttiluettelon lukuoikeus on testattu. Tämä EI ole oikea välittäjäsalkku eikä tee ostoja tai myyntejä.
     Raportissa näkyy metadataan perustuva laskentakatsaus ja erillinen historiallinen simulaatio.</div>
 
-  <section class="card" aria-labelledby="capital"><h2 id="capital">Pääoma ja riskirajat</h2>
+  <section class="card" aria-labelledby="capital"><h2 id="capital">Swing Bot 2.0 · vuosituottotavoite</h2>
     <div class="grid">
-      <div class="metric"><small>Paperialkupääoma</small><div class="value">5 000 €</div></div>
-      <div class="metric"><small>Yksi positio enintään</small><div class="value">20 %</div></div>
-      <div class="metric"><small>Laskennallinen riski / kauppa</small><div class="value">1 %</div></div>
-      <div class="metric"><small>Uudet ostot pysäyttävä raja</small><div class="value">−25 %</div></div>
+      <div class="metric"><small>Tutkimuspääoma</small><div class="value">5 000 €</div></div>
+      <div class="metric"><small>Tavoite vuoden jälkeen</small><div class="value">10 000 €</div></div>
+      <div class="metric"><small>Vuosituottotavoite (CAGR)</small><div class="value">+100 %</div></div>
+      <div class="metric"><small>Strategian valinta</small><div class="value" style="font-size:17px">Tuotto ensin</div></div>
     </div>
+    <p class="note">Tavoite ei ole tuottoennuste eikä taattu tulos. Strategiat asetetaan järjestykseen harjoitusjakson tuoton perusteella; myöhempi testijakso ja kaupankäyntikulut arvioidaan erikseen. Pitkäaikainen 200 €/kk sijoittaminen ei kuulu tähän tuottolaskelmaan.</p>
   </section>
 
   <section class="card">
@@ -136,11 +137,11 @@
     <p class="warn">Massiven henkilökohtainen datalisenssi ei sellaisenaan oikeuta automatisoituun non-display-sijoitusstrategian analyysiin. Siksi TOP 20 -tuloksia EI luoda Massiven datasta ilman erillistä vahvistettua käyttölupaa. Massiven datalla A/B/C-testit eivät ole käytössä. Alpaca PAPER -tilin historiallinen SIP A/B/C -tutkimus onnistui 20.10.2026 erillisessä GitHub Actions -ajossa, mutta historiatulos ei todista tulevaa tuottoa.</p>
     <p class="note">Uusi maksuton vaihtoehto: Alpaca Markets Basic. Sen 50 osakkeen historiallinen SIP-lukutesti ja erillinen A/B/C-vertailu onnistuivat 20.10.2026. Avaimia käytetään vain Alpaca PAPER -tililtä. Valittavana on IEX-rajatut päivätiedot sekä erikseen kokeiltava yli 15 min vanha SIP-historia, jos tilin oikeudet sallivat. <a href="https://github.com/jaheinone-lang/swing-bot-iphone/actions/workflows/alpaca-free-iex.yml">Avaa Alpaca-yhteystesti GitHubissa ↗</a></p>
     <details>
-      <summary>A/B/C-strategiat ja riskienhallinta</summary>
+      <summary>A/B/C-strategiat ja tekniset suojaukset</summary>
       <p class="note"><strong>A – perus:</strong> 20 päivän hintaläpimurto, 50 päivän trendi, ATR-stop x 2,0.</p>
       <p class="note"><strong>B – trendi:</strong> 15 päivän läpimurto, 50/200 päivän trendiehdot, ATR-stop x 2,5, enintään 25 havainnon pitoaika.</p>
       <p class="note"><strong>C – aggressiivinen:</strong> 10 päivän läpimurto, 30/200 päivän trendiehdot, ATR-stop x 3,0, enintään 18 havainnon pitoaika.</p>
-      <p class="note">Simulaation perusoletukset: 1 % riskibudjetti avauksessa, 20 % enimmäisposition arvo, 5 samanaikaista positiota, 25 % salkun arvonlasku estää uudet avaukset myös aamun kurssigapin jälkeen, 0,10 % palkkio ja 0,10 % liukuma per kauppasuunta. Stop ei takaa tappiorajaa kurssigapissa.</p>
+      <p class="note">Strategioiden tutkimustavoite on +100 % vuosituotto, ei riskiprosenttien optimointi. Vanhat position kokoon ja tappiopysäytyksiin liittyvät tekniset suojaukset ovat toistaiseksi ennallaan, mutta ne eivät määrää strategian paremmuusjärjestystä. Simulaatio sisältää arvioidut palkkiot ja liukuman; stop ei takaa tappiorajaa kurssigapissa.</p>
       <p class="note">Tulosten laadunvarmistus sisältää suljettujen kauppojen voittoprosentin, tappion pahimmalta päivältä, position kesto-/altistusseurannan ja erillisen myöhemmän tarkistusjakson. Teoreettinen tasapainotettu vertailusalkku ei ole sijoitettava markkinaindeksi. Keinotekoinen testidata ei voi nostaa strategiaa hyväksytyksi voittajaksi.</p>
     </details>
     <details>
