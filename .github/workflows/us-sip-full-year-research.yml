@@ -79,7 +79,7 @@ jobs:
           ALPACA_DATA_KEY_ID: ${{ secrets.ALPACA_PAPER_DATA_KEY_ID }}
           ALPACA_DATA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_DATA_SECRET_KEY }}
           ALPACA_PERSONAL_RESEARCH_OK: "true"
-          LOOKBACK_DAYS: ${{ inputs.historical_lookback_days }}
+          LOOKBACK_DAYS: ${{ inputs.historical_lookback_days || '2555' }}
         run: |
           python -m swingbot.us_annual_cli --lookback-days "$LOOKBACK_DAYS"
           # Prints aggregate A/B/C annual OOS results only, never ticker-level
