@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "mode": "DELAYED_CRYPTO_E_SHADOW_V1",
+  "strategy": "E - filtered momentum",
+  "started_on": "2026-10-21",
+  "last_processed_day": "2026-10-21",
+  "starting_eur": 5000.0,
+  "cash_eur": 5000.0,
+  "tax_reserved_eur": 0.0,
+  "peak_equity_eur": 5000.0,
+  "last_closes_eur": {
+    "BTC-EUR": 74790.0,
+    "ETH-EUR": 2199.91,
+    "SOL-EUR": 95.129
+  },
+  "positions": {},
+  "pending_entries": {},
+  "pending_exits": [],
+  "disposals": [],
+  "trades": [],
+  "fees_eur": 0.0,
+  "halted": false,
+  "equity_curve": [
+    {
+      "day": "2026-10-21",
+      "equity_eur": 5000.0,
+      "drawdown_pct": 0.0
+    }
+  ]
+}

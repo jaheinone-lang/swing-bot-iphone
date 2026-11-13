@@ -1,0 +1,71 @@
+name: Five-year BTC ETH early exit comparison (READ-ONLY)
+on:
+  push:
+    branches:
+      - 'research/crypto-alpha-*'
+    paths:
+      - 'swingbot/daytrade_exit_guards.py'
+      - 'swingbot/five_year_early_exit.py'
+      - 'tests/test_daytrade_exit_guards.py'
+      - '.github/workflows/crypto-early-exits.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: crypto-early-exits-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  early-exits:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run early-exit and existing daytime safety regression tests
+        run: |
+          python -m unittest discover -s tests -p 'test_daytrade_exit_guards.py' -v
+          python -m unittest discover -s tests -p 'test_daytrade_one_per_day.py' -v
+          python -m unittest discover -s tests -p 'test_five_year_daytrade.py' -v
+      - name: Run 2021-2026 BTC ETH early exit policy comparison on real Bitvavo 5m data
+        run: python -m swingbot.five_year_early_exit > /tmp/crypto-exit-comparison.json
+      - name: Print entire five-year and 2021-25 vs 2026 trade outcomes
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=json.loads(Path('/tmp/crypto-exit-comparison.json').read_text())
+          print('FIVE_YEAR_EXIT_VERIFIED_RESULT='+json.dumps({
+              'source':p['data_coverage'],
+              'eligible_bars':p['eligible_bars'],
+              'segments':p['contiguous_sections'],
+              'results':p['results'],
+              'notes':p['notes'],
+          },ensure_ascii=False))
+          lines=['# BTC/ETH: five-year stop protection vs causal early exit',
+                 f"Window: {p['start_utc']} – {p['end_utc_exclusive']} (exclusive)",
+                 f"Observed jointly usable 5m bars: {p['eligible_bars']}",
+                 '| Exit policy | End € | PnL € | End € 2x costs | PnL € 2x costs | Orders | 1% full TP | Stops | Early exits |',
+                 '|---|---:|---:|---:|---:|---:|---:|---:|---:|']
+          for name,vals in p['results'].items():
+              a=vals['normal'];b=vals['double_costs']
+              lines.append(
+                  f"| {name} | {a['final_eur']:.2f} | {a['net_profit_eur']:.2f} | "
+                  f"{b['final_eur']:.2f} | {b['net_profit_eur']:.2f} | "
+                  f"{a['buys']} | {a['full_position_1pct_net_takeprofits']} | "
+                  f"{a['stop_exits']} | {a['early_exits']} |")
+          lines += ['', 'All rules exploratory, not approved for trading. '
+                        'Historical OHLC fills assumed, market gaps lead to '
+                        'flat re-entry sections, no personal taxes. '
+                        'Previously viewed data is not independent validation.']
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as h:
+              h.write('\n'.join(lines)+'\n')
+          print('\n'.join(lines))
+          PY
+      - name: Store results JSON
+        uses: actions/upload-artifact@v4
+        with:
+          name: btc-eth-five-year-early-exit
+          path: /tmp/crypto-exit-comparison.json
+          retention-days: 30

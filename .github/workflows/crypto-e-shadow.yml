@@ -1,0 +1,47 @@
+name: Crypto E delayed shadow paper (NO REAL ORDERS)
+on:
+  push:
+    branches:
+      - 'research/crypto-alpha-*'
+      - main
+    paths:
+      - 'swingbot/crypto_e_shadow.py'
+      - 'tests/test_crypto_e_shadow.py'
+      - '.github/workflows/crypto-e-shadow.yml'
+  workflow_dispatch:
+  # GitHub scheduled runs execute on the repository default branch.
+  # No periodic run on the research branch until the reviewed PR is merged.
+  schedule:
+    - cron: '43 5 * * *'
+permissions:
+  contents: write
+concurrency:
+  group: crypto-e-shadow-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  shadow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Full offline safety and strategy tests
+        run: python -m unittest discover -s tests -v
+      - name: Process only validated completed Bitvavo crypto candles
+        run: python -m swingbot.crypto_e_shadow
+      - name: Atomically commit fictional ledger and public summary together
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add paper/crypto_e_shadow.json docs/crypto_e_shadow_summary.json
+          if git diff --cached --quiet; then
+            echo "No new completed market data or changes to shadow ledger"
+            exit 0
+          fi
+          git commit -m "Update frozen E crypto delayed forward research [skip ci]"
+          # Fail closed if the branch moved. Do not auto-rebase paper state.
+          git push origin "HEAD:$GITHUB_REF_NAME"

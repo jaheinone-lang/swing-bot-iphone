@@ -1,0 +1,235 @@
+name: Crypto alpha research (READ-ONLY)
+on:
+  push:
+    branches:
+      - 'research/crypto-alpha-*'
+    paths:
+      - 'swingbot/crypto_alpha_research.py'
+      - 'swingbot/crypto_validation.py'
+      - 'swingbot/crypto_allocation_research.py'
+      - 'swingbot/intraday_net_target.py'
+      - 'swingbot/bitvavo_intraday.py'
+      - 'swingbot/intraday_research.py'
+      - 'swingbot/intraday_entry_filters.py'
+      - 'swingbot/intraday_robustness.py'
+      - 'swingbot/intraday_train_test.py'
+      - 'swingbot/bitvavo_intraday_history.py'
+      - 'swingbot/intraday_pullback_research.py'
+      - 'swingbot/intraday_risk_regime.py'
+      - 'swingbot/intraday_regime_research.py'
+      - 'swingbot/btc_eth_only_research.py'
+      - 'swingbot/shared_btc_eth_portfolio.py'
+      - 'swingbot/five_month_btc_eth.py'
+      - 'swingbot/btc_eth_quality_gate.py'
+      - 'swingbot/five_month_quality_comparison.py'
+      - 'swingbot/five_month_exit_research.py'
+      - 'swingbot/daytrade_one_per_day.py'
+      - 'swingbot/daytrade_150d_research.py'
+      - 'swingbot/entry_timing_150d_audit.py'
+      - 'tests/test_entry_timing_150d_audit.py'
+      - 'tests/test_daytrade_one_per_day.py'
+      - 'tests/test_five_month_exit_research.py'
+      - 'tests/test_shared_btc_eth_portfolio.py'
+      - 'tests/test_btc_eth_only_research.py'
+      - 'tests/test_intraday_risk_regime.py'
+      - 'tests/test_intraday_pullback_research.py'
+      - 'tests/test_bitvavo_intraday_history.py'
+      - 'tests/test_intraday_train_test.py'
+      - 'tests/test_intraday_entry_filters.py'
+      - 'tests/test_intraday_research.py'
+      - 'tests/test_intraday_net_target.py'
+      - 'swingbot/strategy_lab.py'
+      - 'tests/test_crypto_alpha_research.py'
+      - 'tests/test_crypto_allocation_research.py'
+      - '.github/workflows/crypto-alpha-research.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  crypto-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run safety and research tests
+        run: python -m unittest discover -s tests -v
+      - name: Fetch completed public candles and compare candidate strategies
+        run: |
+          python -m swingbot.crypto_alpha_research > /tmp/crypto-research.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          result=json.loads(Path('/tmp/crypto-research.json').read_text())
+          summary=['# Crypto-only research (no orders)',
+                   f"Historical window: {result['start']} to {result['end']} ({result['calendar_days']} days)",
+                   f"Training/later split: {result['split_day']}",
+                   f"Uniform earliest entry: {result['first_entry_day']}",
+                   f"Training-selected candidate: **{result['winner_on_training']}**",
+                   '',
+                   '| Strategy | Development % | Later % | Later DD % | Net 5k -> € | 2x costs € | 3% risk cap € | Worst 90d % |',
+                   '|---|---:|---:|---:|---:|---:|---:|---:|']
+          for r in result['candidates']:
+              summary.append(
+                  f"| {r['name']} | {r['development']['total_return_pct']} | "
+                  f"{r['later_period']['total_return_pct']} | "
+                  f"{r['later_period']['max_drawdown_pct']} | "
+                  f"{r['full_period_after_tax_eur']:.2f} | "
+                  f"{r['fee_stress_after_tax_eur']:.2f} | "
+                  f"{r['risk_cap_3pct_after_tax_eur']:.2f} | "
+                  f"{r['nonoverlapping_90d_windows']['worst_90d_return_pct']} |"
+              )
+          summary.extend(['', '### Buy-and-hold controls (201-candle warmup)',
+                          '| Control | Whole-period % | Later-period % | Max DD % | Final € |',
+                          '|---|---:|---:|---:|---:|'])
+          for label, row in result['hold_benchmarks'].items():
+              summary.append(
+                  f"| {label} | {row['whole_period']['total_return_pct']} | "
+                  f"{row['later_period']['total_return_pct']} | "
+                  f"{row['whole_period']['max_drawdown_pct']} | "
+                  f"{row['final_equity_eur']:.2f} |"
+              )
+          summary.extend([
+              '',
+              '**Caveats:** strategies and buy-and-hold may enter only after 201 completed daily candles. '
+              'Buy-and-hold does not pay liquidation taxes; strategy reserves estimated realized-gain tax. '
+              'Raw performance is NOT apples-to-apples after-tax alpha. These are about 719 historical days only, '
+              'not independent prospective verification. The 3% stop-risk guard is nominal and cannot bound gap losses. '
+              'No live orders or account connection.'
+          ])
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as handle:
+              handle.write('\n'.join(summary)+'\n')
+          print('\n'.join(summary))
+          PY
+
+      - name: Compare €5000 E60 against E100 risk-capped and all-in over fresh last 30 days
+        run: |
+          python -m swingbot.crypto_allocation_research > /tmp/crypto-allocation-30d.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          research = json.loads(Path('/tmp/crypto-allocation-30d.json').read_text())
+          lines = [
+              '',
+              '# Capital allocation: EUR 5,000 reinvested; new account in last 30 completed days',
+              f"Window {research['recent_month_start']} to {research['history_end']}; "
+              "no external deposits, returns compound on the whole changing balance.",
+              '| Model | 30d end € | 30d profit € | Return % | 30d max DD % | Average invested % | Days ≥95% invested | Buy events | Entire history end € | Entire history max DD % |',
+              '|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|',
+          ]
+          for r in research['scenarios']:
+              m = r['most_recent_30d_from_fresh_5000']
+              h = r['full_history_compounding']
+              lines.append(
+                  f"| {r['name']} | {m['ending_eur']:.2f} | {m['profit_eur']:.2f} | "
+                  f"{m['return_pct']:.2f} | {m['max_drawdown_pct']:.2f} | "
+                  f"{m['mean_invested_share_pct']:.2f} | "
+                  f"{m['days_95pct_or_more_invested']} | {m['buy_events']} | "
+                  f"{h['final_equity_eur']:.2f} | {h['max_drawdown_pct']:.2f} |"
+              )
+          lines.extend([
+              '',
+              'CAUTION: **all-in removes per-trade stop-risk sizing**. '
+              'Funds can be heavily concentrated, 25% max-DD rule freezes NEW entries '
+              'but does not guarantee protection. '
+              'When BUY signals do not occur, even 100% allocation-enabled models hold cash. '
+              'Tax reserves cover only realized gains; the fee assumptions are estimates. '
+              'Historical tuning is not future validation. NO live trading, no position changes.'
+          ])
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
+              f.write('\n'.join(lines) + '\n')
+          print('\n'.join(lines))
+          PY
+
+      - name: Verify 1% net-profit target with conservative fee assumptions
+        run: |
+          python - <<'PY'
+          from swingbot.intraday_net_target import (
+              ExecutionCosts, minimum_target_price,
+              net_profit_pct, partial_profit_cashflow
+          )
+          import os
+          lines=[
+              '',
+              '# Intraday 1% after-cost target (illustrative, no market fill)',
+              '| Cost profile | Required exit for entry €100 | Gross rise % | Net gain after costs % | Realized gain on €5k when 50% sold |',
+              '|---|---:|---:|---:|---:|',
+          ]
+          for name, cost in (
+              ('Estimated 25bps fee + 15bps slippage each side', ExecutionCosts()),
+              ('Stress 50bps fee + 30bps slippage each side',
+               ExecutionCosts(50,50,30,30)),
+          ):
+              target=minimum_target_price(100,costs=cost)
+              cash=partial_profit_cashflow(100,target,
+                                           sold_fraction=.5,costs=cost)
+              lines.append(
+                  f'| {name} | €{target:.2f} | {target-100:.2f}% | '
+                  f'{net_profit_pct(100,target,cost):.3f}% | '
+                  f"€{cash['net_realized_gain_eur_before_tax']:.2f} |"
+              )
+          lines.append(
+              '\n**This is order-price arithmetic, NOT a realized monthly or daily '
+              'return, and excludes personal taxes and changing venue fees.** '
+              'Price must touch the target and the order actually fill. '
+              'If 50% of a fully invested position is sold at +1% net, '
+              'that realizes ~0.5% of the whole initial portfolio, '
+              'not 1% of the entire account. Never submits orders.'
+          )
+          print('\n'.join(lines))
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
+              f.write('\n'.join(lines)+'\n')
+          PY
+
+      - name: Verify completed real 5m BTC candles and conservative intraday result
+        run: |
+          python -m swingbot.intraday_research
+
+      - name: Compare baseline and volume-confirmed BTC 5m entry rules
+        run: python -m swingbot.intraday_entry_filters
+
+      - name: Check frozen filters across BTC ETH SOL, separate windows and fee stress
+        run: python -m swingbot.intraday_robustness
+
+      - name: Select only on older candles and assess frozen later history
+        run: python -m swingbot.intraday_train_test
+
+      - name: Check historical 7-day BTC 5m coverage
+        run: |
+          python - <<'PY'
+          from swingbot.bitvavo_intraday_history import historical_five_minute
+          candles=historical_five_minute('BTC-EUR',days=7,require_complete=False)
+          from swingbot.bitvavo_intraday_history import contiguous_observed_segments
+          segments=contiguous_observed_segments(candles,min_bars=100)
+          print('Observed BTC bars:',len(candles),'Missing:',2016-len(candles),
+                'Longest continuous:',max((len(x) for x in segments),default=0))
+          PY
+
+      - name: Compare pullback versus breakout with 7 days of real 5m crypto candles
+        run: python -m swingbot.intraday_pullback_research
+
+      - name: Compare BTC ETH SOL trend regime overlay and net-fee risk cap
+        run: python -m swingbot.intraday_regime_research
+
+      - name: Validate BTC ETH only read-only market scope
+        run: python -m swingbot.btc_eth_only_research
+
+      - name: Backtest one shared 5000 EUR BTC ETH spot account
+        run: python -m swingbot.shared_btc_eth_portfolio
+
+      - name: Run 150-day gap-aware BTC ETH shared portfolio experiment
+        run: python -m swingbot.five_month_btc_eth
+
+      - name: Compare closed-candle quality entry gate on 150-day pooled BTC ETH history
+        run: python -m swingbot.five_month_quality_comparison
+
+      - name: Test predeclared stop and take-profit grid on 150-day train/later history
+        run: python -m swingbot.five_month_exit_research
+
+      - name: Compare one trade per Finland day and immediate full net target for 150 days
+        run: python -m swingbot.daytrade_150d_research
+
+      - name: Analyze actual winning BTC ETH 5m buy timestamps and predeclared timing rules
+        run: python -m swingbot.entry_timing_150d_audit
