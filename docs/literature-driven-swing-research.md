@@ -93,6 +93,52 @@ from different tickers **overlap in calendar time**. These event returns
 are NOT independent observations, a fair confidence interval, a
 self-financing portfolio equity curve, or proof of recurring +100% CAGR.
 
+## Actual first SIP event-study results (2026-11-13)
+
+The new real-history event study completed successfully in GitHub Actions:
+https://github.com/jaheinone-lang/swing-bot-iphone/actions/runs/43494755628
+
+- Alpaca SIP source: 50/50 curated stock histories, SPY matched benchmark
+  data, sample 2019-11-15 through 2026-11-12; ~7 years of calendar lookback.
+- Frozen end-of-day signals, next-open fill, 5/20-session fixed exits,
+  **10 bps fee + 10 bps slippage PER SIDE** for stock and reference.
+- No real, paper or intraday orders. Events are distinct by signal
+  but can overlap across tickers and are not independent.
+- **All four historic event families show a positive average price-only
+  20-session return difference vs SPY**, but that is not a verified
+  trading alpha or continuously invested portfolio CAGR.
+
+| Pattern | Events | Unique current survivor stocks | Avg 5-session net return | Avg 20-session net return | Mean 20-session matched-SPY excess | Caution |
+|---|---:|---:|---:|---:|---:|---|
+| 52W_HIGH | 863 | 50 | -0.007% | +0.835% | +0.420 percentage points | Highly correlated signal dates |
+| LEADER_BASE_BREAK | 35 | 18 | +0.192% | +1.603% | +1.281 pp | Only 35 observations |
+| GAP_VOLUME_PROXY | 12 | 10 | +0.677% | +3.552% | +2.808 pp | **Only 12 observations**; no earnings verification |
+| 90D_SMOOTH_TREND | 622 | 50 | -0.143% | +1.177% | +0.626 pp | Strong trend and modern survivor selection |
+
+This correctly identifies a **market-universe bottleneck**: the 50
+current large-cap names produce only 12 gap-volume events over the
+observed history. Lowering thresholds after seeing these results
+would be overfitting. The next genuine work is verified broad US
+and European **point-in-time common-stock histories**, including
+delisted/renamed securities and corporate actions.
+
+Source/provider candidates for that next stage (verify use rights and
+pricing independently; no subscription has been ordered):
+- EODHD active/delisted common-stock exchange listings:
+  https://eodhd.com/financial-apis/delisted-stock-companies-data-2
+- EODHD coverage and retroactive adjustments caution (no PIT vintages):
+  https://eodhd.com/help/methodology
+- Norgate US listed/delisted equities and historical memberships, but
+  Windows-hosted and subscription-dependent:
+  https://norgatedata.com/data-package-faq.php
+- Alpaca Asset API is a **current** available-asset catalog, not a
+  verified historical constituents endpoint:
+  https://docs.alpaca.markets/us/reference/get-v2-assets-1
+
+Do not treat the largest gap-proxy sample mean as proof of a winner:
+12 correlated signals, especially from today's survivors, cannot
+validate an independent, feasible 100%-annual-return strategy.
+
 ## Current architecture constraints
 
 - Original 50-stock US hand-picked survivor set is biased and very unlike
