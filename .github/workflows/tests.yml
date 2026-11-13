@@ -19,3 +19,6 @@ jobs:
         run: python -m swingbot.us_quality_cli
       - name: Verify EU EUR-only A/B/C synthetic stress safety
         run: python -m swingbot.eu_quality_cli
+
+      - name: Verify 3-fold walk-forward chronology and safety on synthetic US data
+        run: python -m swingbot.us_walkforward_quality_cli
