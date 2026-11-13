@@ -1,0 +1,52 @@
+# US common-stock active AND delisted provider directory coverage.
+# Metadata only; no raw symbol or ISIN lists in public logs or repo.
+# Two read-only EODHD requests after explicit user-research authorization.
+name: US active and delisted stock catalog discovery
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'swingbot/us_delisted_catalog.py'
+  workflow_dispatch:
+    inputs:
+      confirm_personal_metadata_research:
+        description: "I approve two read-only EODHD personal-use exchange catalog requests (active and delisted)"
+        required: true
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: us-active-delisted-inventory
+  cancel-in-progress: false
+jobs:
+  offline-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -q
+  personal-metadata-only:
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.confirm_personal_metadata_research == true) || (github.event_name == 'push' && contains(github.event.head_commit.message, 'US delisted inventory one-shot')) }}
+    needs: offline-guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Read only USD common stock directory, aggregate status counts
+        env:
+          EODHD_API_TOKEN: ${{ secrets.EODHD_API_TOKEN }}
+        run: |
+          python -m swingbot.us_delisted_catalog --approved-personal-metadata-read
+          # No company names, symbols, ISIN, individual prices, orders or
+          # raw vendor contents in the public job logs.
