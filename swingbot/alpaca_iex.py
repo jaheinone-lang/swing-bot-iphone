@@ -103,6 +103,7 @@ def fetch_iex_bars(
     feed: str="iex",
     urlopen: Callable=urllib.request.urlopen,
     allowed_symbols: frozenset[str] | None = None,
+    lookback_days: int = 850,
 ) -> FreeMarketHistory:
     """Only historical split-adjusted GETs, explicit feed, bounded pagination.
 
@@ -111,6 +112,10 @@ def fetch_iex_bars(
     """
     if feed not in ("iex", "sip"):
         raise AlpacaUnavailable("Invalid historical feed")
+    # Longer multi-year history needed for true calendar-year holdouts.
+    # Defaults retain the existing shorter CI/test behavior.
+    if type(lookback_days) is not int or not 850 <= lookback_days <= 3000:
+        raise AlpacaUnavailable("Historical lookback must be 850..3000 days")
     key = (key_id if key_id is not None
            else os.getenv("ALPACA_DATA_KEY_ID","")).strip()
     secret = (secret_key if secret_key is not None
@@ -121,7 +126,7 @@ def fetch_iex_bars(
     if symbol not in allowed or not ALLOWED_SYMBOL.fullmatch(symbol):
         raise AlpacaUnavailable("Stock outside predeclared watchlist")
     now=as_of or datetime.now(timezone.utc).date()
-    start=now-timedelta(days=850)
+    start=now-timedelta(days=lookback_days)
     end=now-timedelta(days=1)
     data=[]
     token=None
