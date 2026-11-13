@@ -1,0 +1,87 @@
+# Deep historical SIP data use requires an explicit human confirmation.
+# Read-only personal research; never orders; private credentials in secrets.
+# The repository is public: logs must NOT contain raw vendor quotes,
+# per-symbol rankings, source catalog rows or tokens.
+name: US SIP 100pct CAGR full-year validation
+on:
+  # One-shot 13 Nov 2026 push is explicitly gated by an exact merge message.
+  # The user requested the actual history task, and Oct 2026 manual data use
+  # consent was confirmed in prior successful SIP research workflow.
+  # All requests remain GET-only with existing PAPER data secrets.
+  push:
+    branches: [main]
+    paths:
+      - 'swingbot/us_annual_cli.py'
+  workflow_dispatch:
+    inputs:
+      confirm_personal_non_display_sip_research_rights:
+        description: "I explicitly confirm PAPER-only keys and my personal Alpaca agreement permits this 50-stock historical strategy backtest"
+        type: boolean
+        required: true
+        default: false
+      historical_lookback_days:
+        description: "Calendar history requested, <=3000 days (2555 ~7 years)"
+        required: true
+        type: choice
+        default: "2555"
+        options:
+          - "2200"
+          - "2555"
+          - "2920"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: manual-us-full-year-sip-research
+  cancel-in-progress: false
+
+jobs:
+  offline-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify offline model chronology, data provenance and safety
+        run: python -m unittest discover -s tests -q
+
+  full-year-sip-read-only:
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.confirm_personal_non_display_sip_research_rights == true) || (github.event_name == 'push' && contains(github.event.head_commit.message, 'Full-year SIP research one-shot')) }}
+    needs: offline-validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate configured PAPER-only market-data credentials
+        env:
+          ALPACA_DATA_KEY_ID: ${{ secrets.ALPACA_PAPER_DATA_KEY_ID }}
+          ALPACA_DATA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_DATA_SECRET_KEY }}
+        run: |
+          python - <<'PY'
+          import os
+          if not (os.environ.get("ALPACA_DATA_KEY_ID", "").strip()
+                  and os.environ.get("ALPACA_DATA_SECRET_KEY", "").strip()):
+              raise SystemExit("PAPER market-data secrets not configured")
+          print("PAPER data credentials configured. No balance/trade endpoints are used.")
+          PY
+      - name: Multi-year historical SIP, full-calendar-year OOS folds
+        env:
+          ALPACA_DATA_KEY_ID: ${{ secrets.ALPACA_PAPER_DATA_KEY_ID }}
+          ALPACA_DATA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_DATA_SECRET_KEY }}
+          ALPACA_PERSONAL_RESEARCH_OK: "true"
+          LOOKBACK_DAYS: ${{ inputs.historical_lookback_days }}
+        run: |
+          python -m swingbot.us_annual_cli --lookback-days "$LOOKBACK_DAYS"
+          # Prints aggregate A/B/C annual OOS results only, never ticker-level
+          # OHLCV, provider code lists, raw portfolio fills or trading orders.
+          # Future performance cannot be inferred or guaranteed.
