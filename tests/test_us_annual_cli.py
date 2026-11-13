@@ -25,6 +25,7 @@ def fake_report():
                 "holdout_max_drawdown_pct":10.0,
                 "closed_trades":25,
                 "holdout_profit_factor":1.2,
+                "reference_return_pct":8.0,
                 "target_met_in_this_historical_fold":False,
             },{
                 "case":"SEVERE",
@@ -102,6 +103,8 @@ class AnnualCliTests(unittest.TestCase):
         runner.assert_called_once()
         self.assertEqual(r["validated"],50)
         self.assertEqual(r["folds"][0]["test_return_after_base_friction_pct"],4)
+        self.assertEqual(r["folds"][0]["test_excess_vs_reference_percentage_points"],-4)
+        self.assertEqual(r["folds"][0]["test_theoretical_reference_return_pct"],8)
         self.assertEqual(r["status"],"HISTORICAL_SIP_FULL_YEAR_RESEARCH_ONLY")
         self.assertFalse(r["profit_goal_proven_repeatable"])
         self.assertFalse(r["orders_enabled"])
