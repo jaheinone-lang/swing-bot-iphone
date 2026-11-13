@@ -5,6 +5,47 @@ Trading-only research capital: USD 5,000 in the US historical engine.
 **+100% CAGR is an ambitious research target, not a forecast**. EUR
 conversion, taxes, funding flows and actual execution are not included.
 
+## Verified five-year walk-forward outcome (13 November 2026)
+
+The full-year GitHub Actions data job **completed successfully**:
+https://github.com/jaheinone-lang/swing-bot-iphone/actions/runs/43491873101
+
+- 50/50 real Alpaca delayed SIP stock histories retrieved (2555-calendar-day
+  lookback, as-of 2026-11-13).
+- Five non-overlapping >=365-day annual holdouts. Each fold preselected a
+  frozen A/B/C strategy from preceding 252 completed sessions.
+- Base case: **10 bps fee + 10 bps slippage on each trade side**.
+- The 100% per-year objective was **not** reached in any holdout.
+
+| Full-year out-of-sample interval | Training-chosen strategy | Net historical return (base costs) | Worst friction-case return | Theoretical equal-weight reference |
+| --- | --- | ---: | ---: | ---: |
+| 2021-09-17 → 2022-09-19 | B trend | -10.92% | -25.88% | -5.06% |
+| 2022-09-20 → 2023-09-20 | C aggressive | +7.55% | -13.27% | +25.16% |
+| 2023-09-21 → 2024-09-20 | B trend | +14.44% | -15.73% | +31.51% |
+| 2024-09-23 → 2025-09-23 | C aggressive | +0.22% | -16.31% | +12.66% |
+| 2025-09-24 → 2026-09-24 | A basic | +13.71% | -14.98% | +21.15% |
+
+Illustrative independently-reset fold-return chain:
+- BASE (10/10 bps per side): **+4.54% annualized**, +24.95% five-year illustrative total.
+- WORSE (25/25 bps): **-1.08% annualized**, -5.30% illustrative total.
+- SEVERE (50/75 bps): **-17.30% annualized**, -61.45% illustrative total.
+
+**Interpretation:** On the historical dataset tested, the current A/B/C
+models show insufficient after-friction return for the +100% annual goal,
+and they underperform the theoretical survivor-basket reference in every
+full-year fold. These are NOT a continuous executable portfolio series
+because the model resets to a USD 5,000 hypothetical account at every
+fold. Dynamic changes to execution sizing/exposure, new strategies or
+broader securities should be explored only as **new hypotheses**, with
+additional genuinely unseen data/forward paper observation; repeatedly
+tuning to these five now-public test intervals would overfit.
+
+Important: This evidence uses a preselected 50-name **survivor universe**,
+excludes delisted shares, no actual bid/ask spreads, tax/FX or dividends;
+historical comparison is therefore exploratory and may be optimistic.
+The US source is USD, not EUR, and the USD amounts must never be labeled
+EUR returns without FX verification. There is no claim of future profit.
+
 ## Previously collected real historical evidence (20 October 2026)
 
 GitHub Actions historical read-only Alpaca SIP comparison:
