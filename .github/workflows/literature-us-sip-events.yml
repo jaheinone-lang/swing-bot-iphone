@@ -1,0 +1,76 @@
+# Four frozen, literature-inspired USD equity research hypotheses; GET only.
+# This is a one-shot EOD SIP EVENT STUDY, NOT a trading strategy run:
+# no order API, no per-ticker price output, no provider data redistribution.
+name: Literature-inspired US SIP momentum patterns
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'swingbot/literature_event_cli.py'
+  workflow_dispatch:
+    inputs:
+      confirm_personal_non_display_sip_research_rights:
+        description: "I confirm PAPER-only market-data credentials and licensed personal, internal backtesting use of Alpaca SIP historical bars"
+        type: boolean
+        required: true
+        default: false
+      historical_lookback_days:
+        description: "Lookback period for strictly historical research"
+        type: choice
+        options: ['2200', '2555', '2920']
+        default: '2555'
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: one-shot-literature-sip-events
+  cancel-in-progress: false
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Frozen hypotheses, next-session fills, rights and no-order checks
+        run: python -m unittest discover -s tests -q
+
+  read-sip-private:
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.confirm_personal_non_display_sip_research_rights == true) || (github.event_name == 'push' && contains(github.event.head_commit.message, 'Literature patterns one-shot')) }}
+    needs: offline-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Confirm PAPER-only secrets set
+        env:
+          ALPACA_DATA_KEY_ID: ${{ secrets.ALPACA_PAPER_DATA_KEY_ID }}
+          ALPACA_DATA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_DATA_SECRET_KEY }}
+        run: |
+          python - <<'PY'
+          import os
+          if not (os.getenv("ALPACA_DATA_KEY_ID","").strip()
+                  and os.getenv("ALPACA_DATA_SECRET_KEY","").strip()):
+              raise SystemExit("PAPER data-only credentials not configured")
+          print("Historical SIP data credentials configured; no orders or balance reads.")
+          PY
+      - name: Read historical SIP bars and print only aggregated pattern outcomes
+        env:
+          ALPACA_DATA_KEY_ID: ${{ secrets.ALPACA_PAPER_DATA_KEY_ID }}
+          ALPACA_DATA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_DATA_SECRET_KEY }}
+          ALPACA_PERSONAL_RESEARCH_OK: 'true'
+          LOOKBACK_DAYS: ${{ inputs.historical_lookback_days || '2555' }}
+        run: |
+          python -m swingbot.literature_event_cli --lookback-days "$LOOKBACK_DAYS"
+          # All signals determined after candle closes and entered next open.
+          # Different events overlap across tickers; results are exploratory.
+          # This is NOT a self-financing 100%-per-year equity curve.
