@@ -56,6 +56,13 @@ class StockFocusTests(unittest.TestCase):
             split_adjusted=True,verified_spread_bps=12)
         self.assertTrue(s["family_signals"]["large_cap_breakout"])
         self.assertFalse(s["family_signals"]["small_cap_momentum"])
+    def test_full_synthetic_safety_matrix(self):
+        from swingbot.us_stock_setup_quality_cli import report
+        outcome=report()
+        self.assertEqual(outcome['tests_passed'],9)
+        self.assertFalse(outcome['real_market_data_tested'])
+        self.assertFalse(outcome['historical_return_computed'])
+        self.assertEqual(outcome['real_trade_orders'],0)
     def test_all_families_present(self):
         self.assertEqual(set(self._scan(history())["family_signals"]),set(FAMILIES))
 if __name__=="__main__":unittest.main()
