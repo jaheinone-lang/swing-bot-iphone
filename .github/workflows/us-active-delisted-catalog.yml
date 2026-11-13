@@ -32,7 +32,7 @@ jobs:
           python-version: '3.12'
       - run: python -m unittest discover -s tests -q
   personal-metadata-only:
-    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.confirm_personal_metadata_research == true) || (github.event_name == 'push' && contains(github.event.head_commit.message, 'US delisted inventory one-shot')) }}
+    if: ${{ github.event.repository.private == true && ((github.event_name == 'workflow_dispatch' && inputs.confirm_personal_metadata_research == true) || (github.event_name == 'push' && contains(github.event.head_commit.message, 'US delisted inventory one-shot'))) }}
     needs: offline-guard
     runs-on: ubuntu-latest
     timeout-minutes: 12
