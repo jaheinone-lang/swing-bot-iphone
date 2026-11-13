@@ -1,0 +1,54 @@
+# Optional manual metadata inventory; does not fetch price history or trade.
+# The branch's normal Python safety workflow tests each change automatically.
+# Never write licensed provider catalog rows, keys, broker account data, or
+# per-symbol rankings into public Actions artifacts or git commits.
+name: Wide US and European equity catalog inventory
+on:
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: "Alpaca US paper assets or EODHD European exchange listings"
+        required: true
+        type: choice
+        default: alpaca
+        options:
+          - alpaca
+          - eodhd
+      start_exchange:
+        description: "European EODHD exchange chunk start (0-based)"
+        required: true
+        type: number
+        default: 0
+      max_exchanges:
+        description: "Number of European EODHD exchanges in this run (1 to 5)"
+        required: true
+        type: number
+        default: 2
+permissions:
+  contents: read
+jobs:
+  inventory-private-metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run offline catalog and market data safety tests
+        run: python -m unittest discover -s tests -v
+      - name: Fetch metadata, print safe aggregates only
+        env:
+          ALPACA_PAPER_DATA_KEY_ID: ${{ secrets.ALPACA_PAPER_DATA_KEY_ID }}
+          ALPACA_PAPER_DATA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_DATA_SECRET_KEY }}
+          EODHD_API_TOKEN: ${{ secrets.EODHD_API_TOKEN }}
+          PROVIDER: ${{ inputs.provider }}
+          START_EXCHANGE: ${{ inputs.start_exchange }}
+          MAX_EXCHANGES: ${{ inputs.max_exchanges }}
+        run: |
+          python -m swingbot.broad_market_catalog \
+            --provider "$PROVIDER" \
+            --start-exchange "$START_EXCHANGE" \
+            --max-exchanges "$MAX_EXCHANGES"
