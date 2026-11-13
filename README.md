@@ -1,5 +1,11 @@
 # Swing Bot iPhone — yhdistetty osake- ja kryptobotti
 
+> **Maksullinen markkinadata on yksityistä.** EODHD:n historiallista
+> hintadataa, raakaa katalogia tai datasta johdettuja tutkimustuloksia
+> ei julkaista tässä repositoriossa. EODHD-avainta käyttävät GitHub
+> Actions -vaiheet on rajattu yksityisiin repositorioihin.
+> Katso [yksityisen ympäristön perustaminen](docs/private-research-setup.md).
+
 **Tila: TURVALLINEN TESTIVERSIO.** Ei oikeaa rahaa, ei API-kaupankäyntiavaimia, ei osto-/myyntitoimeksiantoja. Yhteinen 5 000 € simuloitu salkku.
 
 ## Markkinat

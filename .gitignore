@@ -14,3 +14,20 @@ venv/
 *.log
 *.sqlite
 *.db
+
+# Licensed / personal vendor data and locally generated sensitive research.
+# Gitignore is only an accident guard: never force-add these to public git.
+licensed_data/
+private_data/
+licensed_reports/
+private_reports/
+*.parquet
+*.arrow
+*.feather
+*.duckdb
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+*.db-wal
+*.db-shm
+*.zip

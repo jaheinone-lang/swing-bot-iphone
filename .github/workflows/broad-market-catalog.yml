@@ -28,6 +28,7 @@ permissions:
   contents: read
 jobs:
   inventory-private-metadata:
+    if: ${{ github.event.repository.private == true }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

@@ -34,7 +34,7 @@ jobs:
 
   single-eu-eod-read-only:
     needs: offline-guard
-    if: ${{ inputs.confirm_personal_read_only == true }}
+    if: ${{ github.event.repository.private == true && inputs.confirm_personal_read_only == true }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
