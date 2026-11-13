@@ -1,0 +1,25 @@
+# Manual and read-only Alpaca PAPER credentials verification.
+# Unlike SIP historical tests this does NOT download licensed market data.
+name: Alpaca PAPER connection check
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  paper-connection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Offline credential-check unit tests
+        run: python -m unittest tests.test_alpaca_paper_check -v
+      - name: Verify PAPER account using read-only GET
+        env:
+          ALPACA_DATA_KEY_ID: ${{ secrets.ALPACA_PAPER_DATA_KEY_ID }}
+          ALPACA_DATA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_DATA_SECRET_KEY }}
+        run: python -m swingbot.alpaca_paper_check
