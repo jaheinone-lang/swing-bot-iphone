@@ -1,32 +1,32 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-11-24T16:19:11+00:00",
-  "as_of": "2026-11-24",
+  "generated_at_utc": "2026-11-25T15:59:43+00:00",
+  "as_of": "2026-11-25",
   "status": "TRADING212_DEMO_METADATA_CONNECTED",
   "data_mode": "BROKER_INSTRUMENT_METADATA_ONLY",
   "instruments": {
-    "stocks": 10368,
+    "stocks": 10371,
     "etfs": 6771,
-    "total": 17139,
-    "unique_isins": 13122,
+    "total": 17142,
+    "unique_isins": 13126,
     "by_currency": {
-      "CAD": 543,
+      "CAD": 542,
       "CHF": 388,
-      "EUR": 6350,
+      "EUR": 6353,
       "GBP": 580,
       "GBX": 1893,
-      "USD": 7385
+      "USD": 7386
     },
-    "platform_additions_last_30d": 81
+    "platform_additions_last_30d": 85
   },
   "eu_stock_research": {
     "status": "EU_ISIN_PREFIX_METADATA_COUNTS_ONLY",
-    "stocks_with_eu_isin_prefix": 1467,
-    "eur_quoted_eu_isin_prefix_stocks": 1338,
+    "stocks_with_eu_isin_prefix": 1470,
+    "eur_quoted_eu_isin_prefix_stocks": 1341,
     "by_quote_currency": {
       "CAD": 1,
       "CHF": 4,
-      "EUR": 1338,
+      "EUR": 1341,
       "GBX": 26,
       "USD": 98
     },
@@ -50,7 +50,7 @@
       "NL": 146,
       "PL": 35,
       "PT": 27,
-      "SE": 55
+      "SE": 58
     },
     "curated_watchlist_size": 50,
     "curated_countries": 9,
